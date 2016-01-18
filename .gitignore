@@ -11,3 +11,9 @@
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
+.Rproj.user
+
+*.Rproj
+inst/doc
+.RData
+.Rhistory

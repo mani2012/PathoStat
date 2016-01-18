@@ -1,0 +1,48 @@
+library(shiny)
+library(ggvis)
+library(reshape2)
+
+shinyServer(function(input, output, session) {
+  #needed information from PathoStat
+  
+  setInputs <- function(combatFlag)  {
+    if (combatFlag)  {
+      shinyInput <<- shinyInputCombat
+    } else  {
+      shinyInput <<- shinyInputOrig
+    }
+  }
+  #setInputs(FALSE)
+  ra_bp <- reactive({
+    dat <- melt(cbind(shinyInput$data, ind = rownames(shinyInput$data)), id.vars = c('ind'))
+    dat %>%  
+      ggvis(x=~variable, y=~value, fill=~factor(ind)) %>% layer_bars(stack = TRUE) %>%
+      add_tooltip(function(dat2){paste0("Sample: ", dat2$variable, "<br>", "Genome: ", dat2$ind, 
+                                       "<br>", "RA: ", dat2$value)}, "hover") %>%
+      add_axis("x", title = "Samples", 
+        properties = axis_props(
+        title = list(fontSize = 15),
+        labels = list(fontSize = 5)
+      )) %>%
+      add_axis("y", title = "Relative Abundance %", properties = axis_props(
+        title = list(fontSize = 15),
+        labels = list(fontSize = 10)
+      )) %>%
+      add_legend("fill", title = "Samples", properties = legend_props(
+        title = list(fontSize = 15),
+        labels = list(fontSize = 10)
+      ))
+  })
+  ra_bp %>% bind_shiny("RelAbundancePlot")
+  output$RAsummary <- renderPrint({
+    #summary(shinyInput$data)
+    dat <- melt(cbind(shinyInput$data, ind = rownames(shinyInput$data)), id.vars = c('ind'))
+    dat
+  })
+  
+  output$RAtable <- renderTable({
+    shinyInput$data
+  })
+  
+})
+

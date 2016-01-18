@@ -1,0 +1,25 @@
+Package: PathoStat
+Type: Package
+Title: PathoStat - PathoScope Statistical Analysis package
+Version: 1.1
+Date: 2016-01-14
+Author: Solaiappan Manimaran
+Maintainer: Solaiappan Manimaran <mani2012@bu.edu>, W. Evan Johnson <wej@bu.edu>
+Description: Performs Statistical Analysis on the PathoScope generated reports file. 
+License: GNU GPL (version 2 or later)
+Depends: MCMCpack,
+    limma,
+    corpcor,
+    rmarkdown,
+    knitr,
+    pander,
+    gplots,
+    matrixStats,
+    reshape2,
+    scales,
+    ggplot2
+Collate: 
+    'pathoStat.R'
+    'utils.R'
+Suggests: testthat
+VignetteBuilder: knitr

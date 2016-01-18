@@ -1,0 +1,92 @@
+---
+title: "BatchQC package Introduction"
+author: "Solaiappan Manimaran"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{BatchQCIntro}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+The purpose of this package is to provide Quality Control of sequencing samples by deducing if there is batch effect and adjusts for it.
+
+The package includes:
+
+1. principal component analysis and plots to check batch effects
+2. heatmap plot of gene expressions
+3. statistical tests to assess batch effects
+4. functions to generate simulated RNA-Seq data
+
+`batchQC` is the pipeline function that generates the BatchQC report. It combines all the functions into one step.
+
+## Installation
+
+To begin, install [Bioconductor](http://www.bioconductor.org/) along with a
+few dependencies that BatchQC uses:
+
+```r
+source("http://bioconductor.org/biocLite.R")
+biocLite(c('MCMCpack', 'limma', 'preprocessCore', 'sva', 'devtools', 'corpcor', 'matrixStats', 'shiny', 'ggvis', 'd3heatmap', 'reshape2'))
+```
+
+Next, use [devtools](https://github.com/hadley/devtools) to install the latest
+version of HTShape and BatchQC from Github:
+```r
+require(devtools)
+install_github("kokrah/HTShape")
+install_github("mani2012/BatchQC", build_vignettes=TRUE)
+```
+
+Install 'pandoc' package by following the instructions at the following URL:
+http://johnmacfarlane.net/pandoc/installing.html
+
+Rstudio provide pandoc binaries at the following location for (windows, linux and mac):
+https://s3.amazonaws.com/rstudio-buildtools/pandoc-1.13.1.zip 
+
+Install 'pander' package by following the instructions at the following URL:
+http://rapporter.github.io/pander/
+
+```r
+require(devtools)
+install_github('Rapporter/pander')
+```
+
+If all went well you should now be able to load BatchQC. Here is an example use of the pipeline.
+
+### Simulate data
+```r
+nbatch <- 3
+ncond <- 2
+npercond <- 10
+data.matrix <- rnaseq_sim(ngenes=50, nbatch=nbatch, ncond=ncond, npercond=npercond, 
+                          ggstep=5, bbstep=15000, ccstep=10000, bvarstep=2, seed=1234)
+
+```
+### Apply BatchQC
+```r
+batch <- rep(1:nbatch, each=ncond*npercond)
+condition <- rep(rep(1:ncond, each=npercond), nbatch)
+nsample <- nbatch*ncond*npercond
+sample <- 1:nsample
+pdata <- data.frame(sample, batch, condition)
+modmatrix = model.matrix(~as.factor(condition), data=pdata)
+
+batchQC(data.matrix, batch=batch, condition=condition, 
+        report_file="batchqc_report.html", report_dir=".", 
+        report_option_binary="111111111",
+        view_report=FALSE, interactive=TRUE)
+
+```
+
+### Apply combat
+```r
+combat_data.matrix = ComBat(dat=data.matrix, batch=batch, mod=modmatrix)
+```
+
+### Rerun the BatchQC pipeline on the batch adjusted data
+```r
+batchQC(combat_data.matrix, batch=batch, condition=condition, 
+        report_file="batchqc_combat_adj_report.html", report_dir=".", 
+        report_option_binary="110011111",
+        interactive=FALSE)
+```
