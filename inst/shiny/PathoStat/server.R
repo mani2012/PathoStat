@@ -17,8 +17,10 @@ shinyServer(function(input, output, session) {
     dat <- melt(cbind(shinyInput$data, ind = rownames(shinyInput$data)), id.vars = c('ind'))
     dat %>%  
       ggvis(x=~variable, y=~value, fill=~factor(ind)) %>% layer_bars(stack = TRUE) %>%
-      add_tooltip(function(dat2){paste0("Sample: ", dat2$variable, "<br>", "Genome: ", dat2$ind, 
-                                       "<br>", "RA: ", dat2$value)}, "hover") %>%
+      #add_tooltip(function(dat2){paste0("Sample: ", dat2$variable, "<br />", "Genome: ", dat2$ind, 
+      #                                 "<br />", "RA: ", dat2$value)}, "hover") %>%
+      add_tooltip(function(dat2){paste0("Sample: ", dat2[2], "<br />", "Genome: ", dat2[1], 
+                                       "<br />", "RA: ", dat2[4])}, "hover") %>%
       add_axis("x", title = "Samples", 
         properties = axis_props(
         title = list(fontSize = 15),
@@ -28,7 +30,7 @@ shinyServer(function(input, output, session) {
         title = list(fontSize = 15),
         labels = list(fontSize = 10)
       )) %>%
-      add_legend("fill", title = "Samples", properties = legend_props(
+      add_legend("fill", title = "Genomes", properties = legend_props(
         title = list(fontSize = 15),
         labels = list(fontSize = 10)
       ))
