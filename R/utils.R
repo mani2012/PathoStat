@@ -24,13 +24,6 @@ log2CPM <- function(qcounts, lib.size=NULL){
 
 readPathoscopeData <- function(input_dir=".")  {
   filenames <- list.files(input_dir, pattern="*.tsv", full.names=TRUE)
-  #ltbl <- lapply(filenames, read.table, skip=1, header=TRUE, sep ='\t', nrows=10)
-  #lhash <- lapply(ltbl, prop_hash)
-  #genomes <- c()
-  #for (i in 1:length(ltbl))  {
-  #  genomes <- c(genomes, levels(ltbl[i][1]))
-  #}
-  #lprop <- lapply(lhash, proportion, genomes)
   genomes <- c()
   for (i in 1:length(filenames))  {
     filename <- filenames[i]
@@ -38,6 +31,7 @@ readPathoscopeData <- function(input_dir=".")  {
     hasht <- prop_hash(tbl)
     genomes <- c(genomes, levels(tbl[,1]))
   }
+  genomes <- c(genomes, "others")
   genomes <- unique(genomes)
   lprop <- vector('list', length(filenames)) 
   for (i in 1:length(filenames))  {
@@ -56,8 +50,13 @@ readPathoscopeData <- function(input_dir=".")  {
 
 prop_hash <- function(tbl)  {
   prop_hash <- new.env()
+  sum <- 0.0
   for(i in 1:nrow(tbl)) {
     prop_hash[[as.character(tbl[i, 1])]] <- tbl[i, 2]
+    sum <- sum+tbl[i, 2]
+  }
+  if (sum < 1.0)  {
+    prop_hash[["others"]] <- 1.0-sum
   }
   return(prop_hash)
 }

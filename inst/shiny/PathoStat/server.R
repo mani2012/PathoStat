@@ -26,20 +26,21 @@ shinyServer(function(input, output, session) {
         title = list(fontSize = 15),
         labels = list(fontSize = 5)
       )) %>%
-      add_axis("y", title = "Relative Abundance %", properties = axis_props(
+      add_axis("y", title = "Relative Abundance (RA)", properties = axis_props(
         title = list(fontSize = 15),
         labels = list(fontSize = 10)
       )) %>%
       add_legend("fill", title = "Genomes", properties = legend_props(
         title = list(fontSize = 15),
         labels = list(fontSize = 10)
-      ))
+      )) %>%
+      set_options(width = "auto", height = "auto")
   })
   ra_bp %>% bind_shiny("RelAbundancePlot")
   output$RAsummary <- renderPrint({
-    #summary(shinyInput$data)
-    dat <- melt(cbind(shinyInput$data, ind = rownames(shinyInput$data)), id.vars = c('ind'))
-    dat
+    summary(shinyInput$data)
+    #dat <- melt(cbind(shinyInput$data, ind = rownames(shinyInput$data)), id.vars = c('ind'))
+    #dat
   })
   
   output$RAtable <- renderTable({

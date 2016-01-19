@@ -6,23 +6,23 @@ require(reshape2)
 require(scales)
 require(ggplot2)
 
-#' Checks for presence of batch effect and creates a html report 
-#' with information including whether the batch needs to be adjusted
+#' Statistical Analysis of the PathoScope reports and generates a html report 
+#' and produces interactive shiny app plots
 #' 
-#' @param data.matrix Given data or simulated data from rnaseq_sim()
+#' @param input_dir Directory where the tsv files from PathoScope are located
 #' @param batch Batch covariate 
 #' @param condition Covariates or conditions of interest besides batch
 #' @param report_file Output report file name 
 #' @param report_dir Output report directory path 
 #' @param report_option_binary 9 bits Binary String representing the plots to display and hide in the report 
 #' @param view_report when TRUE, opens the report in a browser 
-#' @return pca Principal Components Analysis object of the data
+#' @return outputfile The output file with all the statistical plots
 #' @export
 #' @examples
 #' nbatch <- 10
 #' nperbatch <- 10
 #' batch <- rep(1:nbatch, each=nperbatch)
-#' PathoStat(data.matrix, batch)
+#' PathoStat(input_dir=".", batch)
 pathoStat <- function(input_dir=".", batch, condition=NULL, 
                     report_file="PathoStat_report.html", 
                     report_dir=".", report_option_binary="111111111",
@@ -32,19 +32,8 @@ pathoStat <- function(input_dir=".", batch, condition=NULL,
   mod = model.matrix(~as.factor(condition), data=pdata)
   if (report_dir==".") { report_dir=getwd() }
   dat <- readPathoscopeData(input_dir)
-#   dat <- read.table(text = "    ONE TWO THREE
-# 1   23  234 324
-# 2   34  534 120
-# 3   56  324 124
-# 4   34  234 124
-# 5   123 534 654",sep = "",header = TRUE)
-  
-  #Add an id variable for the filled regions
-  #dat <- melt(cbind(dat, ind = rownames(dat)), id.vars = c('ind'))
-
-  #dat <- as.matrix(dat)
   shinyInput <<- list("data"=dat, "batch"=batch, "condition"=condition, 
-                      "report_dir"=report_dir)
+                      "report_dir"=report_dir, "input_dir"=input_dir)
   
   rmdfile <- system.file("reports/PathoStat_report.Rmd", package = "PathoStat")
   report_option_vector <- unlist(strsplit(as.character(report_option_binary), ""))
