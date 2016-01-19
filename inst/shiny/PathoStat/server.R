@@ -20,7 +20,7 @@ shinyServer(function(input, output, session) {
       #add_tooltip(function(dat2){paste0("Sample: ", dat2$variable, "<br />", "Genome: ", dat2$ind, 
       #                                 "<br />", "RA: ", dat2$value)}, "hover") %>%
       add_tooltip(function(dat2){paste0("Sample: ", dat2[2], "<br />", "Genome: ", dat2[1], 
-                                       "<br />", "RA: ", dat2[4])}, "hover") %>%
+                                       "<br />", "RA: ", dat2[4]-dat2[3])}, "hover") %>%
       #add_axis("x", subdivide = 1, values = 1:length(colnames(shinyInput$data)), 
       add_axis("x", 
         title = "Samples", 
