@@ -16,11 +16,11 @@ few dependencies that PathoStat uses:
 
 ```r
 source("http://bioconductor.org/biocLite.R")
-biocLite(c('MCMCpack', 'limma', 'preprocessCore', 'sva', 'devtools', 'corpcor', 'matrixStats', 'shiny', 'ggvis', 'd3heatmap', 'reshape2', 'scales'))
+biocLite(c('MCMCpack', 'limma', 'preprocessCore', 'sva', 'devtools', 'stringi', 'corpcor', 'matrixStats', 'shiny', 'ggvis', 'd3heatmap', 'reshape2', 'scales'))
 ```
 
 Next, use [devtools](https://github.com/hadley/devtools) to install the latest
-version of HTShape and BatchQC from Github:
+version of PathoStat from Github:
 ```r
 require(devtools)
 install_github("mani2012/PathoStat", build_vignettes=TRUE, auth_token="dadf36cdaef71a2f761f193862a8f6f3f36e3966")
@@ -43,7 +43,7 @@ install_github('Rapporter/pander')
 If all went well you should now be able to load PathoStat:
 ```r
 require(PathoStat)
-vignette('PathoStatIntro', package='BatchQC')
+vignette('PathoStatIntro', package='PathoStat')
 ```
 
 ## Troubleshooting with Installation
