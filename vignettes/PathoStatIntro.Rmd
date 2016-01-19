@@ -30,7 +30,7 @@ Next, use [devtools](https://github.com/hadley/devtools) to install the latest
 version of HTShape and BatchQC from Github:
 ```r
 require(devtools)
-install_github("mani2012/PathoStat", build_vignettes=TRUE)
+install_github("mani2012/PathoStat", build_vignettes=TRUE, auth_token="dadf36cdaef71a2f761f193862a8f6f3f36e3966")
 ```
 
 Install 'pandoc' package by following the instructions at the following URL:
