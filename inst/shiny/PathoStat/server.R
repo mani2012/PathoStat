@@ -21,10 +21,12 @@ shinyServer(function(input, output, session) {
       #                                 "<br />", "RA: ", dat2$value)}, "hover") %>%
       add_tooltip(function(dat2){paste0("Sample: ", dat2[2], "<br />", "Genome: ", dat2[1], 
                                        "<br />", "RA: ", dat2[4])}, "hover") %>%
-      add_axis("x", title = "Samples", 
+      #add_axis("x", subdivide = 1, values = 1:length(colnames(shinyInput$data)), 
+      add_axis("x", 
+        title = "Samples", 
         properties = axis_props(
         title = list(fontSize = 15),
-        labels = list(fontSize = 5)
+        labels = list(text="", fontSize = 10)
       )) %>%
       add_axis("y", title = "Relative Abundance (RA)", properties = axis_props(
         title = list(fontSize = 15),

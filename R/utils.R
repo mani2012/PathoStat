@@ -44,7 +44,10 @@ readPathoscopeData <- function(input_dir=".")  {
   do.call(cbind, lprop)
   dat <- data.frame(lprop)
   rownames(dat) <- genomes
-  colnames(dat) <- 1:length(filenames)
+  samplenames <- unlist(lapply(filenames, 
+    function(x){return(strsplit(basename(x), "-sam-report.tsv")[[1]])}))
+  #colnames(dat) <- 1:length(filenames)
+  colnames(dat) <- samplenames
   return(dat)
 }
 
