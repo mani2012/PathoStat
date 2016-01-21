@@ -23,7 +23,7 @@ few dependencies that PathoStat uses:
 
 ```r
 source("http://bioconductor.org/biocLite.R")
-biocLite(c('MCMCpack', 'limma', 'preprocessCore', 'sva', 'devtools', 'stringi', 'corpcor', 'matrixStats', 'shiny', 'ggvis', 'd3heatmap', 'reshape2', 'scales'))
+biocLite(c('MCMCpack', 'limma', 'preprocessCore', 'sva', 'devtools', 'stringi', 'corpcor', 'matrixStats', 'shiny', 'ggvis', 'd3heatmap', 'reshape2', 'scales', 'rentrez'))
 ```
 
 Next, use [devtools](https://github.com/hadley/devtools) to install the latest
