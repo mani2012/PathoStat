@@ -14,7 +14,8 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                                 )
                             ),
                    tabPanel("Taxonomy Analysis",
-                            selectizeInput('taxl', 'Taxonomy Level', choices = setNames(tax.abb, tax.name)),
+                            #selectizeInput('taxl', 'Taxonomy Level', choices = setNames(tax.abb, tax.name)),
+                            selectizeInput('taxl', 'Taxonomy Level', choices = tax.name, selected='genus'),
                             tabsetPanel(
                               tabPanel("Taxonomy level RA",ggvisOutput("TaxRelAbundancePlot")),
                               tabPanel("Summary", verbatimTextOutput("TaxRAsummary")),

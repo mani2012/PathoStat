@@ -76,3 +76,9 @@ proportion <- function(hasht, genomes)  {
   }
   return(prop)
 }
+
+grepTid <- function(id)  {
+  tid <- unlist(strsplit(id, ".org"))[1]
+  tid <- unlist(strsplit(tid, "ti."))[2]
+  return(tid)
+}

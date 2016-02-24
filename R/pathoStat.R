@@ -32,8 +32,12 @@ pathoStat <- function(input_dir=".", batch, condition=NULL,
   mod = model.matrix(~as.factor(condition), data=pdata)
   if (report_dir==".") { report_dir=getwd() }
   dat <- readPathoscopeData(input_dir)
+  ids <- rownames(dat)
+  tids <- unlist(lapply(ids, FUN=grepTid))
+  taxonLevels <- findTaxonomy(tids)
   shinyInput <<- list("data"=dat, "batch"=batch, "condition"=condition, 
-                      "report_dir"=report_dir, "input_dir"=input_dir)
+                      "report_dir"=report_dir, "input_dir"=input_dir,
+                      "taxonLevels"=taxonLevels)
   
   rmdfile <- system.file("reports/PathoStat_report.Rmd", package = "PathoStat")
   report_option_vector <- unlist(strsplit(as.character(report_option_binary), ""))

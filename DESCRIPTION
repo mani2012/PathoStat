@@ -17,9 +17,11 @@ Depends: MCMCpack,
     matrixStats,
     reshape2,
     scales,
-    ggplot2
+    ggplot2,
+    rentrez
 Collate: 
     'pathoStat.R'
     'utils.R'
+    'taxonomy.R'
 Suggests: testthat
 VignetteBuilder: knitr
