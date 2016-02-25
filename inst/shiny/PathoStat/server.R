@@ -13,13 +13,21 @@ shinyServer(function(input, output, session) {
     }
   }
   #setInputs(FALSE)
-  tax_ra_bp <- reactive({
+  findTaxData <- eventReactive(input$taxl, {
     taxdata <- findTaxonLevelData(shinyInput$data, shinyInput$taxonLevels, input$taxl)
     if (is.null(shinyInput$taxdata))  {
       shinyInput <<- c(shinyInput, list("taxdata"=taxdata))
     } else  {
       shinyInput$taxdata <<- taxdata
     }
+    shinyInput$taxdata
+  })
+  
+  tax_ra_bp <- reactive({
+    if (is.null(input$taxl))  {
+      return()
+    }
+    taxdata <- findTaxData()
     dat <- melt(cbind(taxdata, ind = as.character(rownames(taxdata))), id.vars = c('ind'))
     dat %>%  
       ggvis(x=~variable, y=~value, fill=~as.factor(ind)) %>% layer_bars(stack = TRUE) %>%
@@ -44,18 +52,12 @@ shinyServer(function(input, output, session) {
   })
   tax_ra_bp %>% bind_shiny("TaxRelAbundancePlot")
 
-  raSummary <- eventReactive(input$taxl, {
-    summary(shinyInput$taxdata)
-  })
   output$TaxRAsummary <- renderPrint({
-    raSummary()
+    summary(findTaxData())
   })
   
-  raTable <- eventReactive(input$taxl, {
-    shinyInput$taxdata
-  })
   output$TaxRAtable <- renderTable({
-    raTable()
+    findTaxData()
   })
   
   output$downloadData <- downloadHandler(
