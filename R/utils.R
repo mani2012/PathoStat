@@ -22,7 +22,7 @@ log2CPM <- function(qcounts, lib.size=NULL){
   return(list(y=y, lib.size=lib.size))
 }
 
-readPathoscopeData <- function(input_dir=".")  {
+readPathoscopeData <- function(input_dir=".", countdata=FALSE)  {
   filenames <- list.files(input_dir, pattern="*.tsv", full.names=TRUE)
   genomes <- c()
   for (i in 1:length(filenames))  {
@@ -35,9 +35,14 @@ readPathoscopeData <- function(input_dir=".")  {
   lprop <- vector('list', length(filenames)) 
   for (i in 1:length(filenames))  {
     filename <- filenames[i]
+    numReads <- 1
+    if (countdata)  {
+      fl <- readLines(filename, n=1)
+      numReads <- as.numeric(strsplit(fl, "\t")[[1]][2])
+    }
     tbl <- read.table(filename, skip=1, header=TRUE, sep ='\t', nrows=10)
     hasht <- prop_hash(tbl)
-    lprop[[i]] <- proportion(hasht, genomes) # the column data
+    lprop[[i]] <- proportion(hasht, genomes, countdata, numReads) # the column data
   }
   do.call(cbind, lprop)
   dat <- data.frame(lprop)
@@ -61,13 +66,17 @@ prop_hash <- function(tbl)  {
   return(prop_hash)
 }
 
-proportion <- function(hasht, genomes)  {
+proportion <- function(hasht, genomes, countdata=FALSE, numReads=1)  {
   prop <- c()
   for(genome in genomes)  {
     if (is.null(hasht[[as.character(genome)]]))  {
       prop <- c(prop, 0)
     } else  {
-      prop <- c(prop, hasht[[as.character(genome)]])
+      if (countdata)  {
+        prop <- c(prop, round(numReads*hasht[[as.character(genome)]]))
+      } else  {
+        prop <- c(prop, hasht[[as.character(genome)]])
+      }
     }
   }
   return(prop)

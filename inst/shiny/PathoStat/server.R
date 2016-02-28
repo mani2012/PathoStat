@@ -23,6 +23,16 @@ shinyServer(function(input, output, session) {
     shinyInput$taxdata
   })
   
+  findTaxCountData <- eventReactive(input$taxl, {
+    taxcountdata <- findTaxonLevelData(shinyInput$countdata, shinyInput$taxonLevels, input$taxl)
+    if (is.null(shinyInput$taxcountdata))  {
+      shinyInput <<- c(shinyInput, list("taxcountdata"=taxcountdata))
+    } else  {
+      shinyInput$taxcountdata <<- taxcountdata
+    }
+    shinyInput$taxcountdata
+  })
+  
   tax_ra_bp <- reactive({
     if (is.null(input$taxl))  {
       return()
@@ -32,7 +42,7 @@ shinyServer(function(input, output, session) {
     dat %>%  
       ggvis(x=~variable, y=~value, fill=~as.factor(ind)) %>% layer_bars(stack = TRUE) %>%
       add_tooltip(function(dat2){paste0("Sample: ", dat2[2], "<br />", "Genome: ", dat2[1], 
-                                        "<br />", "RA: ", dat2[4]-dat2[3])}, "hover") %>%
+                                        "<br />", "RA: ", round(dat2[4]-dat2[3], 4))}, "hover") %>%
       #add_axis("x", subdivide = 1, values = 1:length(colnames(shinyInput$data)), 
       add_axis("x", 
                title = "Samples", 
@@ -60,12 +70,25 @@ shinyServer(function(input, output, session) {
     findTaxData()
   })
   
+  output$TaxCountTable <- renderTable({
+    findTaxCountData()
+  }, digits=0)
+  
   output$downloadData <- downloadHandler(
     filename = function() { 
       paste0('sample_data_', input$taxl, '.csv', sep='') 
     },
     content = function(file) {
       write.csv(shinyInput$taxdata, file)
+    }
+  )
+
+  output$downloadCountData <- downloadHandler(
+    filename = function() { 
+      paste0('sample_data_count_', input$taxl, '.csv', sep='') 
+    },
+    content = function(file) {
+      write.csv(shinyInput$taxcountdata, file)
     }
   )
 })
