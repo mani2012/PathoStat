@@ -31,11 +31,12 @@ pathoStat <- function(input_dir=".", batch, condition=NULL,
   pdata <- data.frame(batch, condition)
   mod = model.matrix(~as.factor(condition), data=pdata)
   if (report_dir==".") { report_dir=getwd() }
-  dat <- readPathoscopeData(input_dir)
+  datlist <- readPathoscopeData(input_dir)
+  dat <- datlist$data
+  countdat <- datlist$countdata
   ids <- rownames(dat)
   tids <- unlist(lapply(ids, FUN=grepTid))
   taxonLevels <- findTaxonomy(tids)
-  countdat <- readPathoscopeData(input_dir, countdata=TRUE)
   shinyInput <<- list("data"=dat, "batch"=batch, "condition"=condition, 
                       "report_dir"=report_dir, "input_dir"=input_dir,
                       "taxonLevels"=taxonLevels, "countdata"=countdat)

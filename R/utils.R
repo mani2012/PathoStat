@@ -22,7 +22,7 @@ log2CPM <- function(qcounts, lib.size=NULL){
   return(list(y=y, lib.size=lib.size))
 }
 
-readPathoscopeData <- function(input_dir=".", countdata=FALSE)  {
+readPathoscopeData <- function(input_dir=".")  {
   filenames <- list.files(input_dir, pattern="*.tsv", full.names=TRUE)
   genomes <- c()
   for (i in 1:length(filenames))  {
@@ -33,24 +33,28 @@ readPathoscopeData <- function(input_dir=".", countdata=FALSE)  {
   genomes <- c(genomes, "others")
   genomes <- unique(genomes)
   lprop <- vector('list', length(filenames)) 
+  lcprop <- vector('list', length(filenames)) 
   for (i in 1:length(filenames))  {
     filename <- filenames[i]
     numReads <- 1
-    if (countdata)  {
-      fl <- readLines(filename, n=1)
-      numReads <- as.numeric(strsplit(fl, "\t")[[1]][2])
-    }
+    fl <- readLines(filename, n=1)
+    numReads <- as.numeric(strsplit(fl, "\t")[[1]][2])
     tbl <- read.table(filename, skip=1, header=TRUE, sep ='\t', nrows=10)
     hasht <- prop_hash(tbl)
-    lprop[[i]] <- proportion(hasht, genomes, countdata, numReads) # the column data
+    lprop[[i]] <- proportion(hasht, genomes) # the column data
+    lcprop[[i]] <- proportion(hasht, genomes, countdata=TRUE, numReads) # the column data
   }
   do.call(cbind, lprop)
-  dat <- data.frame(lprop)
-  rownames(dat) <- genomes
+  do.call(cbind, lcprop)
   samplenames <- unlist(lapply(filenames, 
     function(x){return(strsplit(basename(x), "-sam-report.tsv")[[1]])}))
+  dat <- data.frame(lprop)
+  rownames(dat) <- genomes
   colnames(dat) <- samplenames
-  return(dat)
+  countdat <- data.frame(lcprop)
+  rownames(countdat) <- genomes
+  colnames(countdat) <- samplenames
+  return(list(data=dat, countdata=countdat))
 }
 
 prop_hash <- function(tbl)  {

@@ -13,23 +13,27 @@ shinyServer(function(input, output, session) {
     }
   }
   #setInputs(FALSE)
-  findTaxData <- eventReactive(input$taxl, {
+  findAllTaxData <- function()  {
     taxdata <- findTaxonLevelData(shinyInput$data, shinyInput$taxonLevels, input$taxl)
     if (is.null(shinyInput$taxdata))  {
       shinyInput <<- c(shinyInput, list("taxdata"=taxdata))
     } else  {
       shinyInput$taxdata <<- taxdata
     }
-    shinyInput$taxdata
-  })
-  
-  findTaxCountData <- eventReactive(input$taxl, {
     taxcountdata <- findTaxonLevelData(shinyInput$countdata, shinyInput$taxonLevels, input$taxl)
     if (is.null(shinyInput$taxcountdata))  {
       shinyInput <<- c(shinyInput, list("taxcountdata"=taxcountdata))
     } else  {
       shinyInput$taxcountdata <<- taxcountdata
     }
+  }
+  findTaxData <- eventReactive(input$taxl, {
+    findAllTaxData()
+    shinyInput$taxdata
+  })
+  
+  findTaxCountData <- eventReactive(input$taxl, {
+    findAllTaxData()
     shinyInput$taxcountdata
   })
   
