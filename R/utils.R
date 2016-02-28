@@ -28,7 +28,6 @@ readPathoscopeData <- function(input_dir=".")  {
   for (i in 1:length(filenames))  {
     filename <- filenames[i]
     tbl <- read.table(filename, skip=1, header=TRUE, sep ='\t', nrows=10)
-    hasht <- prop_hash(tbl)
     genomes <- c(genomes, levels(tbl[,1]))
   }
   genomes <- c(genomes, "others")
@@ -39,14 +38,12 @@ readPathoscopeData <- function(input_dir=".")  {
     tbl <- read.table(filename, skip=1, header=TRUE, sep ='\t', nrows=10)
     hasht <- prop_hash(tbl)
     lprop[[i]] <- proportion(hasht, genomes) # the column data
-    #names(lprop)[i] <- paste('Col', i, sep='.')  # the column name 
   }
   do.call(cbind, lprop)
   dat <- data.frame(lprop)
   rownames(dat) <- genomes
   samplenames <- unlist(lapply(filenames, 
     function(x){return(strsplit(basename(x), "-sam-report.tsv")[[1]])}))
-  #colnames(dat) <- 1:length(filenames)
   colnames(dat) <- samplenames
   return(dat)
 }
@@ -71,7 +68,6 @@ proportion <- function(hasht, genomes)  {
       prop <- c(prop, 0)
     } else  {
       prop <- c(prop, hasht[[as.character(genome)]])
-      #prop <- c(prop, mget(as.character(genome), envir=hasht))
     }
   }
   return(prop)
