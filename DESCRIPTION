@@ -1,13 +1,19 @@
 Package: PathoStat
 Type: Package
-Title: PathoStat - PathoScope Statistical Analysis package
-Version: 1.1
-Date: 2016-01-14
-Author: Solaiappan Manimaran
-Maintainer: Solaiappan Manimaran <mani2012@bu.edu>, W. Evan Johnson <wej@bu.edu>
-Description: Performs Statistical Analysis on the PathoScope generated reports file. 
-License: GNU GPL (version 2 or later)
-Depends: MCMCpack,
+Title: PathoScope Statistical Analysis Package
+Version: 0.99.0
+Date: 2016-03-22
+Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>, 
+    W. Evan Johnson <wej@bu.edu>
+Maintainer: Solaiappan Manimaran <manimaran_1975@hotmail.com>
+Description: Performs Statistical Analysis on the PathoScope generated reports 
+    files. 
+URL: https://github.com/mani2012/PathoStat
+BugReports: https://github.com/mani2012/PathoStat/issues
+License: GPL (>= 2)
+Depends: R (>= 3.3.0)
+Imports: 
+    MCMCpack,
     limma,
     corpcor,
     rmarkdown,
@@ -24,4 +30,9 @@ Collate:
     'utils.R'
     'taxonomy.R'
 Suggests: testthat
+biocViews: GraphAndNetwork, Microarray, PrincipalComponent, 
+    Sequencing, Software, Visualization, RNASeq
+SystemRequirements: pandoc (http://pandoc.org/installing.html) for generating
+    reports from markdown files.
 VignetteBuilder: knitr
+RoxygenNote: 5.0.1

@@ -37,17 +37,18 @@ pathoStat <- function(input_dir=".", batch, condition=NULL,
   ids <- rownames(dat)
   tids <- unlist(lapply(ids, FUN=grepTid))
   taxonLevels <- findTaxonomy(tids)
-  shinyInput <<- list("data"=dat, "batch"=batch, "condition"=condition, 
+  shinyInput <- list("data"=dat, "batch"=batch, "condition"=condition, 
                       "report_dir"=report_dir, "input_dir"=input_dir,
                       "taxonLevels"=taxonLevels, "countdata"=countdat)
-  
+  setShinyInput(shinyInput)
   rmdfile <- system.file("reports/PathoStat_report.Rmd", package = "PathoStat")
   report_option_vector <- unlist(strsplit(as.character(report_option_binary), ""))
   static_lib_dir <- system.file("reports/libs", package = "PathoStat")
   file.copy(static_lib_dir, report_dir, recursive=TRUE)
   outputfile <- rmarkdown::render(rmdfile, output_file=report_file, output_dir=report_dir)
-  shinyInputOrig <<- shinyInput
-  shinyInputCombat <<- NULL
+  shinyInput <- getShinyInput()
+  setShinyInputOrig(shinyInput)
+  setShinyInputCombat(NULL)
   if (view_report)  {
     browseURL(outputfile)
   }
@@ -59,5 +60,62 @@ pathoStat <- function(input_dir=".", batch, condition=NULL,
     shiny::runApp(appDir, display.mode = "normal")
   }
   return(outputfile)
+}
+
+#' Getter function to get the shinyInput option
+#' @return shinyInput option
+#' @export
+#' @examples
+#' getShinyInput()
+getShinyInput <- function() {
+  shinyInput <- getOption("pathostat.shinyInput")
+  return(shinyInput)
+}
+#' Setter function to set the shinyInput option
+#' @param x shinyInput option
+#' @return shinyInput option
+#' @export
+#' @examples
+#' setShinyInput(NULL)
+setShinyInput <- function(x) {
+  options(pathostat.shinyInput = x)
+}
+
+#' Getter function to get the shinyInputOrig option
+#' @return shinyInputOrig option
+#' @export
+#' @examples
+#' getShinyInputOrig()
+getShinyInputOrig <- function() {
+  shinyInputOrig <- getOption("pathostat.shinyInputOrig")
+  return(shinyInputOrig)
+}
+#' Setter function to set the shinyInputOrig option
+#' @param x shinyInputOrig option
+#' @return shinyInputOrig option
+#' @export
+#' @examples
+#' setShinyInputOrig(NULL)
+setShinyInputOrig <- function(x) {
+  options(pathostat.shinyInputOrig = x)
+}
+
+#' Getter function to get the shinyInputCombat option
+#' @return shinyInputCombat option
+#' @export
+#' @examples
+#' getShinyInputCombat()
+getShinyInputCombat <- function() {
+  shinyInputCombat <- getOption("pathostat.shinyInputCombat")
+  return(shinyInputCombat)
+}
+#' Setter function to set the shinyInputCombat option
+#' @param x shinyInputCombat option
+#' @return shinyInputCombat option
+#' @export
+#' @examples
+#' setShinyInputCombat(NULL)
+setShinyInputCombat <- function(x) {
+  options(pathostat.shinyInputCombat = x)
 }
 

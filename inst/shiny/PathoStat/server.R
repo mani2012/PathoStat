@@ -4,36 +4,40 @@ library(reshape2)
 
 shinyServer(function(input, output, session) {
   #needed information from PathoStat
+  shinyInput <- getShinyInput()
   
   setInputs <- function(combatFlag)  {
     if (combatFlag)  {
-      shinyInput <<- shinyInputCombat
+      setShinyInput(getShinyInputCombat())
     } else  {
-      shinyInput <<- shinyInputOrig
+      setShinyInput(getShinyInputOrig())
     }
   }
   #setInputs(FALSE)
   findAllTaxData <- function()  {
     taxdata <- findTaxonLevelData(shinyInput$data, shinyInput$taxonLevels, input$taxl)
     if (is.null(shinyInput$taxdata))  {
-      shinyInput <<- c(shinyInput, list("taxdata"=taxdata))
+      shinyInput <- c(shinyInput, list("taxdata"=taxdata))
     } else  {
-      shinyInput$taxdata <<- taxdata
+      shinyInput$taxdata <- taxdata
     }
     taxcountdata <- findTaxonLevelData(shinyInput$countdata, shinyInput$taxonLevels, input$taxl)
     if (is.null(shinyInput$taxcountdata))  {
-      shinyInput <<- c(shinyInput, list("taxcountdata"=taxcountdata))
+      shinyInput <- c(shinyInput, list("taxcountdata"=taxcountdata))
     } else  {
-      shinyInput$taxcountdata <<- taxcountdata
+      shinyInput$taxcountdata <- taxcountdata
     }
+    setShinyInput(shinyInput)
   }
   findTaxData <- eventReactive(input$taxl, {
     findAllTaxData()
+    shinyInput <- getShinyInput()
     shinyInput$taxdata
   })
   
   findTaxCountData <- eventReactive(input$taxl, {
     findAllTaxData()
+    shinyInput <- getShinyInput()
     shinyInput$taxcountdata
   })
   

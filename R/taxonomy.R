@@ -73,6 +73,13 @@ taxon_hash_update <- function(taxon_hash, taxon, length)  {
   return(list(taxon_hash=taxon_hash, length=length, index=index, newrow=newrow))
 }
 
+#' Find the taxonomy level data for the given taxon level
+#'
+#' @param data Given Relative abundance data
+#' @param taxonLevels Taxon Levels of all tids
+#' @param level Selected Taxonomy Level
+#' @return taxdata Taxonomy Level Data
+#' @export
 findTaxonLevelData <- function(data, taxonLevels, level)  {
   if (level == 'no rank')  return(data)
   taxdata <- data.frame(stringsAsFactors = FALSE)
