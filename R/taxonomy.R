@@ -1,4 +1,4 @@
-library(rentrez)
+require(rentrez)
 
 #' Find the taxonomy for the given taxon id
 #'
@@ -22,6 +22,7 @@ findTaxonLevel <- function(tid) {
 #'
 #' @param tids Given taxonomy ids
 #' @return taxondata Data with the taxonomy information
+#' @import rentrez
 #' @export
 findTaxonomy <- function(tids) {
     if (is.null(tids)) {

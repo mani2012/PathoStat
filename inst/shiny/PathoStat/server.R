@@ -1,6 +1,8 @@
 library(shiny)
 library(ggvis)
+library(d3heatmap)
 library(reshape2)
+library(PathoStat)
 
 shinyServer(function(input, output, session) {
     # needed information from PathoStat

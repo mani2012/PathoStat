@@ -3,8 +3,8 @@ require(pander)
 require(stats)
 require(graphics)
 require(reshape2)
-require(scales)
 require(ggplot2)
+require(rentrez)
 
 #' Statistical Analysis of the PathoScope reports and generates a html report 
 #' and produces interactive shiny app plots
@@ -18,7 +18,10 @@ require(ggplot2)
 #'  display and hide in the report 
 #' @param view_report when TRUE, opens the report in a browser 
 #' @return outputfile The output file with all the statistical plots
-#' @import reshape2
+#' @import pander stats graphics reshape2 ggplot2 rentrez
+#' @importFrom scales percent_format
+#' @importFrom utils browseURL
+#' @importFrom shiny runApp
 #' @export
 #' @examples
 #' nbatch <- 10
