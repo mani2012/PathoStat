@@ -1,7 +1,7 @@
 #' Simple function to convert binary string to decimal
 #'
 BinToDec <- function(x) 
-  sum(2^(which(rev(unlist(strsplit(as.character(x), "")) == 1))-1))
+    sum(2^(which(rev(unlist(strsplit(as.character(x), "")) == 1)) - 1))
 
 #' Compute log2(counts per mil reads) and library size for each sample
 #'
@@ -9,85 +9,89 @@ BinToDec <- function(x)
 #' @param lib.size default is colsums(qcounts)
 #' @return list containing log2(quantile counts per mil reads) and library sizes
 #' @export
-log2CPM <- function(qcounts, lib.size=NULL){
-  if (is.null(lib.size)) 
-    lib.size <- colSums(qcounts)
-  minimum <- min(qcounts)
-  if (minimum < 0)  {
-    qcounts <- qcounts-minimum
-  }
-  avg <- mean(qcounts)
-  qcounts <- apply(qcounts,1:2,FUN=function(x){ifelse(x<=0,avg,x)})
-  y <- t(log2(t(qcounts + 0.5)/(lib.size + 1) * 1e+06))
-  return(list(y=y, lib.size=lib.size))
-}
-
-readPathoscopeData <- function(input_dir=".")  {
-  filenames <- list.files(input_dir, pattern="*.tsv", full.names=TRUE)
-  genomes <- c()
-  for (i in 1:length(filenames))  {
-    filename <- filenames[i]
-    tbl <- read.table(filename, skip=1, header=TRUE, sep ='\t', nrows=10)
-    genomes <- c(genomes, levels(tbl[,1]))
-  }
-  genomes <- c(genomes, "others")
-  genomes <- unique(genomes)
-  lprop <- vector('list', length(filenames)) 
-  lcprop <- vector('list', length(filenames)) 
-  for (i in 1:length(filenames))  {
-    filename <- filenames[i]
-    numReads <- 1
-    fl <- readLines(filename, n=1)
-    numReads <- as.numeric(strsplit(fl, "\t")[[1]][2])
-    tbl <- read.table(filename, skip=1, header=TRUE, sep ='\t', nrows=10)
-    hasht <- prop_hash(tbl)
-    lprop[[i]] <- proportion(hasht, genomes) # the column data
-    lcprop[[i]] <- proportion(hasht, genomes, countdata=TRUE, numReads) # the column data
-  }
-  do.call(cbind, lprop)
-  do.call(cbind, lcprop)
-  samplenames <- unlist(lapply(filenames, 
-    function(x){return(strsplit(basename(x), "-sam-report.tsv")[[1]])}))
-  dat <- data.frame(lprop)
-  rownames(dat) <- genomes
-  colnames(dat) <- samplenames
-  countdat <- data.frame(lcprop)
-  rownames(countdat) <- genomes
-  colnames(countdat) <- samplenames
-  return(list(data=dat, countdata=countdat))
-}
-
-prop_hash <- function(tbl)  {
-  prop_hash <- new.env()
-  sum <- 0.0
-  for(i in 1:nrow(tbl)) {
-    prop_hash[[as.character(tbl[i, 1])]] <- tbl[i, 2]
-    sum <- sum+tbl[i, 2]
-  }
-  if (sum < 1.0)  {
-    prop_hash[["others"]] <- 1.0-sum
-  }
-  return(prop_hash)
-}
-
-proportion <- function(hasht, genomes, countdata=FALSE, numReads=1)  {
-  prop <- c()
-  for(genome in genomes)  {
-    if (is.null(hasht[[as.character(genome)]]))  {
-      prop <- c(prop, 0)
-    } else  {
-      if (countdata)  {
-        prop <- c(prop, round(numReads*hasht[[as.character(genome)]]))
-      } else  {
-        prop <- c(prop, hasht[[as.character(genome)]])
-      }
+log2CPM <- function(qcounts, lib.size = NULL) {
+    if (is.null(lib.size)) 
+        lib.size <- colSums(qcounts)
+    minimum <- min(qcounts)
+    if (minimum < 0) {
+        qcounts <- qcounts - minimum
     }
-  }
-  return(prop)
+    avg <- mean(qcounts)
+    qcounts <- apply(qcounts, 1:2, FUN = function(x) {
+        ifelse(x <= 0, avg, x)
+    })
+    y <- t(log2(t(qcounts + 0.5)/(lib.size + 1) * 1e+06))
+    return(list(y = y, lib.size = lib.size))
 }
 
-grepTid <- function(id)  {
-  tid <- unlist(strsplit(id, ".org"))[1]
-  tid <- unlist(strsplit(tid, "ti."))[2]
-  return(tid)
+readPathoscopeData <- function(input_dir = ".") {
+    filenames <- list.files(input_dir, pattern = "*.tsv", full.names = TRUE)
+    genomes <- c()
+    for (i in 1:length(filenames)) {
+        filename <- filenames[i]
+        tbl <- read.table(filename, skip=1, header=TRUE, sep="\t", nrows=10)
+        genomes <- c(genomes, levels(tbl[, 1]))
+    }
+    genomes <- c(genomes, "others")
+    genomes <- unique(genomes)
+    lprop <- vector("list", length(filenames))
+    lcprop <- vector("list", length(filenames))
+    for (i in 1:length(filenames)) {
+        filename <- filenames[i]
+        numReads <- 1
+        fl <- readLines(filename, n = 1)
+        numReads <- as.numeric(strsplit(fl, "\t")[[1]][2])
+        tbl <- read.table(filename, skip=1, header=TRUE, sep="\t", nrows=10)
+        hasht <- prop_hash(tbl)
+        lprop[[i]] <- proportion(hasht, genomes)  # the column data
+        lcprop[[i]] <- proportion(hasht, genomes, countdata = TRUE, numReads)  
+        # the column data
+    }
+    do.call(cbind, lprop)
+    do.call(cbind, lcprop)
+    samplenames <- unlist(lapply(filenames, function(x) {
+        return(strsplit(basename(x), "-sam-report.tsv")[[1]])
+    }))
+    dat <- data.frame(lprop)
+    rownames(dat) <- genomes
+    colnames(dat) <- samplenames
+    countdat <- data.frame(lcprop)
+    rownames(countdat) <- genomes
+    colnames(countdat) <- samplenames
+    return(list(data = dat, countdata = countdat))
 }
+
+prop_hash <- function(tbl) {
+    prop_hash <- new.env()
+    sum <- 0
+    for (i in 1:nrow(tbl)) {
+        prop_hash[[as.character(tbl[i, 1])]] <- tbl[i, 2]
+        sum <- sum + tbl[i, 2]
+    }
+    if (sum < 1) {
+        prop_hash[["others"]] <- 1 - sum
+    }
+    return(prop_hash)
+}
+
+proportion <- function(hasht, genomes, countdata = FALSE, numReads = 1) {
+    prop <- c()
+    for (genome in genomes) {
+        if (is.null(hasht[[as.character(genome)]])) {
+            prop <- c(prop, 0)
+        } else {
+            if (countdata) {
+                prop <- c(prop, round(numReads * hasht[[as.character(genome)]]))
+            } else {
+                prop <- c(prop, hasht[[as.character(genome)]])
+            }
+        }
+    }
+    return(prop)
+}
+
+grepTid <- function(id) {
+    tid <- unlist(strsplit(id, ".org"))[1]
+    tid <- unlist(strsplit(tid, "ti."))[2]
+    return(tid)
+} 

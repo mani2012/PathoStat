@@ -18,13 +18,17 @@ eval_cell_1 = (report_option_vector[1]=="1")
 `r if (eval_cell_1) 'Data Summary'`
 `r if (eval_cell_1) '============'`
 `r if (eval_cell_1) 'This is a summary with the Relative Abundance of genomes for each samples.'`
-```{r eval=eval_cell_1, echo=FALSE, message=FALSE, fig.width = 12, fig.height = 8}
+```{r eval=eval_cell_1, echo=FALSE, message=FALSE, fig.width=12, fig.height=8}
 #datasummary <- summary(t(dat))
-#panderOptions("table.split.table", 120)  ## table split at 100 (default 80) characters in a line
+#panderOptions("table.split.table", 120)  
+## table split at 100 (default 80) characters in a line
 #pander(datasummary[,1:10])
 #pander(dat)
 #Add an id variable for the filled regions
-dat <- melt(cbind(shinyInput$data, ind = rownames(shinyInput$data)), id.vars = c('ind'))
+require(reshape2)
+require(scales)
+dat <- melt(cbind(shinyInput$data, ind = rownames(shinyInput$data)), 
+    id.vars = c('ind'))
 ggplot(dat,aes(x = variable, y = value,fill = ind)) + 
     geom_bar(position = "fill",stat = "identity") + 
     scale_y_continuous(labels = percent_format())
