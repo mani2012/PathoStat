@@ -11,7 +11,7 @@ Description: Performs Statistical Analysis on the PathoScope generated reports
 URL: https://github.com/mani2012/PathoStat
 BugReports: https://github.com/mani2012/PathoStat/issues
 License: GPL (>= 2)
-Depends: R (>= 3.2.3)
+Depends: R (>= 3.2.0)
 Imports: 
     MCMCpack,
     limma,
