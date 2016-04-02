@@ -112,6 +112,16 @@ shinyServer(function(input, output, session) {
         physeq1 <- merge_phyloseq(physeq, sampledata, random_tree)
         return(physeq1)
     }
+    setGgplotTheme <- function() {
+        ggplot2::theme_set(ggplot2::theme_bw())
+    }
+    pal = "Set1"
+    scale_colour_discrete <- function(palname = pal, ...) {
+        scale_colour_brewer(palette = palname, ...)
+    }
+    scale_fill_discrete <- function(palname = pal, ...) {
+        scale_fill_brewer(palette = palname, ...)
+    }
     
     output$AlphaDiversity <- renderPlot({
         physeq1 <- findPhyseqData()
@@ -120,12 +130,14 @@ shinyServer(function(input, output, session) {
         #alpha_meas <- c("Observed", "Chao1", "Shannon", "Simpson", 
         #    "InvSimpson")
         alpha_meas <- c("Shannon", "Simpson", "InvSimpson")
+        setGgplotTheme()
         (p <- plot_richness(physeq1, "condition", "batch", measures=alpha_meas))
         p + ggplot2::geom_boxplot(data=p$data, ggplot2::aes(x=condition, 
             y=value, color=NULL), alpha=0.1)
     })
     output$ExploratoryTree <- renderPlot({
         physeq1 <- findPhyseqData()
+        setGgplotTheme()
         plot_tree(physeq1, color="condition", label.tips="genus", 
             size="Abundance")
     })
