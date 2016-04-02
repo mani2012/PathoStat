@@ -108,3 +108,36 @@ findTaxonLevelData <- function(data, taxonLevels, level) {
     }
     return(taxdata)
 } 
+
+#' Find the Taxonomy Information Matrix
+#'
+#' @param names Row names of the taxonomy matrix
+#' @param taxonLevels Taxon Levels of all tids
+#' @return taxmat Taxonomy Information Matrix
+#' @export
+findTaxonMat <- function(names, taxonLevels) {
+    # tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 
+    #     'suborder', 'family', 'subfamily', 'genus', 'subgenus', 'species', 
+    #     'subspecies', 'no rank')
+    tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 
+        'family', 'genus', 'species', 'no rank')
+    tl <- c()
+    for (i in 1:length(tax.name)) {
+        tl[tax.name[i]] <- "others"
+    }
+    taxmat <- NULL
+    for (i in 1:length(taxonLevels)) {
+        taxrow <- tl
+        tLineageEx <- taxonLevels[[i]]
+        for (j in 1:length(tLineageEx)) {
+            rank <- tLineageEx[[j]]["Rank"]
+            taxid <- tLineageEx[[j]]["TaxId"]
+            if (!is.null(rank) && !is.na(rank) && rank %in% tax.name) {
+                taxrow[as.character(rank)] <- as.character(taxid)
+            }
+        }
+        taxmat <- rbind(taxmat, taxrow)
+    }
+    rownames(taxmat) <- names
+    return(taxmat)
+} 

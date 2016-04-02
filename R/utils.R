@@ -24,6 +24,15 @@ log2CPM <- function(qcounts, lib.size = NULL) {
     return(list(y = y, lib.size = lib.size))
 }
 
+#' Reads the data from PathoScope reports and returns a list of 
+#' final guess relative abundance and count data
+#' 
+#' @param input_dir Directory where the tsv files from PathoScope are located
+#' @return List of final guess relative abundance and count data
+#' @export
+#' @examples
+#' example_data_dir <- system.file("example/data", package = "PathoStat")
+#' readPathoscopeData(input_dir=example_data_dir)
 readPathoscopeData <- function(input_dir = ".") {
     filenames <- list.files(input_dir, pattern = "*.tsv", full.names = TRUE)
     genomes <- c()
@@ -90,6 +99,13 @@ proportion <- function(hasht, genomes, countdata = FALSE, numReads = 1) {
     return(prop)
 }
 
+#' Greps the tid from the given identifier string 
+#' 
+#' @param id Given identifier string
+#' @return tid string
+#' @export
+#' @examples
+#' tid <- grepTid("ti|367928|org|Bifidobacterium_adolescentis_ATCC_15703")
 grepTid <- function(id) {
     tid <- unlist(strsplit(id, ".org"))[1]
     tid <- unlist(strsplit(tid, "ti."))[2]

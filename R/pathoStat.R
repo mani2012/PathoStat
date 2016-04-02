@@ -18,7 +18,7 @@ require(rentrez)
 #'  display and hide in the report 
 #' @param view_report when TRUE, opens the report in a browser 
 #' @return outputfile The output file with all the statistical plots
-#' @import pander stats graphics reshape2 ggplot2 rentrez
+#' @import pander stats graphics reshape2 ggplot2 rentrez phyloseq
 #' @importFrom scales percent_format
 #' @importFrom utils browseURL
 #' @importFrom shiny runApp

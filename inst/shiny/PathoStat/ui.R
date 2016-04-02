@@ -3,7 +3,8 @@ library(ggvis)
 library(d3heatmap)
 
 tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 'suborder',
-    'family', 'subfamily', 'genus', 'subgenus', 'species', 'no rank')
+    'family', 'subfamily', 'genus', 'subgenus', 'species', 'subspecies', 
+    'no rank')
 measure.type <- c('Final Guess', 'Final Best Hit', 'Final High Confidence Hit')
 sort.by <- c('None', 'Batch', 'Condition')
 shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE, 
@@ -21,6 +22,11 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
             tabPanel("Summary", verbatimTextOutput("TaxRAsummary")),
             tabPanel("Table", tableOutput("TaxRAtable")),
             tabPanel("Count Table", tableOutput("TaxCountTable"))
+        )
+    ),
+    tabPanel("Diversity",
+        tabsetPanel(
+            tabPanel("Alpha Diversity", plotOutput("AlphaDiversity"))
         )
     )
 )

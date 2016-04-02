@@ -2,6 +2,8 @@ library(shiny)
 library(ggvis)
 library(d3heatmap)
 library(reshape2)
+library(phyloseq)
+library(ape)
 library(PathoStat)
 
 shinyServer(function(input, output, session) {
@@ -94,6 +96,26 @@ shinyServer(function(input, output, session) {
         paste0("sample_data_count_", input$taxl, ".csv", sep = "")
     }, content = function(file) {
         write.csv(shinyInput$taxcountdata, file)
+    })
+    
+    output$AlphaDiversity <- renderPlot({
+        ids <- rownames(shinyInput$data)
+        taxmat <- findTaxonMat(ids, shinyInput$taxonLevels)
+        OTU <- otu_table(shinyInput$countdata, taxa_are_rows = TRUE)
+        TAX <- tax_table(taxmat)
+        physeq <- phyloseq(OTU, TAX)
+        sampledata = sample_data(data.frame(condition=as.factor(condition), 
+            batch=as.factor(batch), row.names=sample_names(physeq), 
+            stringsAsFactors=FALSE))
+        random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=
+            taxa_names(physeq))
+        physeq1 <- merge_phyloseq(physeq, sampledata, random_tree)
+        #alpha_meas <- c("Observed", "Chao1", "ACE", "Shannon", "Simpson", 
+        #    "InvSimpson")
+        #alpha_meas <- c("Observed", "Chao1", "Shannon", "Simpson", 
+        #    "InvSimpson")
+        alpha_meas <- c("Observed", "Shannon", "Simpson", "InvSimpson")
+        (p <- plot_richness(physeq1, "condition", "batch", measures=alpha_meas))
     })
 })
  
