@@ -98,7 +98,7 @@ shinyServer(function(input, output, session) {
         write.csv(shinyInput$taxcountdata, file)
     })
     
-    output$AlphaDiversity <- renderPlot({
+    findPhyseqData <- function() {
         ids <- rownames(shinyInput$data)
         taxmat <- findTaxonMat(ids, shinyInput$taxonLevels)
         OTU <- otu_table(shinyInput$countdata, taxa_are_rows = TRUE)
@@ -110,6 +110,11 @@ shinyServer(function(input, output, session) {
         random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=
             taxa_names(physeq))
         physeq1 <- merge_phyloseq(physeq, sampledata, random_tree)
+        return(physeq1)
+    }
+    
+    output$AlphaDiversity <- renderPlot({
+        physeq1 <- findPhyseqData()
         #alpha_meas <- c("Observed", "Chao1", "ACE", "Shannon", "Simpson", 
         #    "InvSimpson")
         #alpha_meas <- c("Observed", "Chao1", "Shannon", "Simpson", 
@@ -119,5 +124,9 @@ shinyServer(function(input, output, session) {
         p + ggplot2::geom_boxplot(data=p$data, ggplot2::aes(x=condition, 
             y=value, color=NULL), alpha=0.1)
     })
+    output$ExploratoryTree <- renderPlot({
+        physeq1 <- findPhyseqData()
+        plot_tree(physeq1, color="condition", label.tips="genus", 
+            size="Abundance")
+    })
 })
- 

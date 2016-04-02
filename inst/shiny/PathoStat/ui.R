@@ -26,7 +26,8 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
     ),
     tabPanel("Diversity",
         tabsetPanel(
-            tabPanel("Alpha Diversity", plotOutput("AlphaDiversity"))
+            tabPanel("Alpha Diversity", plotOutput("AlphaDiversity")),
+            tabPanel("Exploratory Tree", plotOutput("ExploratoryTree"))
         )
     )
 )

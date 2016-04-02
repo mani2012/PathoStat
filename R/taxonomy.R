@@ -131,9 +131,11 @@ findTaxonMat <- function(names, taxonLevels) {
         tLineageEx <- taxonLevels[[i]]
         for (j in 1:length(tLineageEx)) {
             rank <- tLineageEx[[j]]["Rank"]
-            taxid <- tLineageEx[[j]]["TaxId"]
+            #taxid <- tLineageEx[[j]]["TaxId"]
+            scientificName <- tLineageEx[[j]]["ScientificName"]
             if (!is.null(rank) && !is.na(rank) && rank %in% tax.name) {
-                taxrow[as.character(rank)] <- as.character(taxid)
+                #taxrow[as.character(rank)] <- as.character(taxid)
+                taxrow[as.character(rank)] <- as.character(scientificName)
             }
         }
         taxmat <- rbind(taxmat, taxrow)
