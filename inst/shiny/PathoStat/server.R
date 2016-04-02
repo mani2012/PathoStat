@@ -114,8 +114,10 @@ shinyServer(function(input, output, session) {
         #    "InvSimpson")
         #alpha_meas <- c("Observed", "Chao1", "Shannon", "Simpson", 
         #    "InvSimpson")
-        alpha_meas <- c("Observed", "Shannon", "Simpson", "InvSimpson")
+        alpha_meas <- c("Shannon", "Simpson", "InvSimpson")
         (p <- plot_richness(physeq1, "condition", "batch", measures=alpha_meas))
+        p + ggplot2::geom_boxplot(data=p$data, ggplot2::aes(x=condition, 
+            y=value, color=NULL), alpha=0.1)
     })
 })
  
