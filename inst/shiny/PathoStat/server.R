@@ -182,7 +182,8 @@ shinyServer(function(input, output, session) {
             title = list(fontSize = 15), labels = list(fontSize = 10))) %>% 
         add_legend("fill", title = if (input$colbybatchPCA) 
             "Batches" else "Conditions", properties = legend_props(title = 
-            list(fontSize = 15), labels = list(fontSize = 10)))
+            list(fontSize = 15), labels = list(fontSize = 10)))%>% 
+        set_options(width = "auto", height = "auto")
     })
     # interactive PCA summary
     vis_pc %>% bind_shiny("PCAplot")
