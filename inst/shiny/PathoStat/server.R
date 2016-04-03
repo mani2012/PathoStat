@@ -9,6 +9,12 @@ library(PathoStat)
 shinyServer(function(input, output, session) {
     # needed information from PathoStat
     shinyInput <- getShinyInput()
+    pdata <- data.frame(shinyInput$batch, shinyInput$condition)
+    modmatrix = model.matrix(~as.factor(shinyInput$condition), data=pdata)
+    pca <- BatchQC::batchqc_pca(shinyInput$countdata, batch=shinyInput$batch, 
+        mod=modmatrix)
+    shinyInput <- c(shinyInput, list("pc"=data.frame(pca$x), "vars"=pca$sdev^2))
+    setShinyInput(shinyInput)
     
     setInputs <- function(combatFlag) {
         if (combatFlag) {
@@ -104,9 +110,9 @@ shinyServer(function(input, output, session) {
         OTU <- otu_table(shinyInput$countdata, taxa_are_rows = TRUE)
         TAX <- tax_table(taxmat)
         physeq <- phyloseq(OTU, TAX)
-        sampledata = sample_data(data.frame(condition=as.factor(condition), 
-            batch=as.factor(batch), row.names=sample_names(physeq), 
-            stringsAsFactors=FALSE))
+        sampledata = sample_data(data.frame(condition=as.factor(
+            shinyInput$condition), batch=as.factor(shinyInput$batch), 
+            row.names=sample_names(physeq), stringsAsFactors=FALSE))
         random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=
             taxa_names(physeq))
         physeq1 <- merge_phyloseq(physeq, sampledata, random_tree)
@@ -141,4 +147,84 @@ shinyServer(function(input, output, session) {
         plot_tree(physeq1, color="condition", label.tips="genus", 
             size="Abundance")
     })
+    # interactive PCA
+    PCA <- reactive({
+        shinyInput <- getShinyInput()
+        pc <- shinyInput$pc
+        data.frame(pc[, c(input$xcol, input$ycol)])
+    })
+    # interactive PCA plot
+    vis_pc <- reactive({
+        shinyInput <- getShinyInput()
+        pc <- shinyInput$pc
+        
+        pc$id <- 1:nrow(pc)
+        
+        all_values <- function(x) {
+            if (is.null(x)) 
+                return(NULL)
+            row <- pc[pc$id == x$id, ]
+            paste0(paste0("PC", input$xcol), ": ", signif(with(row, 
+                get(names(row)[input$xcol])), 3), "<br>", 
+                paste0("PC", input$ycol), ": ", signif(with(row, 
+                get(names(row)[input$ycol])), 3), "<br>")
+        }
+        
+        pc %>% 
+        ggvis(~get(names(pc)[input$xcol]), ~get(names(pc)[input$ycol]), 
+            fill = if (input$colbybatchPCA) ~factor(shinyInput$batch) 
+            else ~factor(condition), `:=`(key, ~id)) %>% 
+        layer_points(`:=`(size, 75), `:=`(size.hover, 200)) %>% 
+        add_tooltip(all_values, "hover") %>% 
+        add_axis("x", title = paste0("PC", input$xcol), properties = axis_props(
+            title = list(fontSize = 15), labels = list(fontSize = 10))) %>% 
+        add_axis("y", title = paste0("PC", input$ycol), properties = axis_props(
+            title = list(fontSize = 15), labels = list(fontSize = 10))) %>% 
+        add_legend("fill", title = if (input$colbybatchPCA) 
+            "Batches" else "Conditions", properties = legend_props(title = 
+            list(fontSize = 15), labels = list(fontSize = 10)))
+    })
+    # interactive PCA summary
+    vis_pc %>% bind_shiny("PCAplot")
+    output$PCAsummary <- renderPrint({
+        summary(PCA())
+    })
+    # interactive PCA table
+    output$PCAtable <- renderTable({
+        PCA()
+    })
+    output$PCAExplainedVariation <- renderTable({
+        PCA()
+        shinyInput <- getShinyInput()
+        pc <- shinyInput$pc
+        pcs <- t(pc)
+        explained_variation <- BatchQC::batchqc_pc_explained_variation(pcs, 
+            shinyInput$vars, shinyInput$condition, shinyInput$batch)
+        explained_variation
+    })
+    
+    output$PCoAplot <- renderPlot({
+        physeq1 <- findPhyseqData()
+        setGgplotTheme()
+        DistBC = distance(physeq1, method = "bray")
+        DistUF = distance(physeq1, method = "wUniFrac")
+        ordBC = ordinate(physeq1, method = "PCoA", distance = DistBC)
+        ordUF = ordinate(physeq1, method = "PCoA", distance = DistUF)
+        if (input$colbybatchPCoA) colorstring="batch" 
+        else colorstring="condition"
+        if (input$methodPCoA)  {
+            ordMethod=ordUF
+            titleString="PCoA: Weigthed Unifrac"
+        } else  {
+            ordMethod=ordBC
+            titleString="PCoA: Bray-Curtis"
+        }
+        plot_ordination(physeq1, ordMethod, axes=c(input$xcolA, input$ycolA), 
+            color=colorstring) + 
+            ggplot2::geom_point(size=3) +
+            #ggplot2::geom_point(mapping=ggplot2::aes(size=2)) +
+            #ggplot2::geom_point(mapping=ggplot2::aes(shape=factor(batch))) +
+            ggplot2::ggtitle(titleString)
+    })
+    
 })

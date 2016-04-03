@@ -31,6 +31,44 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
             tabPanel("Exploratory Tree", plotOutput("ExploratoryTree", 
                 height = "550px"))
         )
+    ),
+    tabPanel("PCA",
+        sidebarLayout(
+            sidebarPanel(
+                numericInput('xcol', 'Principal Component (x-axis)', 1,
+                    min = 1, max = 50),
+                numericInput('ycol', 'Principal Component (y-axis)', 2,
+                    min = 1, max = 50),
+                checkboxInput("colbybatchPCA", 
+                    "Color By Batch (Default: Color By Condition)", FALSE)
+            ),
+            mainPanel(
+                tabsetPanel(
+                    tabPanel("PCA", ggvisOutput("PCAplot")),
+                    tabPanel("Summary", verbatimTextOutput("PCAsummary")),
+                    tabPanel("Table",tableOutput("PCAtable")),
+                    tabPanel("Explained Variation",
+                        tableOutput("PCAExplainedVariation"))
+                )
+            )
+        )
+    ), 
+    tabPanel("PCoA",
+        sidebarLayout(
+            sidebarPanel(
+                numericInput('xcolA', 'Principal Coordinate (x-axis)', 1,
+                    min = 1, max = 50),
+                numericInput('ycolA', 'Principal Coordinate (y-axis)', 2,
+                    min = 1, max = 50),
+                checkboxInput("colbybatchPCoA", 
+                    "Color By Batch (Default: Color By Condition)", FALSE),
+                checkboxInput("methodPCoA", 
+                    "Weigthed Unifrac (Default: Bray-Curtis)", FALSE)
+            ),
+            mainPanel(
+                plotOutput("PCoAplot", height = "550px")
+            )
+        )
     )
 )
 )
