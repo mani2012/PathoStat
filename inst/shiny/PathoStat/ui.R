@@ -37,6 +37,10 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
         tabsetPanel(
             tabPanel("Alpha Diversity", plotOutput("AlphaDiversity",
                 height = "550px")),
+            tabPanel("Beta Diversity", 
+                checkboxInput("methodBeta", 
+                    "Weigthed Unifrac (Default: Bray-Curtis)", FALSE),
+                plotOutput("BetaDiversity", height = "500px")),
             tabPanel("Exploratory Tree", plotOutput("ExploratoryTree", 
                 height = "550px"))
         )

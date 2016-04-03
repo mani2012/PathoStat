@@ -141,6 +141,20 @@ shinyServer(function(input, output, session) {
         p + ggplot2::geom_boxplot(data=p$data, ggplot2::aes(x=condition, 
             y=value, color=NULL), alpha=0.1)
     })
+    output$BetaDiversity <- renderPlot({
+        physeq1 <- findPhyseqData()
+        setGgplotTheme()
+        if (input$methodBeta)  {
+            dist = distance(physeq1, method = "wUniFrac")
+            titleString="Beta Diversity Distance: Weigthed Unifrac"
+        } else  {
+            dist = distance(physeq1, method = "bray")
+            titleString="Beta Diversity Distance: Bray-Curtis"
+        }
+        gplots::heatmap.2(as.matrix(dist), col=gplots::bluered(75), scale="row",
+            key=TRUE, symkey=FALSE, density.info="none", trace="none", 
+            margins = c(6, 6))
+    })
     output$ExploratoryTree <- renderPlot({
         physeq1 <- findPhyseqData()
         setGgplotTheme()
