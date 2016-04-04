@@ -129,6 +129,17 @@ shinyServer(function(input, output, session) {
         scale_fill_brewer(palette = palname, ...)
     }
     
+    output$Heatmap <- renderPlot({
+        physeq1 <- findPhyseqData()
+        setGgplotTheme()
+        #plot_heatmap(physeq1, sample.label="condition")
+        if (input$taxl=="no rank")  {
+            plot_heatmap(physeq1)
+        } else  {
+            physeq2 <- tax_glom(physeq1, input$taxl)
+            plot_heatmap(physeq2, taxa.label=input$taxl)
+        }
+    })
     output$AlphaDiversity <- renderPlot({
         physeq1 <- findPhyseqData()
         #alpha_meas <- c("Observed", "Chao1", "ACE", "Shannon", "Simpson", 

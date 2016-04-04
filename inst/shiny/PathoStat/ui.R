@@ -2,9 +2,8 @@ library(shiny)
 library(ggvis)
 library(d3heatmap)
 
-tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 'suborder',
-    'family', 'subfamily', 'genus', 'subgenus', 'species', 'subspecies', 
-    'no rank')
+tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 'family', 
+    'genus', 'species', 'no rank')
 measure.type <- c('Final Guess', 'Final Best Hit', 'Final High Confidence Hit')
 shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE, 
     tabPanel("Relative Abundance",
@@ -26,6 +25,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 tabsetPanel(
                     tabPanel("Taxonomy level RA",
                         ggvisOutput("TaxRelAbundancePlot")),
+                    tabPanel("Heatmap", plotOutput("Heatmap", height="550px")),
                     tabPanel("Summary", verbatimTextOutput("TaxRAsummary")),
                     tabPanel("Table", tableOutput("TaxRAtable")),
                     tabPanel("Count Table", tableOutput("TaxCountTable"))
