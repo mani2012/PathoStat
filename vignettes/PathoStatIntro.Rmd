@@ -70,9 +70,16 @@ pathoStat(input_dir=example_data_dir, batch=batch, condition=condition,
     "111111111", view_report=FALSE, interactive=TRUE)
 ```
 
-### Example 2: Apply PathoStat
+### Example 2: L1 set
 ```r
-example2_data_dir <- system.file("example/data2", package = "PathoStat")
+example2_data_dir <- system.file("example/data2/L1", package = "PathoStat")
+pathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
+    report_file="pathostat_report.html", report_dir=".", report_option_binary=
+    "111111111", view_report=FALSE, interactive=TRUE)
+```
+### Example 2: L2 set
+```r
+example2_data_dir <- system.file("example/data2/L2", package = "PathoStat")
 pathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
     report_file="pathostat_report.html", report_dir=".", report_option_binary=
     "111111111", view_report=FALSE, interactive=TRUE)
