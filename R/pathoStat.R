@@ -27,8 +27,8 @@ require(rentrez)
 #' nbatch <- 10
 #' nperbatch <- 10
 #' batch <- rep(1:nbatch, each=nperbatch)
-#' PathoStat(input_dir='.', batch)
-pathoStat <- function(input_dir = ".", batch, condition = NULL, report_file = 
+#' runPathoStat(input_dir='.', batch)
+runPathoStat <- function(input_dir = ".", batch, condition = NULL, report_file = 
     "PathoStat_report.html", report_dir = ".", report_option_binary = 
     "111111111", view_report = TRUE, interactive = TRUE) {
     

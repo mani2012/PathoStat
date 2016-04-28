@@ -15,8 +15,9 @@ The package includes:
 
 1. Relative Abundance plots
 
-`pathoStat` is the pipeline function that generates the PathoStat report. 
-It combines all the functions into one step.
+`runPathoStat` is the pipeline function that generates the PathoStat report
+and launches shiny app when in interactive mode. It combines all the functions 
+into one step.
 
 ## Installation
 
@@ -63,7 +64,7 @@ condition <- diet_key[diet]
 ### Example 1: Apply PathoStat
 ```r
 example_data_dir <- system.file("example/data", package = "PathoStat")
-pathoStat(input_dir=example_data_dir, batch=batch, condition=condition, 
+runPathoStat(input_dir=example_data_dir, batch=batch, condition=condition, 
     report_file="pathostat_report.html", report_dir=".", report_option_binary=
     "111111111", view_report=FALSE, interactive=TRUE)
 ```
@@ -71,14 +72,14 @@ pathoStat(input_dir=example_data_dir, batch=batch, condition=condition,
 ### Example 2: L1 set
 ```r
 example2_data_dir <- system.file("example/data2/L1", package = "PathoStat")
-pathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
+runPathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
     report_file="pathostat_report.html", report_dir=".", report_option_binary=
     "111111111", view_report=FALSE, interactive=TRUE)
 ```
 ### Example 2: L2 set
 ```r
 example2_data_dir <- system.file("example/data2/L2", package = "PathoStat")
-pathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
+runPathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
     report_file="pathostat_report.html", report_dir=".", report_option_binary=
     "111111111", view_report=FALSE, interactive=TRUE)
 ```

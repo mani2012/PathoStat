@@ -19,20 +19,20 @@ condition <- diet_key[diet]
 ### Example 1 PathoScope report files directory
 example_data_dir <- system.file("example/data", package = "PathoStat")
 ### apply PathoStat
-pathoStat(input_dir=example_data_dir, batch=batch, condition=condition, 
+runPathoStat(input_dir=example_data_dir, batch=batch, condition=condition, 
     report_file="pathostat_report.html", report_dir=".", report_option_binary=
     "111111111", view_report=FALSE, interactive=TRUE)
 
 ### Example 2 PathoScope report files L1 set
 example2_data_dir <- system.file("example/data2/L1", package = "PathoStat")
 ### apply PathoStat
-pathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
+runPathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
     report_file="pathostat_report.html", report_dir=".", report_option_binary=
     "111111111", view_report=FALSE, interactive=TRUE)
 
 ### Example 2 PathoScope report files L2 set
 example2_data_dir <- system.file("example/data2/L2", package = "PathoStat")
 ### apply PathoStat
-pathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
+runPathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
     report_file="pathostat_report.html", report_dir=".", report_option_binary=
     "111111111", view_report=FALSE, interactive=TRUE)

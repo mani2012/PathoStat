@@ -172,6 +172,41 @@ shinyServer(function(input, output, session) {
         plot_tree(physeq1, color="condition", label.tips="genus", 
             size="Abundance")
     })
+    output$BiPlot <- renderPlot({
+        physeq1 <- findPhyseqData()
+        setGgplotTheme()
+        if (input$colorBiP=='None') color <- NULL else color <- input$colorBiP
+        if (input$shapeBiP=='None') shape <- NULL else shape <- input$shapeBiP
+        if (input$labelBiP=='None') label <- NULL else label <- input$labelBiP
+        physeq.ord <- ordinate(physeq1, method=input$methodBiP, distance="bray")
+        p <- plot_ordination(physeq1, physeq.ord, type = "biplot", 
+            color=color, shape=shape, label=label)
+        if (!is.null(label))  {
+            p$layers <- p$layers[-2]
+            p <- p+ggplot2::geom_text(mapping=
+                ggplot2::aes(label=get(label)), size=4, vjust=1.0, 
+                check_overlap=TRUE)
+        }
+        p
+    })
+    output$CoOccurrence <- renderPlot({
+        physeq1 <- findPhyseqData()
+        setGgplotTheme()
+        if (input$colorCo=='None') color <- NULL else color <- input$colorCo
+        if (input$shapeCo=='None') shape <- NULL else shape <- input$shapeCo
+        if (input$labelCo=='None') label <- NULL else label <- input$labelCo
+        ig<-make_network(physeq1, dist.fun="jaccard", type = "taxa", 
+            max.dist=input$max.dist) #max.dist=0.4 default
+        p <- plot_network(ig, physeq1, line_weight=0.4, type = "taxa", 
+            color = color, shape = shape, label = label)
+        if (!is.null(label))  {
+            p$layers <- p$layers[-2]
+            p <- p+ggplot2::geom_text(mapping=ggplot2::aes(label=get(label)), 
+                size=4, vjust=1.0, check_overlap=TRUE)
+        }
+        p
+    })
+    
     # interactive PCA
     PCA <- reactive({
         shinyInput <- getShinyInput()

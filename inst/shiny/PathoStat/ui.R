@@ -42,7 +42,50 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                     "Weigthed Unifrac (Default: Bray-Curtis)", FALSE),
                 plotOutput("BetaDiversity", height = "500px")),
             tabPanel("Exploratory Tree", plotOutput("ExploratoryTree", 
-                height = "550px"))
+                height = "550px")),
+            tabPanel("BiPlot", 
+                sidebarLayout(
+                    sidebarPanel(
+                        selectizeInput('colorBiP', 'Color', choices = 
+                            c(tax.name[-length(tax.name)], 'condition', 'None'), 
+                            selected='genus'),
+                        selectizeInput('shapeBiP', 'Shape', choices = 
+                            c(tax.name[-length(tax.name)], 'condition', 'None'), 
+                            selected='condition'),
+                        selectizeInput('labelBiP', 'Label', choices = 
+                            c(tax.name[-length(tax.name)], 'condition', 'None'), 
+                            selected='None'),
+                        selectizeInput('methodBiP', 'Method', 
+                            choices=c("DCA", "CCA", "RDA", "DPCoA", 
+                            "NMDS", "MDS", "PCoA"), selected='NMDS'),
+                        width=3
+                    ),
+                    mainPanel(
+                        plotOutput("BiPlot", height = "550px"), width=9
+                    )
+                )
+            ),
+            tabPanel("Co-Occurrence", 
+                sidebarLayout(
+                    sidebarPanel(
+                        selectizeInput('colorCo', 'Color', choices = 
+                            c(tax.name[-length(tax.name)], 'None'), 
+                            selected='genus'),
+                        selectizeInput('shapeCo', 'Shape', choices = 
+                            c(tax.name[-length(tax.name)], 'None'), 
+                            selected='None'),
+                        selectizeInput('labelCo', 'Label', choices = 
+                            c(tax.name[-length(tax.name)], 'None'), 
+                            selected='None'),
+                        sliderInput("max.dist", "Max Dist:", 
+                            min = 0, max = 1, value = 0.5, step= 0.1),
+                        width=3
+                    ),
+                    mainPanel(
+                        plotOutput("CoOccurrence", height = "550px"), width=9
+                    )
+                )
+            )
         )
     ),
     tabPanel("PCA",
