@@ -5,6 +5,20 @@ library(d3heatmap)
 tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 'family', 
     'genus', 'species', 'no rank')
 measure.type <- c('Final Guess', 'Final Best Hit', 'Final High Confidence Hit')
+minbatch <- function(batch1){
+    batch2 <- as.factor(batch1)
+    batch3 <- split(batch1,batch2)
+    return(min(unlist(lapply(1:length(batch3), 
+        function(x) length(batch3[[x]])))))
+}
+
+shinyInput <- getShinyInput()
+maxbatchElems <- minbatch(shinyInput$batch)
+maxcondElems <- minbatch(shinyInput$condition)
+defaultDisp <- 30
+defaultGenesDisp <- 10
+maxGenes <- dim(shinyInput$data)[1]
+nbatch <- nlevels(as.factor(shinyInput$batch))
 shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE, 
     tabPanel("Relative Abundance",
         sidebarLayout(
@@ -87,6 +101,38 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 )
             )
         )
+    ),
+    tabPanel("Differential Expression",
+        sidebarLayout(
+            sidebarPanel(
+                selectizeInput('taxlde', 'Taxonomy Level', choices = tax.name, 
+                    selected='no rank'),
+                numericInput('ncSamples', 'No. of Sample(s) Per Condition', 
+                    if (maxcondElems>defaultDisp) defaultDisp 
+                    else maxcondElems, min = 1, max = maxcondElems),
+                numericInput('noSamples', 'No. of Sample(s) Per Batch', 
+                    if (maxbatchElems>defaultDisp) defaultDisp 
+                    else maxbatchElems, min = 1, max = maxbatchElems),
+                checkboxInput("sortbybatch", 
+                    "Sort By Batch First (Default: Sort By Condition First)", 
+                    FALSE),
+                checkboxInput("colbybatch", 
+                    "Color By Batch (Default: Color By Condition)", FALSE),
+                numericInput('noTaxons', 
+                    'No. of top Differentially Expressed Taxons to display', 
+                    if (maxGenes>defaultGenesDisp) defaultGenesDisp 
+                    else maxGenes, min = 1, max = maxGenes),
+                width=3
+            ),
+            mainPanel(
+                tabsetPanel(
+                    tabPanel("Expression Plots",ggvisOutput("DiffExPlot")), 
+                    tabPanel("Summary", verbatimTextOutput("DEsummary")),
+                    tabPanel("Table", tableOutput("DEtable")), 
+                    tabPanel("LIMMA",tableOutput("LimmaTable"))
+                ), width=9
+            )
+            )
     ),
     tabPanel("PCA",
         sidebarLayout(

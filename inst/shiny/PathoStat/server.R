@@ -2,6 +2,7 @@ library(shiny)
 library(ggvis)
 library(d3heatmap)
 library(reshape2)
+library(limma)
 library(phyloseq)
 library(ape)
 library(PathoStat)
@@ -24,16 +25,16 @@ shinyServer(function(input, output, session) {
         }
     }
     # setInputs(FALSE)
-    findAllTaxData <- function() {
+    findAllTaxData <- function(taxonLevel) {
         taxdata <- findTaxonLevelData(shinyInput$data, shinyInput$taxonLevels, 
-            input$taxl)
+            taxonLevel)
         if (is.null(shinyInput$taxdata)) {
             shinyInput <- c(shinyInput, list(taxdata = taxdata))
         } else {
             shinyInput$taxdata <- taxdata
         }
         taxcountdata <- findTaxonLevelData(shinyInput$countdata, 
-            shinyInput$taxonLevels, input$taxl)
+            shinyInput$taxonLevels, taxonLevel)
         if (is.null(shinyInput$taxcountdata)) {
             shinyInput <- c(shinyInput, list(taxcountdata = taxcountdata))
         } else {
@@ -42,13 +43,19 @@ shinyServer(function(input, output, session) {
         setShinyInput(shinyInput)
     }
     findTaxData <- eventReactive(input$taxl, {
-        findAllTaxData()
+        findAllTaxData(input$taxl)
         shinyInput <- getShinyInput()
         shinyInput$taxdata
     })
     
     findTaxCountData <- eventReactive(input$taxl, {
-        findAllTaxData()
+        findAllTaxData(input$taxl)
+        shinyInput <- getShinyInput()
+        shinyInput$taxcountdata
+    })
+    
+    findTaxCountDataDE <- eventReactive(input$taxlde, {
+        findAllTaxData(input$taxlde)
         shinyInput <- getShinyInput()
         shinyInput$taxcountdata
     })
@@ -286,6 +293,116 @@ shinyServer(function(input, output, session) {
             #ggplot2::geom_point(mapping=ggplot2::aes(size=2)) +
             #ggplot2::geom_point(mapping=ggplot2::aes(shape=factor(batch))) +
             ggplot2::ggtitle(titleString)
+    })
+    
+    # interactive Differential Expression boxplot
+    BP <- reactive({
+        findTaxCountDataDE()
+        shinyInput <- getShinyInput()
+        lcpm <- log2CPM(shinyInput$taxcountdata)
+        lcounts <- lcpm$y
+        dat <- lcounts
+        batch1 <- as.factor(shinyInput$batch)
+        batch2 <- split(which(shinyInput$batch == batch1), batch1)
+        batch3 <- unlist(lapply(1:length(batch2), 
+            function(x) batch2[[x]][1:input$noSamples]))
+        dat1 <- dat[, batch3]
+        colnames(dat1) <- seq(1:ncol(dat))[batch3]
+        dat1
+    })
+    DE <- reactive({
+        findTaxCountDataDE()
+        shinyInput <- getShinyInput()
+        lcpm <- log2CPM(shinyInput$taxcountdata)
+        lcounts <- lcpm$y
+        dat <- lcounts
+        cond1 <- as.factor(shinyInput$condition)
+        cond2 <- split(which(shinyInput$condition == cond1), cond1)
+        cond3 <- unlist(lapply(1:length(cond2), 
+            function(x) cond2[[x]][1:input$ncSamples]))
+        dat1 <- dat[, cond3]
+        colnames(dat1) <- seq(1:ncol(dat))[cond3]
+        dat1
+    })
+    diffex_bp <- reactive({
+        if (input$sortbybatch) {
+            batch4 <- split(shinyInput$batch, as.factor(shinyInput$batch))
+            batch5 <- unlist(lapply(1:length(batch4),
+                function(x) batch4[[x]][1:input$noSamples]))
+            dat1 <- BP()
+            dat2 <- melt(as.data.frame(dat1), measure.var = colnames(dat1))
+            dat2$batch <- as.factor(unlist(lapply(1:length(batch5),
+                function(x) rep(batch5[x], nrow(dat1)))))
+            dat2$condition <- as.factor(unlist(lapply(as.numeric(colnames(dat1))
+                , function(x) rep(condition[x], nrow(dat1)))))
+            dat2$samples <- unlist(lapply(seq(ncol(dat1)),
+                function(x) rep(seq(ncol(dat1))[x], nrow(dat1))))
+        } else {
+            cond4 <- split(shinyInput$condition,
+                as.factor(shinyInput$condition))
+            cond5 <- unlist(lapply(1:length(cond4),
+                function(x) cond4[[x]][1:input$ncSamples]))
+            dat1 <- DE()
+            dat2 <- melt(as.data.frame(dat1), measure.var = colnames(dat1))
+            dat2$condition <- as.factor(unlist(lapply(1:length(cond5),
+                function(x) rep(cond5[x], nrow(dat1)))))
+            dat2$batch <- as.factor(unlist(lapply(as.numeric(colnames(dat1)),
+                function(x) rep(batch[x], nrow(dat1)))))
+            dat2$samples <- unlist(lapply(seq(ncol(dat1)),
+                function(x) rep(seq(ncol(dat1))[x], nrow(dat1))))
+        }
+        dat2 %>% group_by(batch) %>% ggvis(~samples, ~value, fill =
+                if (input$colbybatch) ~batch else ~condition) %>%
+            layer_boxplots() %>%
+            add_tooltip(function(dat2) { paste0("Sample: ", 
+                colnames(shinyInput$countdata)[dat2$samples],
+                "<br>", if (input$colbybatch) "Batch: " else "Condition: ",
+                if (input$colbybatch) dat2$batch else dat2$condition)
+            }, "hover") %>%
+            add_axis("x", title = if (input$sortbybatch)
+                paste(input$noSamples, "Sample(s) Per Batch", sep = " ")
+                else
+                    paste(input$ncSamples, "Sample(s) Per Condition", sep=" "),
+                properties = axis_props(title = list(fontSize = 15),
+                labels = list(fontSize = 5, angle = 90))) %>%
+            add_axis("y", title = "Expression", properties = axis_props(title =
+                list(fontSize = 15),labels = list(fontSize = 10))) %>%
+            add_legend("fill", title = if (input$colbybatch)
+                "Batches" else "Conditions", properties = legend_props(title =
+                list(fontSize = 15), labels = list(fontSize = 10)))
+    })
+    diffex_bp %>% bind_shiny("DiffExPlot")
+    output$DEsummary <- renderPrint({
+        if (input$sortbybatch) {
+            summary(BP())
+        } else {
+            summary(DE())
+        }
+    })
+    
+    output$DEtable <- renderTable({
+        if (input$sortbybatch) {
+            BP()
+        } else {
+            DE()
+        }
+    })
+    
+    output$LimmaTable <- renderTable({
+        shinyInput <- getShinyInput()
+        pdata <- data.frame(shinyInput$batch, shinyInput$condition)
+        mod <- model.matrix(~as.factor(shinyInput$condition) + 
+            ~as.factor(shinyInput$batch), data = pdata)
+        dat1 <- DE()
+        fit <- lmFit(dat1, mod)
+        fit2 <- eBayes(fit)
+        ncond <- nlevels(as.factor(shinyInput$condition))
+        limmaTable <- topTable(fit2, coef = 2:ncond, number = input$noTaxons)
+        for (j in 2:ncond)  {
+            colnames(limmaTable)[j-1] <- paste("Condition: ", 
+                levels(as.factor(shinyInput$condition))[j], " (logFC)", sep='')
+        }
+        limmaTable
     })
     
 })
