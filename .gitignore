@@ -17,3 +17,7 @@ vignettes/*.pdf
 inst/doc
 .RData
 .Rhistory
+
+# Miscellaneous
+tmp/
+.DS_Store
