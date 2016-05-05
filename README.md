@@ -20,7 +20,7 @@ few dependencies that PathoStat uses:
 source("http://bioconductor.org/biocLite.R")
 biocLite(c('phyloseq', 'pander', 'MCMCpack', 'limma', 'preprocessCore', 
 'stringi', 'corpcor', 'matrixStats', 'shiny', 'ggvis', 'd3heatmap', 'reshape2',
-'scales', 'rentrez', 'devtools'))
+'scales', 'rentrez', 'devtools', 'BatchQC'))
 ```
 
 Install 'pandoc' package by following the instructions at the following URL:
