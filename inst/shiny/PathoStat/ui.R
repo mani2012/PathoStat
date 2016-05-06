@@ -41,8 +41,8 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                         ggvisOutput("TaxRelAbundancePlot")),
                     tabPanel("Heatmap", plotOutput("Heatmap", height="550px")),
                     tabPanel("Summary", verbatimTextOutput("TaxRAsummary")),
-                    tabPanel("Table", tableOutput("TaxRAtable")),
-                    tabPanel("Count Table", tableOutput("TaxCountTable"))
+                    tabPanel("Table", DT::dataTableOutput("TaxRAtable", width='95%')),
+                    tabPanel("Count Table", DT::dataTableOutput("TaxCountTable", width='95%'))
                 ), width=9
             )
         )
