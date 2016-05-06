@@ -17,6 +17,7 @@ require(rentrez)
 #' @param report_option_binary 9 bits Binary String representing the plots to 
 #'  display and hide in the report 
 #' @param view_report when TRUE, opens the report in a browser 
+#' @param tax_cache Filename to cache taxonomy. Created if file does not exist. 
 #' @return outputfile The output file with all the statistical plots
 #' @import pander stats graphics reshape2 ggplot2 rentrez phyloseq
 #' @importFrom scales percent_format
@@ -30,7 +31,8 @@ require(rentrez)
 #' runPathoStat(input_dir='.', batch)
 runPathoStat <- function(input_dir = ".", batch, condition = NULL, report_file = 
     "PathoStat_report.html", report_dir = ".", report_option_binary = 
-    "111111111", view_report = TRUE, interactive = TRUE) {
+    "111111111", view_report = TRUE, interactive = TRUE,
+    tax_cache = NULL) {
     
     pdata <- data.frame(batch, condition)
     mod = model.matrix(~as.factor(condition), data = pdata)
@@ -42,7 +44,20 @@ runPathoStat <- function(input_dir = ".", batch, condition = NULL, report_file =
     countdat <- datlist$countdata
     ids <- rownames(dat)
     tids <- unlist(lapply(ids, FUN = grepTid))
-    taxonLevels <- findTaxonomy(tids)
+    
+    if(is.null(tax_cache)) {
+        taxonLevels <- findTaxonomy(tids)
+    } else {
+        if(file.exists(tax_cache)) {
+            # Load taxonomy from file if tax_cache file exists
+            load(tax_cache)
+        } else {
+            # Otherwise, findTaxonomy and save to tax_cache
+            taxonLevels <- findTaxonomy(tids)
+            save(taxonLevels, file=tax_cache)
+        }
+    }
+    
     shinyInput <- list(data = dat, batch = batch, condition = condition, 
         report_dir = report_dir, input_dir = input_dir, taxonLevels = 
         taxonLevels, countdata = countdat)
