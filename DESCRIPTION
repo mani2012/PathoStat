@@ -25,7 +25,8 @@ Imports:
     scales,
     ggplot2,
     rentrez,
-    BatchQC
+    BatchQC,
+    DT
 Collate:
     'pathoStat.R'
     'utils.R'

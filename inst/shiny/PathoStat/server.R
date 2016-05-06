@@ -7,6 +7,9 @@ library(phyloseq)
 library(ape)
 library(PathoStat)
 
+# Converts decimal percentage to string with specified digits
+pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
+
 shinyServer(function(input, output, session) {
     # needed information from PathoStat
     shinyInput <- getShinyInput()
@@ -91,13 +94,30 @@ shinyServer(function(input, output, session) {
         summary(findTaxData())
     })
     
-    output$TaxRAtable <- renderTable({
-        findTaxData()
-    })
+    # These are options for rendering datatables
+    dtopts <- list(scrollX=TRUE, paging=TRUE)
+
+    # Format relative abundance table
+    # Converts percents to strings and expands taxa name
+    format_RA_table <- function(tmp) {
+      tmp %>% add_rownames("fullname") %>%
+        dplyr::mutate_each(funs(pct2str), -fullname) %>% 
+        tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl), sep='\\|') %>%
+        dplyr::select_(.dots=c(as.name(input$taxl), 'taxid', colnames(tmp)))
+    }
     
-    output$TaxCountTable <- renderTable({
-        findTaxCountData()
-    }, digits = 0)
+    # Render relative abundance table    
+    output$TaxRAtable <- DT::renderDataTable(format_RA_table(findTaxData()), options=dtopts, rownames=F)    
+    
+    # Format count table:
+    # Just expands taxa name
+    format_Count_table <- function(tmp) {
+      tmp %>% add_rownames("fullname") %>%
+        tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl), sep='\\|') %>%
+        dplyr::select_(.dots=c(as.name(input$taxl), 'taxid', colnames(tmp)))
+    }
+    # Render count table
+    output$TaxCountTable <- DT::renderDataTable(format_Count_table(findTaxCountData()), options=dtopts, rownames=F)
     
     output$downloadData <- downloadHandler(filename = function() {
         paste0("sample_data_", input$taxl, ".csv", sep = "")
