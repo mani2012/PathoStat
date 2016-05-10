@@ -100,8 +100,8 @@ shinyServer(function(input, output, session) {
     # Format relative abundance table
     # Converts percents to strings and expands taxa name
     format_RA_table <- function(tmp) {
-      tmp %>% add_rownames("fullname") %>%
-        dplyr::mutate_each(funs(pct2str), -fullname) %>% 
+      tmp %>% dplyr::add_rownames("fullname") %>%
+        dplyr::mutate_each(dplyr::funs(pct2str), -fullname) %>% 
         tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl), sep='\\|') %>%
         dplyr::select_(.dots=c(as.name(input$taxl), 'taxid', colnames(tmp)))
     }
@@ -112,7 +112,7 @@ shinyServer(function(input, output, session) {
     # Format count table:
     # Just expands taxa name
     format_Count_table <- function(tmp) {
-      tmp %>% add_rownames("fullname") %>%
+      tmp %>% dplyr::add_rownames("fullname") %>%
         tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl), sep='\\|') %>%
         dplyr::select_(.dots=c(as.name(input$taxl), 'taxid', colnames(tmp)))
     }
