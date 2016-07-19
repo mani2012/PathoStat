@@ -317,83 +317,91 @@ shinyServer(function(input, output, session) {
     
     # interactive Differential Expression boxplot
     BP <- reactive({
-        findTaxCountDataDE()
-        shinyInput <- getShinyInput()
-        lcpm <- log2CPM(shinyInput$taxcountdata)
+        getShinyInput()
+        phyloseq1 <- findPhyseqData()
+        lcpm <- log2CPM(otu_table(phyloseq1))
         lcounts <- lcpm$y
         dat <- lcounts
-        batch1 <- as.factor(shinyInput$batch)
-        batch2 <- split(which(shinyInput$batch == batch1), batch1)
-        batch3 <- unlist(lapply(1:length(batch2), 
-            function(x) batch2[[x]][1:input$noSamples]))
-        dat1 <- dat[, batch3]
-        colnames(dat1) <- seq(1:ncol(dat))[batch3]
+        second.Cov3 <- as.factor(sample_data(phyloseq1)[[input$secondary]])
+        second.Cov4 <- split(which(sample_data(phyloseq1)[[input$secondary]] == second.Cov3), second.Cov3)
+        second.Cov5 <- unlist(lapply(1:length(second.Cov4), 
+            function(x) second.Cov4[[x]][1:input$nsSamples]))
+        dat1 <- dat[, second.Cov5]
+        colnames(dat1) <- seq(1:ncol(dat))[second.Cov5]
         dat1
     })
     DE <- reactive({
-        findTaxCountDataDE()
-        shinyInput <- getShinyInput()
-        lcpm <- log2CPM(shinyInput$taxcountdata)
+        getShinyInput()
+        phyloseq1 <- findPhyseqData()
+        lcpm <- log2CPM(otu_table(phyloseq1))
         lcounts <- lcpm$y
         dat <- lcounts
-        cond1 <- as.factor(shinyInput$condition)
-        cond2 <- split(which(shinyInput$condition == cond1), cond1)
-        cond3 <- unlist(lapply(1:length(cond2), 
-            function(x) cond2[[x]][1:input$ncSamples]))
-        dat1 <- dat[, cond3]
-        colnames(dat1) <- seq(1:ncol(dat))[cond3]
+        first.Cov3 <- as.factor(sample_data(phyloseq1)[[input$primary]])
+        first.Cov4 <- split(which(sample_data(phyloseq1)[[input$primary]] == first.Cov3), first.Cov3)
+        first.Cov5 <- unlist(lapply(1:length(first.Cov4), 
+                                     function(x) first.Cov4[[x]][1:input$npSamples]))
+        dat1 <- dat[, first.Cov5]
+        colnames(dat1) <- seq(1:ncol(dat))[first.Cov5]
         dat1
     })
+    #Differential Expression Barplot
     diffex_bp <- reactive({
-        if (input$sortbybatch) {
-            batch4 <- split(shinyInput$batch, as.factor(shinyInput$batch))
-            batch5 <- unlist(lapply(1:length(batch4),
-                function(x) batch4[[x]][1:input$noSamples]))
+        phyloseq2 <- findPhyseqData()
+        if (input$sortbysecondary) {
+            #Define the primary/secondary covariates (set my user), then sort by the secondary
+            second.Cov1 <- split(sample_data(phyloseq2)[[input$secondary]], as.factor(sample_data(phyloseq2)[[input$secondary]]))
+            second.Cov2 <- unlist(lapply(1:length(second.Cov1),
+                function(x) second.Cov1[[x]][1:input$nsSamples]))
+            first.Cov1 <- split(sample_data(phyloseq2)[[input$primary]], as.factor(sample_data(phyloseq2)[[input$primary]]))
+            first.Cov2 <- unlist(lapply(1:length(first.Cov1),
+                                         function(x) first.Cov1[[x]][1:input$npSamples]))
             dat1 <- BP()
             dat2 <- melt(as.data.frame(dat1), measure.var = colnames(dat1))
-            dat2$batch <- as.factor(unlist(lapply(1:length(batch5),
-                function(x) rep(batch5[x], nrow(dat1)))))
-            dat2$condition <- as.factor(unlist(lapply(as.numeric(colnames(dat1))
-                , function(x) rep(condition[x], nrow(dat1)))))
+            dat2$cov2 <- as.factor(unlist(lapply(1:length(second.Cov2),
+                function(x) rep(second.Cov2[x], nrow(dat1)))))
+            dat2$cov1 <- as.factor(unlist(lapply(as.numeric(colnames(dat1))
+                , function(x) rep(second.Cov1[x], nrow(dat1)))))
             dat2$samples <- unlist(lapply(seq(ncol(dat1)),
                 function(x) rep(seq(ncol(dat1))[x], nrow(dat1))))
         } else {
-            cond4 <- split(shinyInput$condition,
-                as.factor(shinyInput$condition))
-            cond5 <- unlist(lapply(1:length(cond4),
-                function(x) cond4[[x]][1:input$ncSamples]))
+            first.Cov1 <- split(sample_data(phyloseq2)[[input$primary]], as.factor(sample_data(phyloseq2)[[input$primary]]))
+            first.Cov2 <- unlist(lapply(1:length(first.Cov1),
+                                       function(x) first.Cov1[[x]][1:input$npSamples]))
+            second.Cov1 <- split(sample_data(phyloseq2)[[input$secondary]], as.factor(sample_data(phyloseq2)[[input$secondary]]))
+            second.Cov2 <- unlist(lapply(1:length(second.Cov1),
+                                         function(x) second.Cov1[[x]][1:input$nsSamples]))
             dat1 <- DE()
             dat2 <- melt(as.data.frame(dat1), measure.var = colnames(dat1))
-            dat2$condition <- as.factor(unlist(lapply(1:length(cond5),
-                function(x) rep(cond5[x], nrow(dat1)))))
-            dat2$batch <- as.factor(unlist(lapply(as.numeric(colnames(dat1)),
-                function(x) rep(batch[x], nrow(dat1)))))
+            dat2$cov1 <- as.factor(unlist(lapply(1:length(first.Cov2),
+                function(x) rep(first.Cov2[x], nrow(dat1)))))
+            dat2$cov2 <- as.factor(unlist(lapply(as.numeric(colnames(dat1)),
+                function(x) rep(second.Cov2[x], nrow(dat1)))))
             dat2$samples <- unlist(lapply(seq(ncol(dat1)),
                 function(x) rep(seq(ncol(dat1))[x], nrow(dat1))))
         }
-        dat2 %>% group_by(batch) %>% ggvis(~samples, ~value, fill =
-                if (input$colbybatch) ~batch else ~condition) %>%
+        dat2 %>% group_by(cov2) %>% ggvis(~samples, ~value, fill =
+                if (input$colbysecondary) ~cov2 else ~cov1) %>%
             layer_boxplots() %>%
             add_tooltip(function(dat2) { paste0("Sample: ", 
                 colnames(shinyInput$countdata)[dat2$samples],
-                "<br>", if (input$colbybatch) "Batch: " else "Condition: ",
-                if (input$colbybatch) dat2$batch else dat2$condition)
+                "<br>", if (input$colbysecondary) "Secondary covariate: " else "Primary Covariate: ",
+                if (input$colbysecondary) dat2$cov2 else dat2$cov1)
             }, "hover") %>%
-            add_axis("x", title = if (input$sortbybatch)
-                paste(input$noSamples, "Sample(s) Per Batch", sep = " ")
+            add_axis("x", title = if (input$sortbysecondary)
+                paste(input$nsSamples, "Sample(s) Per Secondary Covariate", sep = " ")
                 else
-                    paste(input$ncSamples, "Sample(s) Per Condition", sep=" "),
+                    paste(input$npSamples, "Sample(s) Per Primary Covariate", sep=" "),
                 properties = axis_props(title = list(fontSize = 15),
                 labels = list(fontSize = 5, angle = 90))) %>%
             add_axis("y", title = "Expression", properties = axis_props(title =
                 list(fontSize = 15),labels = list(fontSize = 10))) %>%
-            add_legend("fill", title = if (input$colbybatch)
-                "Batches" else "Conditions", properties = legend_props(title =
+            add_legend("fill", title = if (input$colbysecondary)
+                "Secondary" else "Primary", properties = legend_props(title =
                 list(fontSize = 15), labels = list(fontSize = 10)))
     })
     diffex_bp %>% bind_shiny("DiffExPlot")
     output$DEsummary <- renderPrint({
-        if (input$sortbybatch) {
+        if (input$sortbysecondary) {
             summary(BP())
         } else {
             summary(DE())
@@ -401,7 +409,7 @@ shinyServer(function(input, output, session) {
     })
     
     output$DEtable <- renderTable({
-        if (input$sortbybatch) {
+        if (input$sortbysecondary) {
             BP()
         } else {
             DE()
