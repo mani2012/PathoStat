@@ -70,6 +70,73 @@ readPathoscopeData <- function(input_dir = ".") {
     return(list(data = dat, countdata = countdat))
 }
 
+#' Loads all data from a set of PathoID reports.
+#' For each column in the PathoID report, construct a
+#' matrix where the rows are genomes and the columns are samples.
+#' Returns a list where each element is named according to
+#' the PathoID column. For example, ret[["Final.Best.Hit.Read.Numbers"]]
+#' on the result of this function will get you the final count matrix.
+#' Also includes elements "total_reads" and "total_genomes" from the
+#' first line of the PathoID report.
+#' 
+#' @param reportfiles Paths to report files
+#' @return Returns a list where each element is named according to
+#' the PathoID column. For example, ret[["Final.Best.Hit.Read.Numbers"]]
+#' on the result of this function will get you the final count matrix.
+#' Also includes elements "total_reads" and "total_genomes" from the
+#' first line of the PathoID report.
+#' @export
+#' @examples
+#' input_dir <- system.file("example/data", package = "PathoStat")
+#' reportfiles <- list.files(input_dir, pattern = "*.tsv", full.names = TRUE)
+#' loadPathoscopeReports(reportfiles)
+loadPathoscopeReports <- function(reportfiles) {
+    # Report basenames
+    report_base <- gsub('-sam-report', '', gsub('\\.tsv$', '', basename(reportfiles)))
+
+        # Get total_reads and total_genomes from first line of report
+    totals <- data.frame(row.names=report_base, do.call(rbind, lapply(reportfiles, function(rf){
+        read.table(rf, sep='\t', nrows=1)
+    })))
+    totals <- totals[,c('V2','V4')]
+    colnames(totals) <- c('total_reads','total_genomes')
+    
+    # Read all reports into list
+    mlist <- lapply(reportfiles, function(rf){
+        read.table(rf, sep='\t', header=T, stringsAsFactors=F, row.names=1, skip=1,
+                   comment.char="")
+    })
+
+    # Get column names for variables in reports
+    vals <- colnames(mlist[[1]])
+    # Get unique genomes across all reports
+    genomes <- unique(do.call(c,lapply(mlist,function(tbl){rownames(tbl)})))
+    
+    # Set unobserved genome to 0
+    mlist.allgenomes <- lapply(mlist, function(tbl){
+        z <- tbl[genomes,]
+        rownames(z) <- genomes
+        z[is.na(z)] <- 0
+        z
+    })
+    # Sanity check: colnames and rownames should be the same for all tables
+    stopifnot(all(sapply(mlist.allgenomes,function(tbl){all(rownames(tbl)==genomes)})))
+    stopifnot(all(sapply(mlist.allgenomes,function(tbl){all(colnames(tbl)==vals)})))
+
+    ret <- lapply(vals, function(v) {
+        z <- data.frame(row.names=genomes, do.call(cbind, lapply(mlist.allgenomes,function(tbl){ tbl[,v]})))
+        colnames(z) <- report_base
+        z
+    })
+    names(ret) <- vals
+    ret[['total_reads']] <- totals[report_base, 'total_reads']
+    names(ret[['total_reads']]) <- report_base
+    ret[['total_genomes']] <- totals[report_base, 'total_genomes']
+    names(ret[['total_genomes']]) <- report_base
+    
+    ret
+}
+
 prop_hash <- function(tbl) {
     prop_hash <- new.env()
     sum <- 0
