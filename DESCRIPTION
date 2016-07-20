@@ -34,6 +34,7 @@ Collate:
     'taxonomy.R'
     'confRegion.R'
     'allClasses.R'
+    'coreOTUModule.R'
 Suggests: testthat
 biocViews: GraphAndNetwork, Microarray, PrincipalComponent, 
     Sequencing, Software, Visualization, RNASeq

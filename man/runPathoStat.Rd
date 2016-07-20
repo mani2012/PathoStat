@@ -20,6 +20,8 @@ runPathoStat(pstat, report_file = "PathoStat_report.html", report_dir = ".",
 display and hide in the report}
 
 \item{view_report}{when TRUE, opens the report in a browser}
+
+\item{tax_cache}{Filename to cache taxonomy. Created if file does not exist.}
 }
 \value{
 outputfile The output file with all the statistical plots

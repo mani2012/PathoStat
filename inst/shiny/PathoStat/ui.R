@@ -205,6 +205,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 plotOutput("PCoAplot", height = "550px"), width=9
             )
         )
-    )
+    ),
+    coreOTUModuleUI("coreOTUModule")
 )
 )
