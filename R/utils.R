@@ -90,7 +90,7 @@ readPathoscopeData <- function(input_dir = ".") {
 #' input_dir <- system.file("example/data", package = "PathoStat")
 #' reportfiles <- list.files(input_dir, pattern = "*.tsv", full.names = TRUE)
 #' loadPathoscopeReports(reportfiles)
-loadPathoscopeReports <- function(reportfiles) {
+loadPathoscopeReports <- function(reportfiles, nrows=NULL) {
     # Report basenames
     report_base <- gsub('-sam-report', '', gsub('\\.tsv$', '', basename(reportfiles)))
 
@@ -106,6 +106,8 @@ loadPathoscopeReports <- function(reportfiles) {
         read.table(rf, sep='\t', header=T, stringsAsFactors=F, row.names=1, skip=1,
                    comment.char="")
     })
+    
+    if(!is.null(nrows)) mlist <- lapply(mlist, function(tbl){tbl[1:nrows, ]})
 
     # Get column names for variables in reports
     vals <- colnames(mlist[[1]])
