@@ -68,13 +68,25 @@ coreOTUModuleUI <-
   function(id, label = "Core OTUs") {
     # This is the namespace for the module
     ns <- NS(id)
-    
-    fluidRow(
-      column(6, plotOutput(ns("coreLine"))),
-      column(6, plotOutput(ns("coreHeat")))
+    tabPanel("Core OTUs",
+             sidebarLayout(
+               sidebarPanel(br(),
+                            width = 3
+               ),
+               mainPanel(
+                 tabsetPanel(
+                   tabPanel("2D lineplot",
+                            plotOutput(ns("coreLine"))
+                   ),
+                   tabPanel("Heatmap", 
+                            plotOutput(ns("coreHeat"))
+                   )
+                 ),
+                 width = 9
+               )
+             )
     )
-  }
-
+}
 
 #' Server function for Core OTU Module
 #'
