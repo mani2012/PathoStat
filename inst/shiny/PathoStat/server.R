@@ -414,20 +414,38 @@ shinyServer(function(input, output, session) {
             DE()
         }
     })
-    
+    DELim <- reactive({
+      physeq1 <- findPhyseqData()
+      Incondition <- sample_data(physeq1)[[input$primary]]
+      findTaxCountDataDE()
+      shinyInput <- getShinyInput()
+      lcpm <- log2CPM(shinyInput$taxcountdata)
+      lcounts <- lcpm$y
+      dat <- lcounts
+      cond1 <- as.factor(Incondition)
+      cond2 <- split(which(Incondition == cond1), cond1)
+      cond3 <- unlist(lapply(1:length(cond2), 
+                             function(x) cond2[[x]]))
+      dat1 <- dat[, cond3]
+      colnames(dat1) <- seq(1:ncol(dat))[cond3]
+      dat1
+    })
     output$LimmaTable <- renderTable({
         shinyInput <- getShinyInput()
-        pdata <- data.frame(shinyInput$batch, shinyInput$condition)
-        mod <- model.matrix(~as.factor(shinyInput$condition) + 
-            ~as.factor(shinyInput$batch), data = pdata)
-        dat1 <- DE()
+        physeq1 <- findPhyseqData()
+        Incondition <- sample_data(physeq1)[[input$primary]]
+        Inbatch <- sample_data(physeq1)[[input$secondary]]
+        pdata <- data.frame(Inbatch, Incondition)
+        mod <- model.matrix(if (input$primary == input$secondary) ~as.factor(Incondition)
+                            else ~as.factor(Incondition) + ~as.factor(Inbatch), data = pdata)
+        dat1 <- DELim()
         fit <- lmFit(dat1, mod)
         fit2 <- eBayes(fit)
-        ncond <- nlevels(as.factor(shinyInput$condition))
+        ncond <- nlevels(as.factor(Incondition))
         limmaTable <- topTable(fit2, coef = 2:ncond, number = input$noTaxons)
         for (j in 2:ncond)  {
-            colnames(limmaTable)[j-1] <- paste("Condition: ", 
-                levels(as.factor(shinyInput$condition))[j], " (logFC)", sep='')
+            colnames(limmaTable)[j-1] <- paste("Primary Covariate: ", 
+                levels(as.factor(Incondition))[j], " (logFC)", sep='')
         }
         limmaTable
     })
