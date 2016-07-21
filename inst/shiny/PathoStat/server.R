@@ -328,12 +328,14 @@ shinyServer(function(input, output, session) {
     # interactive Differential Expression boxplot
     BP <- reactive({
         findTaxCountDataDE()
+        physeq1 <- findPhyseqData()
+        Inbatch <- sample_data(physeq1)[[input$secondary]]
         shinyInput <- getShinyInput()
         lcpm <- log2CPM(shinyInput$taxcountdata)
         lcounts <- lcpm$y
         dat <- lcounts
-        batch1 <- as.factor(shinyInput$batch)
-        batch2 <- split(which(shinyInput$batch == batch1), batch1)
+        batch1 <- as.factor(Inbatch)
+        batch2 <- split(which(Inbatch == batch1), batch1)
         batch3 <- unlist(lapply(1:length(batch2), 
             function(x) batch2[[x]][1:input$noSamples]))
         dat1 <- dat[, batch3]
@@ -341,13 +343,15 @@ shinyServer(function(input, output, session) {
         dat1
     })
     DE <- reactive({
+        physeq1 <- findPhyseqData()
+        Incondition <- sample_data(physeq1)[[input$primary]]
         findTaxCountDataDE()
         shinyInput <- getShinyInput()
         lcpm <- log2CPM(shinyInput$taxcountdata)
         lcounts <- lcpm$y
         dat <- lcounts
-        cond1 <- as.factor(shinyInput$condition)
-        cond2 <- split(which(shinyInput$condition == cond1), cond1)
+        cond1 <- as.factor(Incondition)
+        cond2 <- split(which(Incondition == cond1), cond1)
         cond3 <- unlist(lapply(1:length(cond2), 
             function(x) cond2[[x]][1:input$ncSamples]))
         dat1 <- dat[, cond3]
@@ -355,8 +359,11 @@ shinyServer(function(input, output, session) {
         dat1
     })
     diffex_bp <- reactive({
+        physeq1 <- findPhyseqData()
+        Incondition <- sample_data(physeq1)[[input$primary]]
+        Inbatch <- sample_data(physeq1)[[input$secondary]]
         if (input$sortbybatch) {
-            batch4 <- split(shinyInput$batch, as.factor(shinyInput$batch))
+            batch4 <- split(Inbatch, as.factor(Inbatch))
             batch5 <- unlist(lapply(1:length(batch4),
                 function(x) batch4[[x]][1:input$noSamples]))
             dat1 <- BP()
@@ -364,12 +371,12 @@ shinyServer(function(input, output, session) {
             dat2$batch <- as.factor(unlist(lapply(1:length(batch5),
                 function(x) rep(batch5[x], nrow(dat1)))))
             dat2$condition <- as.factor(unlist(lapply(as.numeric(colnames(dat1))
-                , function(x) rep(condition[x], nrow(dat1)))))
+                , function(x) rep(Incondition[x], nrow(dat1)))))
             dat2$samples <- unlist(lapply(seq(ncol(dat1)),
                 function(x) rep(seq(ncol(dat1))[x], nrow(dat1))))
         } else {
-            cond4 <- split(shinyInput$condition,
-                as.factor(shinyInput$condition))
+            cond4 <- split(Incondition,
+                as.factor(Incondition))
             cond5 <- unlist(lapply(1:length(cond4),
                 function(x) cond4[[x]][1:input$ncSamples]))
             dat1 <- DE()
@@ -377,7 +384,7 @@ shinyServer(function(input, output, session) {
             dat2$condition <- as.factor(unlist(lapply(1:length(cond5),
                 function(x) rep(cond5[x], nrow(dat1)))))
             dat2$batch <- as.factor(unlist(lapply(as.numeric(colnames(dat1)),
-                function(x) rep(batch[x], nrow(dat1)))))
+                function(x) rep(Inbatch[x], nrow(dat1)))))
             dat2$samples <- unlist(lapply(seq(ncol(dat1)),
                 function(x) rep(seq(ncol(dat1))[x], nrow(dat1))))
         }
@@ -386,19 +393,19 @@ shinyServer(function(input, output, session) {
             layer_boxplots() %>%
             add_tooltip(function(dat2) { paste0("Sample: ", 
                 colnames(shinyInput$countdata)[dat2$samples],
-                "<br>", if (input$colbybatch) "Batch: " else "Condition: ",
+                "<br>", if (input$colbybatch) "Secondary Covariate: " else "Primary Covariate: ",
                 if (input$colbybatch) dat2$batch else dat2$condition)
             }, "hover") %>%
             add_axis("x", title = if (input$sortbybatch)
-                paste(input$noSamples, "Sample(s) Per Batch", sep = " ")
+                paste(input$noSamples, "Sample(s) Per Secondary Covariate", sep = " ")
                 else
-                    paste(input$ncSamples, "Sample(s) Per Condition", sep=" "),
+                    paste(input$ncSamples, "Sample(s) Per Primary Covariate", sep=" "),
                 properties = axis_props(title = list(fontSize = 15),
                 labels = list(fontSize = 5, angle = 90))) %>%
             add_axis("y", title = "Expression", properties = axis_props(title =
                 list(fontSize = 15),labels = list(fontSize = 10))) %>%
             add_legend("fill", title = if (input$colbybatch)
-                "Batches" else "Conditions", properties = legend_props(title =
+                "Secondary Covariates" else "Primary Covariates", properties = legend_props(title =
                 list(fontSize = 15), labels = list(fontSize = 10)))
     })
     diffex_bp %>% bind_shiny("DiffExPlot")
@@ -417,20 +424,38 @@ shinyServer(function(input, output, session) {
             DE()
         }
     })
-    
+    DELim <- reactive({
+      physeq1 <- findPhyseqData()
+      Incondition <- sample_data(physeq1)[[input$primary]]
+      findTaxCountDataDE()
+      shinyInput <- getShinyInput()
+      lcpm <- log2CPM(shinyInput$taxcountdata)
+      lcounts <- lcpm$y
+      dat <- lcounts
+      cond1 <- as.factor(Incondition)
+      cond2 <- split(which(Incondition == cond1), cond1)
+      cond3 <- unlist(lapply(1:length(cond2), 
+                             function(x) cond2[[x]]))
+      dat1 <- dat[, cond3]
+      colnames(dat1) <- seq(1:ncol(dat))[cond3]
+      dat1
+    })
     output$LimmaTable <- renderTable({
         shinyInput <- getShinyInput()
-        pdata <- data.frame(shinyInput$batch, shinyInput$condition)
-        mod <- model.matrix(~as.factor(shinyInput$condition) + 
-            ~as.factor(shinyInput$batch), data = pdata)
-        dat1 <- DE()
+        physeq1 <- findPhyseqData()
+        Incondition <- sample_data(physeq1)[[input$primary]]
+        Inbatch <- sample_data(physeq1)[[input$secondary]]
+        pdata <- data.frame(Inbatch, Incondition)
+        mod <- model.matrix(if (input$primary == input$secondary) ~as.factor(Incondition)
+                            else ~as.factor(Incondition) + ~as.factor(Inbatch), data = pdata)
+        dat1 <- DELim()
         fit <- lmFit(dat1, mod)
         fit2 <- eBayes(fit)
-        ncond <- nlevels(as.factor(shinyInput$condition))
+        ncond <- nlevels(as.factor(Incondition))
         limmaTable <- topTable(fit2, coef = 2:ncond, number = input$noTaxons)
         for (j in 2:ncond)  {
-            colnames(limmaTable)[j-1] <- paste("Condition: ", 
-                levels(as.factor(shinyInput$condition))[j], " (logFC)", sep='')
+            colnames(limmaTable)[j-1] <- paste("Primary Covariate: ", 
+                levels(as.factor(Incondition))[j], " (logFC)", sep='')
         }
         limmaTable
     })
