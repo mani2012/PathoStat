@@ -6,16 +6,6 @@ library(limma)
 library(phyloseq)
 library(ape)
 library(PathoStat)
-library(DESeq2)
-library(plyr)
-library(vegan)
-library(picante)
-library(TSA)
-library(nortest)
-library(multcomp)
-library(mvabund)
-library(alluvial)
-require(grid)
 
 # Converts decimal percentage to string with specified digits
 pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
@@ -459,96 +449,5 @@ shinyServer(function(input, output, session) {
         }
         limmaTable
     })
-    
-    #############
-    #Time Series#
-    #############
-    OTU <- otu_table(read.csv(system.file("example/dataT/otu_table.csv", package = "PathoStat"), header = T, row.names = 1, check.names=F),taxa_are_rows=T)
-    TAX <- tax_table(as.matrix(read.csv(system.file("example/dataT/tax_table.csv", package = "PathoStat"), header = T, row.names = 1)))
-    SAMPLE<- sample_data(read.csv(system.file("example/dataT/sample_data.csv", package = "PathoStat"), header = T, row.names = 1))
-    
-    physeqTS <- phyloseq(OTU, TAX, SAMPLE)
-    
-    datosRAREF<-rarefy_even_depth(physeqTS, sample.size =1000,replace=FALSE, rngseed=T) ### rarefaccion to min number before
-    
-    output$Allusset <- renderUI({
-      selectInput(inputId="Allusset", label="Subset Sample Condition", 
-                  choices = colnames(sample_data(datosRAREF)))
-    })   
-    output$Alluglom <- renderUI({
-      selectInput(inputId="Alluglom", label="Agglomerate taxa", 
-                  choices = colnames(tax_table(datosRAREF)), selected = "Phylum")
-    })
-    output$Allustax <- renderUI({
-      checkboxGroupInput(inputId="Allustax", label="Taxa of interest ", 
-                         choices = as.character(unique(unlist(tax_table(datosRAREF)[,input$Alluglom]))))
-    })
-
-    alludata <- reactive({
-      if(is.null(input$Allusset) || is.null(input$Alluglom) || is.null(input$Allustax)){
-        return(NULL)
-      }
-      
-      tryCatch({
-        #subset sample
-        ss<-paste('subset_samples(datosRAREF,!is.na(',input$Allusset,'))' ,sep ='')
-        DR = eval(parse(text=ss))
-
-        #agglomerate data by taxonomic rank.
-        tg<-paste("tax_glom(DR, taxrank='",input$Alluglom,"')",sep ='')
-        glom = eval(parse(text=tg))
-      
-        #subset taxa
-        tg<-paste("subset_taxa(glom, tax_table(glom)[,",input$Alluglom,"] %in% ",input$Allustax ,")",sep ='')
-        glom = eval(parse(text=tg))
-        
-      },error=function(cond){
-          return(NULL)
-      })
-
-      glom<-transform_sample_counts(glom, function(x) x / sum(x) )
-      glom_time <- sample_data(glom)[,"Time"]
-      glom_time$sample = rownames(glom_time)
-      rownames(glom_time) = NULL
-      glom_otu <- t(otu_table(glom))
-      
-      cbind(glom_time, glom_otu) -> glom_otu_time
-      
-      # clean up the data frame
-      row.names(glom_otu_time) <- NULL
-      glom_otu_time$sample <- NULL
-      
-      # average taxa proportions by time
-      glom_otu_time <- ddply(glom_otu_time,"Time",numcolwise(mean))
-      
-      # change colnames from otu's to Genus names
-      tryCatch({
-        colnames(glom_otu_time) <- c("Time", tax_table(glom)[as.matrix(colnames(glom_otu_time)[-1]),input$Alluglom])
-        glom_otu_time_melted <- melt(glom_otu_time, id.vars=c("Time"), measure.vars=input$Allustax, variable.name="taxa", value.name="proportion")
-        
-      },error=function(cond){
-        return(NULL)
-      })
-      
-      if(!exists("glom_otu_time_melted")){
-        return(NULL)
-      }
-      
-      glom_otu_time_melted$proportion <- glom_otu_time_melted$proportion*100
-      glom_otu_time_melted <- glom_otu_time_melted[c(2,1,3)]
-      glom_otu_time_melted["proportion"]<-rapply( glom_otu_time_melted["proportion"], f=function(x) ifelse(is.nan(x),0,x), how="replace" )
-      
-      return(glom_otu_time_melted)
-      
-    })
-    output$TimePlotVisu<- renderPlot({
-      if(is.null(alludata())){
-        return(NULL)
-      }
-      alluvial_ts(alludata(), wave = .4, ygap = 2, plotdir = 'centred', alpha=.9,
-                  rankup = FALSE, grid = TRUE, grid.lwd = 5, xmargin = 0.2, lab.cex = 1, xlab = 'Time',
-                  ylab = '', border = NA, axis.cex = 1, title = '')
-    })
-    
     
 })

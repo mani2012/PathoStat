@@ -45,7 +45,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 #selectizeInput('taxl', 'Taxonomy Level', choices = setNames(
                 #   tax.abb, tax.name)),
                 selectizeInput('taxl', 'Taxonomy Level', choices = tax.name, 
-                    selected='phylum'),
+                    selected='no rank'),
                 downloadButton('downloadData', 'Download RA CSV'),
                 downloadButton('downloadCountData', 'Download Count CSV'),
                 br(),
@@ -111,7 +111,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                             c(tax.name[-length(tax.name)], 'None'), 
                             selected='None'),
                         sliderInput("max.dist", "Max Dist:", 
-                            min = 0, max = 1, value = 0.8, step= 0.1),
+                            min = 0, max = 1, value = 0.5, step= 0.1),
                         width=3
                     ),
                     mainPanel(
@@ -194,27 +194,6 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 plotOutput("PCoAplot", height = "550px"), width=9
             )
         )
-    ),
-    tabPanel("Time Series",
-             tabsetPanel(
-                tabPanel("Visualization",
-                         sidebarLayout(
-                           sidebarPanel(
-                             uiOutput("Allusset"),
-                             uiOutput("Alluglom"),
-                             uiOutput("Allustax")
-
-                           ), 
-                           mainPanel(
-                             plotOutput("TimePlotVisu",height = "600px")
-                           )
-                     )
-               ),
-               tabPanel("Analysis", plotOutput("tmpPlot")
-                )
-
-               )
-             )
     )
 )
-
+)
