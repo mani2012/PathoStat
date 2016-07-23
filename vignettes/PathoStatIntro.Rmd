@@ -13,7 +13,12 @@ PathoScope generated reports file.
 
 The package includes:
 
-1. Relative Abundance plots
+1. Relative Abundance plots (Stacked Bar Plot, Heatmap)
+2. Diversity plots (Alpha, Beta, Exploratory Tree, BiPlot, Co-Occurrence)
+3. Differential Expression (Expression Plots, Limma)
+4. Confidence Region Plots
+5. PCA plots
+6. PCoA plots
 
 `runPathoStat` is the pipeline function that generates the PathoStat report
 and launches shiny app when in interactive mode. It combines all the functions 
@@ -45,41 +50,32 @@ install_github("mani2012/PathoStat", build_vignettes=TRUE, auth_token="dadf36cda
 ```
 
 If all went well you should now be able to load PathoStat. 
-Here is an example use of the pipeline.
+Here are some examples usage of the pipeline.
 
-### Example batch and condition
+### Example 1: Run PathoStat
 ```r
-nbatch <- 11
-ncond <- 3
-npercond <- 11
-subject_id <- c(1, 1, 1, 2, 2, 2, 3, 3, 3, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9, 
-    10, 10, 10, 12, 12, 12, 13, 13, 13, 15, 15, 15)
-batch <- unlist(lapply(subject_id, FUN=function(id) {paste("Person", id)}))
-diet <- c(1, 3, 2, 3, 1, 2, 2, 3, 1, 3, 2, 1, 3, 2, 1, 3, 1, 2, 1, 2, 3, 
-    2, 1, 3, 3, 1, 2, 3, 1, 2, 2, 3, 1)
-diet_key <- c("simple", "refined", "unrefined")
-condition <- diet_key[diet]
-```
-
-### Example 1: Apply PathoStat
-```r
-example_data_dir <- system.file("example/data", package = "PathoStat")
-runPathoStat(input_dir=example_data_dir, batch=batch, condition=condition, 
-    report_file="pathostat_report.html", report_dir=".", report_option_binary=
-    "111111111", view_report=FALSE, interactive=TRUE)
+runPathoStat()
 ```
 
 ### Example 2: L1 set
 ```r
 example2_data_dir <- system.file("example/data2/L1", package = "PathoStat")
-runPathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
-    report_file="pathostat_report.html", report_dir=".", report_option_binary=
-    "111111111", view_report=FALSE, interactive=TRUE)
+pstat <- createPathoStat(input_dir=example2_data_dir, 
+    sample_data_file="sample_data.tsv")
+# Save for future use
+savePstat(pstat, outdir=".", outfileName="pstat_data_2_L1.rda")
+# Load and run PathoStat
+pstat <- loadPstat(indir=".", infileName="pstat_data_2_L1.rda")
+runPathoStat(pstat)
 ```
 ### Example 2: L2 set
 ```r
 example2_data_dir <- system.file("example/data2/L2", package = "PathoStat")
-runPathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
-    report_file="pathostat_report.html", report_dir=".", report_option_binary=
-    "111111111", view_report=FALSE, interactive=TRUE)
+pstat <- createPathoStat(input_dir=example2_data_dir, 
+    sample_data_file="sample_data.tsv")
+# Save for future use
+savePstat(pstat, outdir=".", outfileName="pstat_data_2_L2.rda")
+# Load and run PathoStat
+pstat <- loadPstat(indir=".", infileName="pstat_data_2_L2.rda")
+runPathoStat(pstat)
 ```

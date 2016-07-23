@@ -33,8 +33,13 @@ log2CPM <- function(qcounts, lib.size = NULL) {
 #' @examples
 #' example_data_dir <- system.file("example/data", package = "PathoStat")
 #' readPathoscopeData(input_dir=example_data_dir)
-readPathoscopeData <- function(input_dir = ".") {
-    filenames <- list.files(input_dir, pattern = "*.tsv", full.names = TRUE)
+readPathoscopeData <- function(input_dir = ".", 
+    pathoreport_file_suffix="-sam-report.tsv") {
+    if (input_dir == ".") {
+        input_dir <- getwd()
+    }
+    pattern <- paste("*", pathoreport_file_suffix, sep="")
+    filenames <- list.files(input_dir, pattern = pattern, full.names = TRUE)
     genomes <- c()
     for (i in 1:length(filenames)) {
         filename <- filenames[i]
@@ -59,7 +64,7 @@ readPathoscopeData <- function(input_dir = ".") {
     do.call(cbind, lprop)
     do.call(cbind, lcprop)
     samplenames <- unlist(lapply(filenames, function(x) {
-        return(strsplit(basename(x), "-sam-report.tsv")[[1]])
+        return(strsplit(basename(x), pathoreport_file_suffix)[[1]])
     }))
     dat <- data.frame(lprop)
     rownames(dat) <- genomes
@@ -196,6 +201,9 @@ grepTid <- function(id) {
 #' data(pstat_data)
 #' outfile <- savePstat(pstat)
 savePstat <- function(pstat, outdir=".", outfileName="pstat_data.rda") {
+    if (outdir == ".") {
+        outdir <- getwd()
+    }
     outfile <- file.path(outdir, outfileName)
     save(pstat, file=outfile)
     return(outfile)
@@ -212,6 +220,9 @@ savePstat <- function(pstat, outdir=".", outfileName="pstat_data.rda") {
 #' infileName <- "pstat_data.rda"
 #' pstat <- loadPstat(data_dir, infileName)
 loadPstat <- function(indir=".", infileName="pstat_data.rda") {
+    if (indir == ".") {
+        indir <- getwd()
+    }
     infile <- file.path(indir, infileName)
     pstat <- NULL
     load(file=infile)

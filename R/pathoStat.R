@@ -20,20 +20,12 @@ require(phyloseq)
 #' @importFrom scales percent_format
 #' @export
 #' @examples
-#' nbatch <- 11
-#' ncond <- 3
-#' npercond <- 11
-#' subject_id <- c(1, 1, 1, 2, 2, 2, 3, 3, 3, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9,
-#'     9, 10, 10, 10, 12, 12, 12, 13, 13, 13, 15, 15, 15)
-#' batch <- unlist(lapply(subject_id, FUN=function(id) {paste("Person", id)}))
-#' diet <- c(1, 3, 2, 3, 1, 2, 2, 3, 1, 3, 2, 1, 3, 2, 1, 3, 1, 2, 1, 2, 3, 
-#'     2, 1, 3, 3, 1, 2, 3, 1, 2, 2, 3, 1)
-#' diet_key <- c("simple", "refined", "unrefined")
-#' condition <- diet_key[diet]
 #' example_data_dir <- system.file("example/data", package = "PathoStat")
-#' createPathoStat(input_dir=example_data_dir, batch, condition)
-createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv") {
-    datlist <- readPathoscopeData(input_dir)
+#' pstat <- createPathoStat(input_dir=example_data_dir, 
+#'     sample_data_file="sample_data.tsv")
+createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
+    pathoreport_file_suffix="-sam-report.tsv") {
+    datlist <- readPathoscopeData(input_dir, pathoreport_file_suffix)
     dat <- datlist$data
     countdat <- datlist$countdata
     ids <- rownames(dat)
@@ -71,14 +63,16 @@ createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv") {
 #' @importFrom shiny runApp
 #' @export
 #' @examples
-#' data_dir <- system.file("data", package = "PathoStat")
-#' infileName <- "pstat_data.rda"
-#' pstat <- loadPstat(data_dir, infileName)
-#' runPathoStat(pstat)
-runPathoStat <- function(pstat, report_file = "PathoStat_report.html", 
+#' runPathoStat()
+runPathoStat <- function(pstat=NULL, report_file = "PathoStat_report.html", 
     report_dir = ".", report_option_binary = "111111111", view_report = FALSE, 
     interactive = TRUE) {
     
+    if (is.null(pstat))  {
+        data_dir <- system.file("data", package = "PathoStat")
+        infileName <- "pstat_data.rda"
+        pstat <- loadPstat(data_dir, infileName)
+    }
     if (report_dir == ".") {
         report_dir = getwd()
     }

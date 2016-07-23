@@ -6,10 +6,16 @@ PathoScope generated reports file.
 
 The package includes:
 
-1. Relative Abundance plots
+1. Relative Abundance plots (Stacked Bar Plot, Heatmap)
+2. Diversity plots (Alpha, Beta, Exploratory Tree, BiPlot, Co-Occurrence)
+3. Differential Expression (Expression Plots, Limma)
+4. Confidence Region Plots
+5. PCA plots
+6. PCoA plots
 
-`pathoStat` is the pipeline function that generates the PathoStat report. 
-It combines all the functions into one step.
+`runPathoStat` is the pipeline function that generates the PathoStat report
+and launches shiny app when in interactive mode. It combines all the functions 
+into one step.
 
 ## Installation
 
@@ -41,13 +47,14 @@ If all went well you should now be able to load PathoStat:
 ```r
 require(PathoStat)
 vignette('PathoStatIntro', package='PathoStat')
+runPathoStat()
 ```
 
 ## Troubleshooting with Installation
 
 If you are having issues with the installation, you may have to setup local 
 directory, if you do not have permissions to install in the default location 
-for R. You may also want to load a version of R 3.2 or higher.
+for R. You may also want to load a version of R 3.3 or higher.
 ```r
 export R_LIBS="/my_own_local_directory/R_libs"
 module load R/R-3.2.4
