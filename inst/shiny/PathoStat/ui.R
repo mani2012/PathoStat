@@ -146,6 +146,26 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
             )
             )
     ),
+    tabPanel("Confidence Region",
+        sidebarLayout(
+            sidebarPanel(
+                #selectizeInput('taxlcr', 'Taxonomy Level', choices = tax.name, 
+                #    selected='no rank'),
+                selectizeInput('taxon1', 'Taxon 1', choices=row.names(
+                    shinyInput$pstat@otu_table)),
+                selectizeInput('taxon2', 'Taxon 2', choices=row.names(
+                    shinyInput$pstat@otu_table)),
+                selectizeInput('sample', 'Sample', choices=colnames(
+                    shinyInput$pstat@otu_table)),
+                checkboxInput("uselogit", 
+                    "Use Logit Transformation", FALSE),
+                width=5
+            ),
+            mainPanel(
+                plotOutput("confRegion", height = "550px"), width=7
+            )
+        )
+    ),
     tabPanel("PCA",
         sidebarLayout(
             sidebarPanel(

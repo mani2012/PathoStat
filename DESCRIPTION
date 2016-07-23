@@ -32,6 +32,7 @@ Collate:
     'pathoStat.R'
     'utils.R'
     'taxonomy.R'
+    'confRegion.R'
     'allClasses.R'
 Suggests: testthat
 biocViews: GraphAndNetwork, Microarray, PrincipalComponent, 

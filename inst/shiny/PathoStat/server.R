@@ -507,4 +507,13 @@ shinyServer(function(input, output, session) {
         limmaTable
     })
     
+    output$confRegion <- renderPlot({
+        p1 <- shinyInput$pstat@otu_table[input$taxon1, input$sample]
+        if (p1 <= 0) p1 <- 1
+        p2 <- shinyInput$pstat@otu_table[input$taxon2, input$sample]
+        if (p2 <= 0) p2 <- 1
+        size <- sum(shinyInput$pstat@otu_table[,input$sample])
+        plotConfRegion(p1, p2, size, uselogit=input$uselogit)
+    })
+    
 })
