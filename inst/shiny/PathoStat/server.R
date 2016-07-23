@@ -13,9 +13,13 @@ pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
 shinyServer(function(input, output, session) {
     # needed information from PathoStat
     shinyInput <- getShinyInput()
-    pdata <- data.frame(shinyInput$batch, shinyInput$condition)
-    modmatrix = model.matrix(~as.factor(shinyInput$condition), data=pdata)
-    pca <- BatchQC::batchqc_pca(shinyInput$countdata, batch=shinyInput$batch, 
+    pstat <- shinyInput$pstat
+    sample_data <- pstat@sam_data
+    #pdata <- data.frame(shinyInput$batch, shinyInput$condition)
+    #modmatrix = model.matrix(~as.factor(shinyInput$condition), data=pdata)
+    pdata <- data.frame(c(sample_data[,1])[[1]], c(sample_data[,2])[[1]])
+    modmatrix = model.matrix(~as.factor(c(sample_data[,2])[[1]]), data=pdata)
+    pca <- BatchQC::batchqc_pca(pstat@otu_table, batch=c(sample_data[,1])[[1]], 
         mod=modmatrix)
     shinyInput <- c(shinyInput, list("pc"=data.frame(pca$x), "vars"=pca$sdev^2))
     setShinyInput(shinyInput)
@@ -29,19 +33,42 @@ shinyServer(function(input, output, session) {
     }
     # setInputs(FALSE)
     findAllTaxData <- function(taxonLevel) {
-        taxdata <- findTaxonLevelData(shinyInput$data, shinyInput$taxonLevels, 
-            taxonLevel)
-        if (is.null(shinyInput$taxdata)) {
-            shinyInput <- c(shinyInput, list(taxdata = taxdata))
-        } else {
-            shinyInput$taxdata <- taxdata
+        #taxcountdata <- findTaxonLevelData(pstat@otu_table, 
+        #    shinyInput$taxonLevels, taxonLevel)
+        shinyInput <- getShinyInput()
+        pstat <- shinyInput$pstat
+        if ((taxonLevel == "no rank"))  {
+            taxcountdata <- pstat@otu_table
+            taxdata <- findRAfromCount(taxcountdata)
+            taxcountdata <- data.frame(taxcountdata)
+            taxdata <- data.frame(taxdata)
+        } else  {
+            physeq2 <- tax_glom(pstat, taxonLevel)
+            taxcountdata <- physeq2@otu_table
+            taxdata <- findRAfromCount(taxcountdata)
+            taxcountdata <- data.frame(taxcountdata)
+            taxdata <- data.frame(taxdata)
+            labvec <- as(tax_table(physeq2)[, taxonLevel], "character")
+            labvec <- unlist(lapply(labvec, 
+                function(x){paste0( taxonLevel, "|", x)}))
+            labvec[is.na(labvec)] <- ""
+            names <- rownames(taxcountdata)
+            for (i in 1:length(names))  {
+                tid <- grepTid(names[i])
+                labvec[i] <- paste0( "ti|", tid, "|", labvec[i])
+            }
+            rownames(taxcountdata) <- labvec
+            rownames(taxdata) <- labvec
         }
-        taxcountdata <- findTaxonLevelData(shinyInput$countdata, 
-            shinyInput$taxonLevels, taxonLevel)
         if (is.null(shinyInput$taxcountdata)) {
             shinyInput <- c(shinyInput, list(taxcountdata = taxcountdata))
         } else {
             shinyInput$taxcountdata <- taxcountdata
+        }
+        if (is.null(shinyInput$taxdata)) {
+            shinyInput <- c(shinyInput, list(taxdata = taxdata))
+        } else {
+            shinyInput$taxdata <- taxdata
         }
         setShinyInput(shinyInput)
     }
@@ -102,22 +129,26 @@ shinyServer(function(input, output, session) {
     format_RA_table <- function(tmp) {
       tmp %>% dplyr::add_rownames("fullname") %>%
         dplyr::mutate_each(dplyr::funs(pct2str), -fullname) %>% 
-        tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl), sep='\\|') %>%
+        tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl), 
+            sep='\\|') %>%
         dplyr::select_(.dots=c(as.name(input$taxl), 'taxid', colnames(tmp)))
     }
     
     # Render relative abundance table    
-    output$TaxRAtable <- DT::renderDataTable(format_RA_table(findTaxData()), options=dtopts, rownames=F)    
+    output$TaxRAtable <- DT::renderDataTable(format_RA_table(findTaxData()), 
+        options=dtopts, rownames=F)    
     
     # Format count table:
     # Just expands taxa name
     format_Count_table <- function(tmp) {
       tmp %>% dplyr::add_rownames("fullname") %>%
-        tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl), sep='\\|') %>%
+        tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl), 
+            sep='\\|') %>%
         dplyr::select_(.dots=c(as.name(input$taxl), 'taxid', colnames(tmp)))
     }
     # Render count table
-    output$TaxCountTable <- DT::renderDataTable(format_Count_table(findTaxCountData()), options=dtopts, rownames=F)
+    output$TaxCountTable <- DT::renderDataTable(format_Count_table(
+        findTaxCountData()), options=dtopts, rownames=F)
     
     output$downloadData <- downloadHandler(filename = function() {
         paste0("sample_data_", input$taxl, ".csv", sep = "")
@@ -138,7 +169,7 @@ shinyServer(function(input, output, session) {
         TAX <- tax_table(taxmat)
         physeq <- phyloseq(OTU, TAX)
         sampledata = sample_data(data.frame(condition=as.factor(
-            shinyInput$condition), batch=as.factor(shinyInput$batch), 
+            c(sample_data[,2])[[1]]), batch=as.factor(c(sample_data[,1])[[1]]), 
             row.names=sample_names(physeq), stringsAsFactors=FALSE))
         random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=
             taxa_names(physeq))
@@ -157,7 +188,7 @@ shinyServer(function(input, output, session) {
     }
     
     output$Heatmap <- renderPlot({
-        physeq1 <- findPhyseqData()
+        physeq1 <- shinyInput$pstat
         setGgplotTheme()
         #plot_heatmap(physeq1, sample.label="condition")
         if (input$taxl=="no rank")  {
@@ -168,7 +199,11 @@ shinyServer(function(input, output, session) {
         }
     })
     output$AlphaDiversity <- renderPlot({
-        physeq1 <- findPhyseqData()
+        physeq1 <- shinyInput$pstat
+        cn <- colnames(physeq1@sam_data)
+        cn[1] <- "batch"
+        cn[2] <- "condition"
+        colnames(physeq1@sam_data) <- cn
         #alpha_meas <- c("Observed", "Chao1", "ACE", "Shannon", "Simpson", 
         #    "InvSimpson")
         #alpha_meas <- c("Observed", "Chao1", "Shannon", "Simpson", 
@@ -180,7 +215,7 @@ shinyServer(function(input, output, session) {
             y=value, color=NULL), alpha=0.1)
     })
     output$BetaDiversity <- renderPlot({
-        physeq1 <- findPhyseqData()
+        physeq1 <- shinyInput$pstat
         setGgplotTheme()
         if (input$methodBeta)  {
             dist = distance(physeq1, method = "wUniFrac")
@@ -194,13 +229,21 @@ shinyServer(function(input, output, session) {
             margins = c(6, 6))
     })
     output$ExploratoryTree <- renderPlot({
-        physeq1 <- findPhyseqData()
+        physeq1 <- shinyInput$pstat
+        cn <- colnames(physeq1@sam_data)
+        cn[1] <- "batch"
+        cn[2] <- "condition"
+        colnames(physeq1@sam_data) <- cn
         setGgplotTheme()
         plot_tree(physeq1, color="condition", label.tips="genus", 
             size="Abundance")
     })
     output$BiPlot <- renderPlot({
-        physeq1 <- findPhyseqData()
+        physeq1 <- shinyInput$pstat
+        cn <- colnames(physeq1@sam_data)
+        cn[1] <- "batch"
+        cn[2] <- "condition"
+        colnames(physeq1@sam_data) <- cn
         setGgplotTheme()
         if (input$colorBiP=='None') color <- NULL else color <- input$colorBiP
         if (input$shapeBiP=='None') shape <- NULL else shape <- input$shapeBiP
@@ -217,7 +260,11 @@ shinyServer(function(input, output, session) {
         p
     })
     output$CoOccurrence <- renderPlot({
-        physeq1 <- findPhyseqData()
+        physeq1 <- shinyInput$pstat
+        cn <- colnames(physeq1@sam_data)
+        cn[1] <- "batch"
+        cn[2] <- "condition"
+        colnames(physeq1@sam_data) <- cn
         setGgplotTheme()
         if (input$colorCo=='None') color <- NULL else color <- input$colorCo
         if (input$shapeCo=='None') shape <- NULL else shape <- input$shapeCo
@@ -259,8 +306,8 @@ shinyServer(function(input, output, session) {
         
         pc %>% 
         ggvis(~get(names(pc)[input$xcol]), ~get(names(pc)[input$ycol]), 
-            fill = if (input$colbybatchPCA) ~factor(shinyInput$batch) 
-            else ~factor(condition), `:=`(key, ~id)) %>% 
+            fill = if (input$colbybatchPCA) ~factor(c(sample_data[,1])[[1]]) 
+            else ~factor(c(sample_data[,2])[[1]]), `:=`(key, ~id)) %>% 
         layer_points(`:=`(size, 75), `:=`(size.hover, 200)) %>% 
         add_tooltip(all_values, "hover") %>% 
         add_axis("x", title = paste0("PC", input$xcol), properties = axis_props(
@@ -287,12 +334,16 @@ shinyServer(function(input, output, session) {
         pc <- shinyInput$pc
         pcs <- t(pc)
         explained_variation <- BatchQC::batchqc_pc_explained_variation(pcs, 
-            shinyInput$vars, shinyInput$condition, shinyInput$batch)
+            shinyInput$vars, c(sample_data[,2])[[1]], c(sample_data[,1])[[1]])
         explained_variation
     })
     
     output$PCoAplot <- renderPlot({
-        physeq1 <- findPhyseqData()
+        physeq1 <- shinyInput$pstat
+        cn <- colnames(physeq1@sam_data)
+        cn[1] <- "batch"
+        cn[2] <- "condition"
+        colnames(physeq1@sam_data) <- cn
         setGgplotTheme()
         DistBC = distance(physeq1, method = "bray")
         DistUF = distance(physeq1, method = "wUniFrac")
@@ -318,7 +369,7 @@ shinyServer(function(input, output, session) {
     # interactive Differential Expression boxplot
     BP <- reactive({
         findTaxCountDataDE()
-        physeq1 <- findPhyseqData()
+        physeq1 <- shinyInput$pstat
         Inbatch <- sample_data(physeq1)[[input$secondary]]
         shinyInput <- getShinyInput()
         lcpm <- log2CPM(shinyInput$taxcountdata)
@@ -333,7 +384,7 @@ shinyServer(function(input, output, session) {
         dat1
     })
     DE <- reactive({
-        physeq1 <- findPhyseqData()
+        physeq1 <- shinyInput$pstat
         Incondition <- sample_data(physeq1)[[input$primary]]
         findTaxCountDataDE()
         shinyInput <- getShinyInput()
@@ -349,7 +400,7 @@ shinyServer(function(input, output, session) {
         dat1
     })
     diffex_bp <- reactive({
-        physeq1 <- findPhyseqData()
+        physeq1 <- shinyInput$pstat
         Incondition <- sample_data(physeq1)[[input$primary]]
         Inbatch <- sample_data(physeq1)[[input$secondary]]
         if (input$sortbybatch) {
@@ -382,21 +433,26 @@ shinyServer(function(input, output, session) {
                 if (input$colbybatch) ~batch else ~condition) %>%
             layer_boxplots() %>%
             add_tooltip(function(dat2) { paste0("Sample: ", 
-                colnames(shinyInput$countdata)[dat2$samples],
-                "<br>", if (input$colbybatch) "Secondary Covariate: " else "Primary Covariate: ",
+                colnames(shinyInput$pstat@otu_table)[dat2$samples],
+                "<br>", if (input$colbybatch) input$secondary 
+                else input$primary, ": ",
                 if (input$colbybatch) dat2$batch else dat2$condition)
             }, "hover") %>%
             add_axis("x", title = if (input$sortbybatch)
-                paste(input$noSamples, "Sample(s) Per Secondary Covariate", sep = " ")
+                paste(input$noSamples, "Sample(s) Per ", input$secondary,
+                    sep = " ")
                 else
-                    paste(input$ncSamples, "Sample(s) Per Primary Covariate", sep=" "),
+                    paste(input$ncSamples, "Sample(s) Per ", input$primary, 
+                        sep=" "),
                 properties = axis_props(title = list(fontSize = 15),
                 labels = list(fontSize = 5, angle = 90))) %>%
             add_axis("y", title = "Expression", properties = axis_props(title =
                 list(fontSize = 15),labels = list(fontSize = 10))) %>%
             add_legend("fill", title = if (input$colbybatch)
-                "Secondary Covariates" else "Primary Covariates", properties = legend_props(title =
-                list(fontSize = 15), labels = list(fontSize = 10)))
+                input$secondary else input$primary, 
+                properties = legend_props(title =
+                list(fontSize = 15), labels = list(fontSize = 10))) %>%
+            set_options(width="auto", height="auto")
     })
     diffex_bp %>% bind_shiny("DiffExPlot")
     output$DEsummary <- renderPrint({
@@ -415,7 +471,7 @@ shinyServer(function(input, output, session) {
         }
     })
     DELim <- reactive({
-      physeq1 <- findPhyseqData()
+      physeq1 <- shinyInput$pstat
       Incondition <- sample_data(physeq1)[[input$primary]]
       findTaxCountDataDE()
       shinyInput <- getShinyInput()
@@ -432,12 +488,13 @@ shinyServer(function(input, output, session) {
     })
     output$LimmaTable <- renderTable({
         shinyInput <- getShinyInput()
-        physeq1 <- findPhyseqData()
+        physeq1 <- shinyInput$pstat
         Incondition <- sample_data(physeq1)[[input$primary]]
         Inbatch <- sample_data(physeq1)[[input$secondary]]
         pdata <- data.frame(Inbatch, Incondition)
-        mod <- model.matrix(if (input$primary == input$secondary) ~as.factor(Incondition)
-                            else ~as.factor(Incondition) + ~as.factor(Inbatch), data = pdata)
+        mod <- model.matrix(if (input$primary == input$secondary) 
+            ~as.factor(Incondition)
+            else ~as.factor(Incondition) + ~as.factor(Inbatch), data = pdata)
         dat1 <- DELim()
         fit <- lmFit(dat1, mod)
         fit2 <- eBayes(fit)

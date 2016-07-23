@@ -1,5 +1,10 @@
 library(PathoStat)
 
+data_dir <- system.file("data", package = "PathoStat")
+infileName <- "pstat_data.rda"
+pstat <- loadPstat(data_dir, infileName)
+runPathoStat(pstat)
+
 ### Example batch and condition
 nbatch <- 11
 ncond <- 3
@@ -21,18 +26,20 @@ example_data_dir <- system.file("example/data", package = "PathoStat")
 ### apply PathoStat
 runPathoStat(input_dir=example_data_dir, batch=batch, condition=condition, 
     report_file="pathostat_report.html", report_dir=".", report_option_binary=
-    "111111111", view_report=FALSE, interactive=TRUE)
+    "111111111", view_report=FALSE, interactive=TRUE, tax_cache="tax_cache.rda")
 
 ### Example 2 PathoScope report files L1 set
 example2_data_dir <- system.file("example/data2/L1", package = "PathoStat")
 ### apply PathoStat
 runPathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
     report_file="pathostat_report.html", report_dir=".", report_option_binary=
-    "111111111", view_report=FALSE, interactive=TRUE)
+    "111111111", view_report=FALSE, interactive=TRUE, 
+    tax_cache="tax_cache_2.rda")
 
 ### Example 2 PathoScope report files L2 set
 example2_data_dir <- system.file("example/data2/L2", package = "PathoStat")
 ### apply PathoStat
 runPathoStat(input_dir=example2_data_dir, batch=batch, condition=condition, 
     report_file="pathostat_report.html", report_dir=".", report_option_binary=
-    "111111111", view_report=FALSE, interactive=TRUE)
+    "111111111", view_report=FALSE, interactive=TRUE, 
+    tax_cache="tax_cache_3.rda")

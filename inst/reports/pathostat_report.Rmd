@@ -25,7 +25,10 @@ eval_cell_1 = (report_option_vector[1]=="1")
 #pander(datasummary[,1:10])
 #pander(dat)
 #Add an id variable for the filled regions
-dat <- melt(cbind(shinyInput$data, ind = rownames(shinyInput$data)), 
+pstat <- shinyInput$pstat
+taxdata <- findRAfromCount(pstat@otu_table)
+taxdata <- data.frame(taxdata)
+dat <- melt(cbind(taxdata, ind = rownames(taxdata)), 
     id.vars = c('ind'))
 ggplot(dat,aes(x = variable, y = value,fill = ind)) + 
     geom_bar(position = "fill",stat = "identity") + 

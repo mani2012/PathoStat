@@ -16,28 +16,13 @@ minbatch <- function(batch1){
 
 shinyInput <- getShinyInput()
 
-findphyloseqData <- function() {
-  ids <- rownames(shinyInput$data)
-  taxmat <- findTaxonMat(ids, shinyInput$taxonLevels)
-  OTU <- otu_table(shinyInput$countdata, taxa_are_rows = TRUE)
-  TAX <- tax_table(taxmat)
-  physeq <- phyloseq(OTU, TAX)
-  sampledata = sample_data(data.frame(condition=as.factor(
-               shinyInput$condition), batch=as.factor(shinyInput$batch), 
-               row.names=sample_names(physeq), stringsAsFactors=FALSE))
-  random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=
-                taxa_names(physeq))
-  physeq1 <- merge_phyloseq(physeq, sampledata, random_tree)
-  return(physeq1)
-}
-phyloseq1 <- findphyloseqData()
-covariates <- colnames(sample_data(phyloseq1))
-maxbatchElems <- minbatch(shinyInput$batch)
-maxcondElems <- minbatch(shinyInput$condition)
+pstat <- shinyInput$pstat
+covariates <- colnames(sample_data(pstat))
+maxbatchElems <- minbatch(c(pstat@sam_data[,1])[[1]])
+maxcondElems <- minbatch(c(pstat@sam_data[,2])[[1]])
 defaultDisp <- 30
 defaultGenesDisp <- 10
-maxGenes <- dim(shinyInput$data)[1]
-nbatch <- nlevels(as.factor(shinyInput$batch))
+maxGenes <- dim(pstat@otu_table)[1]
 shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE, 
     tabPanel("Relative Abundance",
         sidebarLayout(
@@ -60,8 +45,10 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                         ggvisOutput("TaxRelAbundancePlot")),
                     tabPanel("Heatmap", plotOutput("Heatmap", height="550px")),
                     tabPanel("Summary", verbatimTextOutput("TaxRAsummary")),
-                    tabPanel("Table", DT::dataTableOutput("TaxRAtable", width='95%')),
-                    tabPanel("Count Table", DT::dataTableOutput("TaxCountTable", width='95%'))
+                    tabPanel("RA Table(%)", DT::dataTableOutput("TaxRAtable", 
+                        width='95%')),
+                    tabPanel("Count Table", DT::dataTableOutput("TaxCountTable",
+                        width='95%'))
                 ), width=9
             )
         )
@@ -126,19 +113,23 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
             sidebarPanel(
                 selectizeInput('taxlde', 'Taxonomy Level', choices = tax.name, 
                     selected='no rank'),
-                selectizeInput('primary', 'Primary Covariate', choices = covariates),
-                selectizeInput('secondary', 'Secondary Covariate', choices = covariates),
-                numericInput('ncSamples', 'No. of Sample(s) Per Primary Covariate', 
+                selectizeInput('primary', 'Primary Covariate', 
+                    choices = covariates, selected=covariates[2]),
+                selectizeInput('secondary', 'Secondary Covariate', 
+                    choices = covariates, selected=covariates[1]),
+                numericInput('ncSamples', 
+                    'No. of Sample(s) Per Primary Covariate', 
                     if (maxcondElems>defaultDisp) defaultDisp 
                     else maxcondElems, min = 1, max = maxcondElems),
-                numericInput('noSamples', 'No. of Sample(s) Per Secondary Covariate',  
+                numericInput('noSamples', 
+                    'No. of Sample(s) Per Secondary Covariate',  
                     if (maxbatchElems>defaultDisp) defaultDisp 
                     else maxbatchElems, min = 1, max = maxbatchElems),
                 checkboxInput("sortbybatch", 
-                    "Sort By Secondary Covariate First (Default: Sort By Primary Covariate First)", 
+"Sort By Secondary Covariate First (Default: Sort By Primary Covariate First)", 
                     FALSE),
                 checkboxInput("colbybatch", 
-                    "Color By Secondary Covariate (Default: Color By Primary Covariate)", FALSE),
+"Color By Secondary Covariate (Default: Color By Primary Covariate)", FALSE),
                 numericInput('noTaxons', 
                     'No. of top Differentially Expressed Taxons to display', 
                     if (maxGenes>defaultGenesDisp) defaultGenesDisp 

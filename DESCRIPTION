@@ -26,11 +26,13 @@ Imports:
     ggplot2,
     rentrez,
     BatchQC,
-    DT
+    DT,
+    gtools
 Collate:
     'pathoStat.R'
     'utils.R'
     'taxonomy.R'
+    'allClasses.R'
 Suggests: testthat
 biocViews: GraphAndNetwork, Microarray, PrincipalComponent, 
     Sequencing, Software, Visualization, RNASeq

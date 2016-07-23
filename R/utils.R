@@ -92,19 +92,20 @@ readPathoscopeData <- function(input_dir = ".") {
 #' loadPathoscopeReports(reportfiles)
 loadPathoscopeReports <- function(reportfiles, nrows=NULL) {
     # Report basenames
-    report_base <- gsub('-sam-report', '', gsub('\\.tsv$', '', basename(reportfiles)))
+    report_base <- gsub('-sam-report', '', gsub('\\.tsv$', '', 
+        basename(reportfiles)))
 
         # Get total_reads and total_genomes from first line of report
-    totals <- data.frame(row.names=report_base, do.call(rbind, lapply(reportfiles, function(rf){
-        read.table(rf, sep='\t', nrows=1)
-    })))
+    totals <- data.frame(row.names=report_base, do.call(rbind, 
+        lapply(reportfiles, function(rf){read.table(rf, sep='\t', nrows=1)})
+    ))
     totals <- totals[,c('V2','V4')]
     colnames(totals) <- c('total_reads','total_genomes')
     
     # Read all reports into list
     mlist <- lapply(reportfiles, function(rf){
-        read.table(rf, sep='\t', header=T, stringsAsFactors=F, row.names=1, skip=1,
-                   comment.char="")
+        read.table(rf, sep='\t', header=T, stringsAsFactors=F, row.names=1, 
+            skip=1, comment.char="")
     })
     
     if(!is.null(nrows)) mlist <- lapply(mlist, function(tbl){tbl[1:nrows, ]})
@@ -122,11 +123,14 @@ loadPathoscopeReports <- function(reportfiles, nrows=NULL) {
         z
     })
     # Sanity check: colnames and rownames should be the same for all tables
-    stopifnot(all(sapply(mlist.allgenomes,function(tbl){all(rownames(tbl)==genomes)})))
-    stopifnot(all(sapply(mlist.allgenomes,function(tbl){all(colnames(tbl)==vals)})))
+    stopifnot(all(sapply(mlist.allgenomes,
+        function(tbl){all(rownames(tbl)==genomes)})))
+    stopifnot(all(sapply(mlist.allgenomes,
+        function(tbl){all(colnames(tbl)==vals)})))
 
     ret <- lapply(vals, function(v) {
-        z <- data.frame(row.names=genomes, do.call(cbind, lapply(mlist.allgenomes,function(tbl){ tbl[,v]})))
+        z <- data.frame(row.names=genomes, do.call(cbind, lapply(
+            mlist.allgenomes,function(tbl){ tbl[,v]})))
         colnames(z) <- report_base
         z
     })
@@ -180,3 +184,55 @@ grepTid <- function(id) {
     tid <- unlist(strsplit(tid, "ti."))[2]
     return(tid)
 } 
+
+#' Save the pathostat object to R data(.rda) file
+#' 
+#' @param pstat pathostat object
+#' @param outdir Output Directory of the .rda file
+#' @param outfileName File name of the .rda file
+#' @return outfile .rda file
+#' @export
+#' @examples
+#' data(pstat_data)
+#' outfile <- savePstat(pstat)
+savePstat <- function(pstat, outdir=".", outfileName="pstat_data.rda") {
+    outfile <- file.path(outdir, outfileName)
+    save(pstat, file=outfile)
+    return(outfile)
+} 
+
+#' Load the R data(.rda) file with pathostat object
+#' 
+#' @param indir Input Directory of the .rda file
+#' @param infileName File name of the .rda file
+#' @return pstat pathostat object (NULL if it does not exist)
+#' @export
+#' @examples
+#' data_dir <- system.file("data", package = "PathoStat")
+#' infileName <- "pstat_data.rda"
+#' pstat <- loadPstat(data_dir, infileName)
+loadPstat <- function(indir=".", infileName="pstat_data.rda") {
+    infile <- file.path(indir, infileName)
+    pstat <- NULL
+    load(file=infile)
+    return(pstat)
+} 
+
+#' Return the Relative Abundance (RA) data for the given count OTU table
+#' 
+#' @param count_otu Count OTU table
+#' @return ra_otu Relative Abundance (RA) OTU table
+#' @export
+#' @examples
+#' data_dir <- system.file("data", package = "PathoStat")
+#' infileName <- "pstat_data.rda"
+#' pstat <- loadPstat(data_dir, infileName)
+#' ra_otu <- findRAfromCount(pstat@otu_table)
+findRAfromCount <- function(count_otu) {
+    ra_otu <- otu_table(count_otu)
+    numcol <- dim(count_otu)[2]
+    for (i in 1:numcol)  {
+        ra_otu[,i] <- ra_otu[,i]/sum(ra_otu[,i])
+    }
+    return(ra_otu)
+}
