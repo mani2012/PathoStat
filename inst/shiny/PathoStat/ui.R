@@ -205,6 +205,30 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 plotOutput("PCoAplot", height = "550px"), width=9
             )
         )
+    ),
+    tabPanel("Time Series",
+        tabsetPanel(
+            tabPanel("Visualization",
+                sidebarLayout(
+                    sidebarPanel(
+                      selectInput(inputId="Allusset", 
+                          label="Visualization column", 
+                          choices = colnames(shinyInput$pstat@sam_data)),
+                      numericInput(inputId="Allussize", 
+                          label="Sample Size (Rarefaction)", 
+                          min = 1, value = 1000),
+                      selectInput(inputId="Alluglom", label="Agglomerate taxa", 
+                          choices = colnames(shinyInput$pstat@tax_table)),
+                      uiOutput("Allustax"),
+                      downloadButton('downloadAlluvialPlot', 
+                                     'Download Plot')
+                    ),
+                    mainPanel(
+                      plotOutput("TimePlotVisu",height = "600px")
+                    )
+                )
+            )
+        )
     )
 )
 )
