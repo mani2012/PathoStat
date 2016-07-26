@@ -6,16 +6,8 @@ library(limma)
 library(phyloseq)
 library(ape)
 library(PathoStat)
-library(DESeq2)
 library(plyr)
-library(vegan)
-library(picante)
-library(TSA)
-library(nortest)
-library(multcomp)
-library(mvabund)
 library(alluvial)
-library(grid)
 
 # Converts decimal percentage to string with specified digits
 pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
