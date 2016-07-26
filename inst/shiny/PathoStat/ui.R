@@ -206,7 +206,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
             )
         )
     ),
-    tabPanel("Longitudinal",
+    tabPanel("Time Series",
         tabsetPanel(
             tabPanel("Visualization",
                 sidebarLayout(
@@ -216,7 +216,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                           choices = colnames(shinyInput$pstat@sam_data)),
                       numericInput(inputId="Allussize", 
                           label="Sample Size (Rarefaction)", 
-                          min = 1, value = 1000),
+                          min = 1, value = 1000, step = 500),
                       selectInput(inputId="Alluglom", label="Agglomerate taxa", 
                           choices = colnames(shinyInput$pstat@tax_table)),
                       uiOutput("Allustax"),
