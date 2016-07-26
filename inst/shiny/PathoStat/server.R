@@ -527,8 +527,14 @@ shinyServer(function(input, output, session) {
     })
     
     Alluvialdata <- reactive({
-        DR<-rarefy_even_depth(pstat, sample.size =input$Allussize,
-            replace=FALSE, rngseed=T) 
+        if(input$Allurar==T){
+            DR<-rarefy_even_depth(pstat, 
+                sample.size =min(colSums(otu_table(pstat))),
+                replace=FALSE, rngseed=T)
+        }else{
+          DR<-pstat
+        }
+ 
         if(is.null(input$Allusset) || 
             is.null(input$Alluglom) || 
             is.null(input$Allustax)){
