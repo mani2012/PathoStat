@@ -216,7 +216,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                           choices = colnames(shinyInput$pstat@sam_data)),
                       checkboxInput(inputId="Allurar", 
                           label="Rarefaction? (maximum reads of minimal 
-                          sample count"),
+                          sample count)"),
                       selectInput(inputId="Alluglom", label="Agglomerate taxa", 
                           choices = colnames(shinyInput$pstat@tax_table)),
                       uiOutput("Allustax"),
