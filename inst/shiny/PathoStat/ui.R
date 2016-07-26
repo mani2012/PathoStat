@@ -206,7 +206,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
             )
         )
     ),
-    tabPanel("Time Series",
+    tabPanel("Longitudinal",
         tabsetPanel(
             tabPanel("Visualization",
                 sidebarLayout(
