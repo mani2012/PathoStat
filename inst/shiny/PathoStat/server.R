@@ -6,6 +6,8 @@ library(limma)
 library(phyloseq)
 library(ape)
 library(PathoStat)
+library(plyr)
+library(alluvial)
 
 # Converts decimal percentage to string with specified digits
 pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
@@ -516,4 +518,87 @@ shinyServer(function(input, output, session) {
         plotConfRegion(p1, p2, size, uselogit=input$uselogit)
     })
     
+    #Time Series
+    output$Allustax <- renderUI({
+      checkboxGroupInput(inputId="Allustax", label="Taxa of interest ", 
+                         choices = as.character(unique(unlist((
+                           shinyInput$pstat@tax_table)[,input$Alluglom]))))
+      
+    })
+    
+    Alluvialdata <- reactive({
+        if(input$Allurar==T){
+            DR<-rarefy_even_depth(pstat, 
+                sample.size =min(colSums(otu_table(pstat))),
+                replace=FALSE, rngseed=T)
+        }else{
+          DR<-pstat
+        }
+ 
+        if(is.null(input$Allusset) || 
+            is.null(input$Alluglom) || 
+            is.null(input$Allustax)){
+            return()
+        }
+        tryCatch({
+            tg<-paste("tax_glom(DR, taxrank='",input$Alluglom,"')",sep ='')
+            glom = eval(parse(text=tg))
+            tg<-paste("subset_taxa(glom, tax_table(glom)[,",input$Alluglom,"] 
+                %in% ",input$Allustax ,")",sep ='')
+            glom = eval(parse(text=tg))
+        },error=function(cond){
+            return()
+        })
+        glom<-transform_sample_counts(glom, function(x) x / sum(x) )
+        glom_time <- sample_data(glom)[,input$Allusset]
+        glom_time$sample = rownames(glom_time)
+        rownames(glom_time) = NULL
+        glom_otu <- t(otu_table(glom))
+        cbind(glom_time, glom_otu) -> glom_otu_time
+        row.names(glom_otu_time) <- NULL
+        glom_otu_time$sample <- NULL
+        glom_otu_time <- ddply(glom_otu_time,input$Allusset,numcolwise(mean))
+        tryCatch({
+            colnames(glom_otu_time) <- c(input$Allusset, 
+                tax_table(glom)[as.matrix(colnames(
+                glom_otu_time)[-1]),input$Alluglom])
+                glom_otu_time_melted <- melt(glom_otu_time, 
+                    id.vars=c(input$Allusset), measure.vars=input$Allustax, 
+                    variable.name="taxa", value.name="proportion")
+        },error=function(cond){
+            return()
+        })
+        if(!exists("glom_otu_time_melted")){
+            return()
+        }
+        glom_otu_time_melted$proportion <- glom_otu_time_melted$proportion*100
+        glom_otu_time_melted <- glom_otu_time_melted[c(2,1,3)]
+        glom_otu_time_melted["proportion"]<-rapply( 
+        glom_otu_time_melted["proportion"], 
+        f=function(x) ifelse(is.nan(x),0,x), how="replace" )
+        return(glom_otu_time_melted)
+    })
+    
+    output$TimePlotVisu<- renderPlot({
+        if(is.null(Alluvialdata())){
+            return()
+        }
+        alluvial_ts(Alluvialdata(), wave = .4, ygap = 2,plotdir = 'centred', 
+            alpha=.9, rankup = FALSE, grid = TRUE, grid.lwd = 5, xmargin = 0.2, 
+            lab.cex = 1, xlab = input$Allusset, ylab = '', border = NA, 
+            axis.cex = 1, title = '')
+    })
+    
+    output$downloadAlluvialPlot <- downloadHandler(
+        filename = function() { paste('Alluvialplot', '.pdf', sep='') },
+        content = function(file) {
+            pdf(file, width = 18, height = 10)
+            alluvial_ts(Alluvialdata(), wave = .4, ygap = 2,plotdir = 'centred', 
+                alpha=.8, rankup = FALSE, grid = TRUE, grid.lwd = 5, 
+                xmargin = 0.2, lab.cex = 1, xlab = input$Allusset, ylab = '', 
+                border = NA,axis.cex = 1, title = '')
+            dev.off()
+        }
+    )
 })
+
