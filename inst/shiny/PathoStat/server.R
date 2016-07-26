@@ -515,7 +515,6 @@ shinyServer(function(input, output, session) {
         size <- sum(shinyInput$pstat@otu_table[,input$sample])
         plotConfRegion(p1, p2, size, uselogit=input$uselogit)
     })
-
-    df <- callModule(coreOTUModule, "coreOTUModule")
+    df <- callModule(coreOTUModule, "coreOTUModule", findPhyseqData() )
 
 })
