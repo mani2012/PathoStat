@@ -577,22 +577,21 @@ shinyServer(function(input, output, session) {
         if(is.null(Alluvialdata())){
             return()
         }
-        ap<-alluvial_ts(Alluvialdata(), wave = .4, ygap = 2,plotdir = 'centred', 
+        alluvial_ts(Alluvialdata(), wave = .4, ygap = 2,plotdir = 'centred', 
             alpha=.9, rankup = FALSE, grid = TRUE, grid.lwd = 5, xmargin = 0.2, 
             lab.cex = 1, xlab = input$Allusset, ylab = '', border = NA, 
             axis.cex = 1, title = '')
-        return(ap)
     })
     
     output$downloadAlluvialPlot <- downloadHandler(
         filename = function() { paste('Alluvialplot', '.pdf', sep='') },
         content = function(file) {
-        pdf(file, width = 18, height = 10)
-        alluvial_ts(Alluvialdata(), wave = .4, ygap = 2,plotdir = 'centred', 
-            alpha=.8, rankup = FALSE, grid = TRUE, grid.lwd = 5, xmargin = 0.2, 
-            lab.cex = 1, xlab = input$Allusset, ylab = '', border = NA, 
-            axis.cex = 1, title = '')
-        dev.off()
+            pdf(file, width = 18, height = 10)
+            alluvial_ts(Alluvialdata(), wave = .4, ygap = 2,plotdir = 'centred', 
+                alpha=.8, rankup = FALSE, grid = TRUE, grid.lwd = 5, 
+                xmargin = 0.2, lab.cex = 1, xlab = input$Allusset, ylab = '', 
+                border = NA,axis.cex = 1, title = '')
+            dev.off()
         }
     )
 })
