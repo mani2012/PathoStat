@@ -8,10 +8,11 @@ The package includes:
 
 1. Relative Abundance plots (Stacked Bar Plot, Heatmap)
 2. Diversity plots (Alpha, Beta, Exploratory Tree, BiPlot, Co-Occurrence)
-3. Differential Expression (Expression Plots, Limma)
+3. Differential Abundance (Abundance Plots, Limma)
 4. Confidence Region Plots
 5. PCA plots
 6. PCoA plots
+7. Alluvial Plots for longitudinal data
 
 `runPathoStat` is the pipeline function that generates the PathoStat report
 and launches shiny app when in interactive mode. It combines all the functions 
@@ -28,6 +29,9 @@ biocLite(c('phyloseq', 'pander', 'MCMCpack', 'limma', 'preprocessCore',
 'stringi', 'corpcor', 'matrixStats', 'shiny', 'ggvis', 'd3heatmap', 'reshape2',
 'scales', 'rentrez', 'devtools', 'BatchQC'))
 ```
+Install the alluvial package:
+	
+	install_github("mbojan/alluvial")
 
 Install 'pandoc' package by following the instructions at the following URL:
 http://pandoc.org/installing.html

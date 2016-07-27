@@ -27,7 +27,8 @@ Imports:
     rentrez,
     BatchQC,
     DT,
-    gtools
+    gtools,
+    plyr
 Collate:
     'pathoStat.R'
     'utils.R'
