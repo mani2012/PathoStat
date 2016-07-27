@@ -1,100 +1,69 @@
 
-# if(!require(microbiome, quietly = TRUE)) {
-#   source("http://www.bioconductor.org/biocLite.R")
-#   biocLite("ade4")
-#   biocLite("fastcluster")
-#   biocLite("devtools")
-#   biocLite("ggplot2")
-#   biocLite("Matrix")
-#   biocLite("minet")
-#   biocLite("mixOmics")
-#   biocLite("dplyr")
-#   biocLite("qvalue")
-#   biocLite("reshape2")
-#   biocLite("vegan")
-#   biocLite("phyloseq")
-#   biocLite("rpart")
-#   biocLite("GO.db")
-#   devtools::install_github("microbiome/microbiome")
-# }
-
-# require(microbiome)
-
-makePhyseqFromShinyInput <- function(shinyInput) {
-    ids <- rownames(shinyInput$data)
-    taxmat <- findTaxonMat(ids, shinyInput$taxonLevels)
-    OTU <- otu_table(shinyInput$countdata, taxa_are_rows = TRUE)
-    TAX <- tax_table(taxmat)
-    physeq <- phyloseq(OTU, TAX)
-    sampledata = sample_data(data.frame(condition=as.factor(
-      shinyInput$condition), batch=as.factor(shinyInput$batch), 
-      row.names=sample_names(physeq), stringsAsFactors=FALSE))
-    random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=
-                          taxa_names(physeq))
-    physeq1 <- merge_phyloseq(physeq, sampledata, random_tree)
-    return(physeq1)
-}
-
-#' Creates Core Microbiome plot
-#' A (very) thin wrapper around microbiome::plot_core
+#' Select rows of OTU matrix that meet given detection and prevalence thresholds
+#' 
+#' @param pstat PathoStat object
+#' @param detection An integer specifying the minimum value considered to be 
+#' "detected"
+#' @param prevalence An integer specifying the minimum number of samples that
+#' must be detected
 #'
-#' @param psobj Phyloseq object
-#' @param prevalence.intervals Prevalence intervals
-#' @param detection.thresholds Detection thresholds
-#' @param plot.type Plot type
-#' 
-#' @return ggplot object with core microbiome plot
-#' 
-plotCoreMicrobiota <- function(psobj,
-                               prevalence.min,
-                               
-                               prevalence.intervals = seq(5, 100, 5),
-                               detection.thresholds = NULL,
-                               plot.type="lineplot") {
-    prev <- prevalence.intervals
-    if(is.null(detection.thresholds))
-        det <- 10^seq(log10(1e-3), log10( max(taxa_abundances(psobj)) ), length = 20)
-
-    res <- microbiome::plot_core(psobj, 
-                                 prevalence.intervals=prev,
-                                 detection.thresholds=det,
-                                 plot.type=plot.type)
-    res$plot + ggplot2::xlab("Abundance (OTU read count)")
+#' @return Subsetted PathoStat object
+get_core <- function(pstat, detection, prevalence) {
+  filter_taxa(pstat, function(x){ sum(x >= detection, na.rm=T) >= prevalence}, prune = T)
 }
 
-get_coremat <- function(phyobj) {
-    det <- unlist(lapply(0:7, function(p){c(1,2,5) * 10^p}))
-    det <- det[1:min(which(det > max(otu_table(phyobj))))]
-    if(nsamples(phyobj)<101) {
-      prev <- seq(1,nsamples(phyobj)) / nsamples(phyobj)
-    } else { prev <- seq(0.01, 1, by=0.01) 
-    v <- seq(0,1,length.out=45)
-    v2 <- seq(1,nsamples(phyobj)) / nsamples(phyobj)
-    v <- v[2:45] - v2
-    coremat <- data.frame(do.call(rbind, lapply(prev, function(p){
-        sapply(det, function(d) sum(rowSums(otu_table(phyobj) > d) >= (p * nsamples(phyobj))))
-    })))
-    colnames(coremat) <- det
-    coremat$prev <- prev
-    coremat
+#' Create core OTU matrix containing number of OTUs detected at varying 
+#' detection and prevalence thresholds.
+#' 
+#' @param pstat PathoStat object
+#'
+#' @return Data frame containing number of OTUs at varying detection and 
+#' prevalence thresholds, with rows corresponding to number of samples and
+#' columns corresponding to detection thresholds. An additional column called
+#' "prev"contains the sample threshold for each row.
+get_coremat <- function(pstat) {
+  # Detection values to calculate
+  det <- unlist(lapply(0:7, function(p){c(1,2,5) * 10^p}))
+  det <- det[1:min(which(det > max(otu_table(pstat))))]
+  # Prevalence values to calculate
+  prev <- seq(1,nsamples(pstat))
+
+  coremat <- data.frame(do.call(rbind, lapply(prev, function(p){
+    sapply(det, function(d) sum(rowSums(otu_table(pstat) >= d) >= p))
+  })))
+  colnames(coremat) <- det
+  coremat$prev <- prev
+  coremat  
 }
 
-coremat_lineplot <- function(coremat) {
+#' Create line plot from core OTU matrix
+#' 
+#' @param coremat Core OTU matrix (data.frame)
+#' 
+#' @return Line plot with number of OTUs on the x-axis and detection threshold
+#' on the y-axis. Lines connect data points with the same number of samples.
+#' 
+#' @import ggplot2
+#' @importFrom dplyr mutate
+#' @importFrom tidyr gather
+get_coremat_lineplot <- function(coremat) {
   coremat %>% 
     dplyr::mutate(prev=factor(prev)) %>%
     tidyr::gather(det, count, -prev) %>%
     dplyr::mutate(det=as.numeric(det)) %>%
-    ggplot(aes(x=det, y=count, color=prev, group=prev)) + 
+    ggplot(aes(x=det, y=count, group=prev, color=prev)) + 
     geom_point() + 
     geom_line() +
-    scale_x_log10()
+    scale_x_log10() +
+    labs(x="Detection threshold", y="OTU count")
 }
-coremat_heatmap <- function(phyobj) {
-  det <- 10^seq(0,log10(max(otu_table(phyobj), na.rm = T)), length = 20)
+
+get_coremat_heatmap <- function(pstat) {
+  det <- 10^seq(0,log10(max(otu_table(pstat), na.rm = T)), length = 20)
   # det <- unlist(lapply(0:7, function(p){c(1,2,5) * 10^p}))
-  # det <- det[1:min(which(det > max(otu_table(phyobj))))]
+  # det <- det[1:min(which(det > max(otu_table(pstat))))]
   coremat2 <- data.frame(do.call(cbind, lapply(det, function(d){
-    rowSums(otu_table(phyobj) > d) / nsamples(phyobj)
+    rowSums(otu_table(pstat) > d) / nsamples(pstat)
   })))
   colnames(coremat2) <- det
   taxorder <- rownames(coremat2[order(-rowSums(coremat2)),])
@@ -126,60 +95,105 @@ coreOTUModuleUI <-
     tabPanel("Core OTUs",
              sidebarLayout(
                sidebarPanel(
-                   sliderInput(ns("detThresh"), "detection", value=20, min=1, max=1000),
-                   sliderInput(ns("prevThresh"), "prevalence", value=67, min=0, max=100),
-                   width = 3
+                 sliderInput(ns("detThresh"), "Detection threshold", value=5, min=1, max=100, step=1),
+                 uiOutput(ns("prevThreshControl")),
+                 uiOutput(ns("taxLevelControl")),
+                 h4(textOutput(ns("coreSummary")), style="color:goldenrod;"),
+                 width=3
                ),
                mainPanel(
-                 tabsetPanel(
-                   tabPanel("2D lineplot",
-                            plotOutput(ns("coreLine"))
-                   ),
-                   tabPanel("Heatmap", 
-                            plotOutput(ns("coreHeat"))
-                   ),
-                   tabPanel("Table", 
-                            DT::dataTableOutput(ns("coreTable"), width='95%')
-                   )
-                 ),
-                 width = 9
-               )
-             )
-    )
+                 fluidRow(column(12,
+                               tabsetPanel(
+                                   tabPanel("2D lineplot",
+                                       plotOutput(ns("coreLine"), click = "plot_click")
+                                   ),
+                                   tabPanel("Heatmap", 
+                                       plotOutput(ns("coreHeat"))
+                                   )
+                               )
+                 )),
+                 #fluidRow(column(12,
+                 #                h3(textOutput(ns("coreSummary")))
+                 #), style="padding:9px;"),                 
+                 fluidRow(column(12,
+                                 DT::dataTableOutput(ns("coreTable"), width='95%')
+                 ))
+               ) # end mainPanel
+            ) # end sidebarLayout
+        ) # end tabPanel
 }
-
 
 #' Server function for Core OTU Module
 #'
 #' @param input Shiny server input object
 #' @param output Shiny server output object
 #' @param session This is the session
+#' @param pstat PathoStat object
 #' 
 #' @return None
 #' 
 #' @export
-coreOTUModule <- function(input, output, session, phyobj) {
-    output$coreTable <- DT::renderDataTable({
-        coretax <- microbiome::core(phyobj,
-                                    detection.threshold = input$detThresh,
-                                    prevalence.threshold = input$prevThresh)
-        tax_table(phyobj)[coretax,]
+coreOTUModule <- function(input, output, session, pstat) {
+    glom <- reactive({
+        if(is.null(input$taxLevel)) return()
+        tax_glom(pstat, taxrank=input$taxLevel)
     })
     
-    coremat <- get_coremat(phyobj)
-    cols.active <- colorRampPalette(c("black","blue"))(length(coremat$prev))
-    
-    output$coreLine <- renderPlot({
-        # cols <- ifelse(coremat$prev < (input$prevThresh/100), cols.active, cols.inactive)
-        cols <- ifelse(coremat$prev == (input$prevThresh/100), cols.active, "#00000011")
-        coremat_lineplot(coremat) + 
-          scale_colour_manual(guide=F, values=cols) +
-          geom_vline(xintercept = input$detThresh, color="#990000", linetype=2)
+    coremat <- reactive({
+      v <- glom()
+      if(is.null(v)) return()
+      get_coremat(v)
     })
-      
-    output$coreHeat <- renderPlot({
-      coremat_heatmap(phyobj)
-      # plotCoreMicrobiota(phyobj, plot.type="heatmap")
+    
+    lineplot <- reactive({
+        v <- coremat()
+        if(is.null(v)) return()
+        get_coremat_lineplot(v)
+    })
+    
+    output$prevThreshControl <- renderUI({
+      ns <- session$ns
+      sliderInput(ns("prevThresh"), "Samples detected",
+                  value=5, step=1, min=1, max=nsamples(pstat))
+    })
+    
+    output$taxLevelControl <- renderUI({
+      ns <- session$ns
+      rnames <- rev(rank_names(pstat))
+      selectizeInput(ns("taxLevel") , 'Taxonomy Level', choices = rnames, 
+                     selected=rnames[1])
     })
 
+    output$coreTable <- DT::renderDataTable({
+        cur <- glom()
+        if(is.null(cur)) return(invisible())
+        formatTaxTable(tax_table(get_core(cur, input$detThresh, input$prevThresh)))
+    })
+
+    output$coreLine <- renderPlot({
+        cur <- coremat()
+        cur_plot <- lineplot()
+        if(is.null(cur) | is.null(cur_plot)) return(invisible())
+        prevLabel <- paste0("Samples: ", input$prevThresh, " (",
+                            sprintf('%.1f', 100*(input$prevThresh / nsamples(pstat)))
+                            ,"% prevalence) ")
+        cols <- ifelse(cur$prev == input$prevThresh, "#253494", "#bdbdbd33")
+        cur_plot + 
+            scale_colour_manual(values=cols, guide=F) +
+            annotate("text", x=Inf, y=Inf, vjust=1, hjust=1,
+                     size=8, color="#253494",
+                     label=prevLabel) +
+            geom_vline(xintercept = input$detThresh, color="#990000", linetype=2)
+    })
+    
+    output$coreHeat <- renderPlot({
+        get_coremat_heatmap(glom())
+    })
+    
+    output$coreSummary <- renderText({
+          cur <- glom()
+          if(is.null(cur)) return(invisible())
+          nt <- ntaxa(get_core(cur, input$detThresh, input$prevThresh))
+          paste0(nt, " core OTUs detected.")
+    })
 }

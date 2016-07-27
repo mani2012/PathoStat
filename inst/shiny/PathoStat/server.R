@@ -601,6 +601,6 @@ shinyServer(function(input, output, session) {
         }
     )
     
-    callModule(coreOTUModule, "coreOTUModule", findPhyseqData() )
+    callModule( coreOTUModule, "coreOTUModule", pstat )
 })
 

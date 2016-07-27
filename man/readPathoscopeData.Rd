@@ -5,7 +5,8 @@
 \title{Reads the data from PathoScope reports and returns a list of 
 final guess relative abundance and count data}
 \usage{
-readPathoscopeData(input_dir = ".")
+readPathoscopeData(input_dir = ".",
+  pathoreport_file_suffix = "-sam-report.tsv")
 }
 \arguments{
 \item{input_dir}{Directory where the tsv files from PathoScope are located}

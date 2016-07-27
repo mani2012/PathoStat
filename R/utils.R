@@ -247,3 +247,12 @@ findRAfromCount <- function(count_otu) {
     }
     return(ra_otu)
 }
+
+#' Format taxonomy table for rendering
+#' 
+#' @param ttable Taxonomy table
+#' @return Formatted table suitable for rendering with. DT::renderDataTable
+formatTaxTable <- function(ttable) {
+    ttable
+}
+

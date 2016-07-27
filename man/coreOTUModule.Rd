@@ -4,7 +4,7 @@
 \alias{coreOTUModule}
 \title{Server function for Core OTU Module}
 \usage{
-coreOTUModule(input, output, session)
+coreOTUModule(input, output, session, pstat)
 }
 \arguments{
 \item{input}{Shiny server input object}
@@ -12,6 +12,8 @@ coreOTUModule(input, output, session)
 \item{output}{Shiny server output object}
 
 \item{session}{This is the session}
+
+\item{pstat}{PathoStat object}
 }
 \value{
 None

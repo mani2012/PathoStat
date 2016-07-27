@@ -5,9 +5,9 @@
 \title{Statistical Analysis of the PathoScope reports and generates a html report 
 and produces interactive shiny app plots}
 \usage{
-runPathoStat(pstat, report_file = "PathoStat_report.html", report_dir = ".",
-  report_option_binary = "111111111", view_report = FALSE,
-  interactive = TRUE)
+runPathoStat(pstat = NULL, report_file = "PathoStat_report.html",
+  report_dir = ".", report_option_binary = "111111111",
+  view_report = FALSE, interactive = TRUE)
 }
 \arguments{
 \item{pstat}{phyloseq extension pathostat object}
@@ -20,8 +20,6 @@ runPathoStat(pstat, report_file = "PathoStat_report.html", report_dir = ".",
 display and hide in the report}
 
 \item{view_report}{when TRUE, opens the report in a browser}
-
-\item{tax_cache}{Filename to cache taxonomy. Created if file does not exist.}
 }
 \value{
 outputfile The output file with all the statistical plots
@@ -31,9 +29,6 @@ Statistical Analysis of the PathoScope reports and generates a html report
 and produces interactive shiny app plots
 }
 \examples{
-data_dir <- system.file("data", package = "PathoStat")
-infileName <- "pstat_data.rda"
-pstat <- loadPstat(data_dir, infileName)
-runPathoStat(pstat)
+runPathoStat()
 }
 
