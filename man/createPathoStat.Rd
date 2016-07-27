@@ -5,7 +5,8 @@
 \title{Generates a PathoStat object from the PathoScope reports for further 
 analysis using the interactive shiny app}
 \usage{
-createPathoStat(input_dir = ".", sample_data_file = "sample_data.tsv")
+createPathoStat(input_dir = ".", sample_data_file = "sample_data.tsv",
+  pathoreport_file_suffix = "-sam-report.tsv")
 }
 \arguments{
 \item{input_dir}{Directory where the tsv files from PathoScope are located}
@@ -22,17 +23,8 @@ Generates a PathoStat object from the PathoScope reports for further
 analysis using the interactive shiny app
 }
 \examples{
-nbatch <- 11
-ncond <- 3
-npercond <- 11
-subject_id <- c(1, 1, 1, 2, 2, 2, 3, 3, 3, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9,
-    9, 10, 10, 10, 12, 12, 12, 13, 13, 13, 15, 15, 15)
-batch <- unlist(lapply(subject_id, FUN=function(id) {paste("Person", id)}))
-diet <- c(1, 3, 2, 3, 1, 2, 2, 3, 1, 3, 2, 1, 3, 2, 1, 3, 1, 2, 1, 2, 3, 
-    2, 1, 3, 3, 1, 2, 3, 1, 2, 2, 3, 1)
-diet_key <- c("simple", "refined", "unrefined")
-condition <- diet_key[diet]
 example_data_dir <- system.file("example/data", package = "PathoStat")
-createPathoStat(input_dir=example_data_dir, batch, condition)
+pstat <- createPathoStat(input_dir=example_data_dir, 
+    sample_data_file="sample_data.tsv")
 }
 

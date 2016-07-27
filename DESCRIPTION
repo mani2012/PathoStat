@@ -28,13 +28,15 @@ Imports:
     BatchQC,
     DT,
     gtools,
-    plyr
+    plyr,
+    tidyr
 Collate:
     'pathoStat.R'
     'utils.R'
     'taxonomy.R'
     'confRegion.R'
     'allClasses.R'
+    'coreOTUModule.R'
 Suggests: testthat
 biocViews: GraphAndNetwork, Microarray, PrincipalComponent, 
     Sequencing, Software, Visualization, RNASeq

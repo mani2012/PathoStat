@@ -508,7 +508,7 @@ shinyServer(function(input, output, session) {
         }
         limmaTable
     })
-    
+
     output$confRegion <- renderPlot({
         p1 <- shinyInput$pstat@otu_table[input$taxon1, input$sample]
         if (p1 <= 0) p1 <- 1
@@ -517,7 +517,7 @@ shinyServer(function(input, output, session) {
         size <- sum(shinyInput$pstat@otu_table[,input$sample])
         plotConfRegion(p1, p2, size, uselogit=input$uselogit)
     })
-    
+
     #Time Series
     output$Allustax <- renderUI({
       checkboxGroupInput(inputId="Allustax", label="Taxa of interest ", 
@@ -600,5 +600,7 @@ shinyServer(function(input, output, session) {
             dev.off()
         }
     )
+    
+    callModule( coreOTUModule, "coreOTUModule", pstat )
 })
 

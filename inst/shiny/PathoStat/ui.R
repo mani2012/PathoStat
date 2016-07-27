@@ -229,6 +229,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 )
             )
         )
-    )
+    ),
+    coreOTUModuleUI("coreOTUModule")
 )
 )
