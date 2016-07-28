@@ -55,7 +55,10 @@ createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
 #' @param report_dir Output report directory path 
 #' @param report_option_binary 9 bits Binary String representing the plots to 
 #'  display and hide in the report 
-#' @param view_report when TRUE, opens the report in a browser 
+#' @param view_report when TRUE, opens the report in a browser
+#' @param interactive If true, run the shiny app
+#' @param launch.browser Passed to shiny::runApp. If true, the system's default
+#'  web browser will be launched automatically after the app is started.
 #' @return outputfile The output file with all the statistical plots
 #' @import pander stats graphics reshape2 ggplot2 rentrez phyloseq
 #' @importFrom scales percent_format
@@ -66,7 +69,8 @@ createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
 #' runPathoStat()
 runPathoStat <- function(pstat=NULL, report_file = "PathoStat_report.html", 
     report_dir = ".", report_option_binary = "111111111", view_report = FALSE, 
-    interactive = TRUE) {
+    interactive = TRUE,
+    launch.browser = getOption("shiny.launch.browser", interactive())) {
     
     if (is.null(pstat))  {
         data_dir <- system.file("data", package = "PathoStat")
@@ -98,7 +102,7 @@ runPathoStat <- function(pstat=NULL, report_file = "PathoStat_report.html",
             stop("Could not find shiny directory. Try re-installing PathoStat.",
                 call. = FALSE)
         }
-        shiny::runApp(appDir, display.mode = "normal")
+        shiny::runApp(appDir, display.mode = "normal", launch.browser=launch.browser)
     }
     return(outputfile)
 }
