@@ -21,11 +21,11 @@ shinyServer(function(input, output, session) {
     #modmatrix = model.matrix(~as.factor(shinyInput$condition), data=pdata)
     pdata <- data.frame(c(sample_data[,1])[[1]], c(sample_data[,2])[[1]])
     modmatrix = model.matrix(~as.factor(c(sample_data[,2])[[1]]), data=pdata)
-    pca <- BatchQC::batchqc_pca(pstat@otu_table, batch=c(sample_data[,1])[[1]], 
+    pca <- BatchQC::batchqc_pca(pstat@otu_table, batch=c(sample_data[,1])[[1]],
         mod=modmatrix)
     shinyInput <- c(shinyInput, list("pc"=data.frame(pca$x), "vars"=pca$sdev^2))
     setShinyInput(shinyInput)
-    
+
     setInputs <- function(combatFlag) {
         if (combatFlag) {
             setShinyInput(getShinyInputCombat())
@@ -35,7 +35,7 @@ shinyServer(function(input, output, session) {
     }
     # setInputs(FALSE)
     findAllTaxData <- function(taxonLevel) {
-        #taxcountdata <- findTaxonLevelData(pstat@otu_table, 
+        #taxcountdata <- findTaxonLevelData(pstat@otu_table,
         #    shinyInput$taxonLevels, taxonLevel)
         shinyInput <- getShinyInput()
         pstat <- shinyInput$pstat
@@ -51,7 +51,7 @@ shinyServer(function(input, output, session) {
             taxcountdata <- data.frame(taxcountdata)
             taxdata <- data.frame(taxdata)
             labvec <- as(tax_table(physeq2)[, taxonLevel], "character")
-            labvec <- unlist(lapply(labvec, 
+            labvec <- unlist(lapply(labvec,
                 function(x){paste0( taxonLevel, "|", x)}))
             labvec[is.na(labvec)] <- ""
             names <- rownames(taxcountdata)
@@ -79,50 +79,50 @@ shinyServer(function(input, output, session) {
         shinyInput <- getShinyInput()
         shinyInput$taxdata
     })
-    
+
     findTaxCountData <- eventReactive(input$taxl, {
         findAllTaxData(input$taxl)
         shinyInput <- getShinyInput()
         shinyInput$taxcountdata
     })
-    
+
     findTaxCountDataDE <- eventReactive(input$taxlde, {
         findAllTaxData(input$taxlde)
         shinyInput <- getShinyInput()
         shinyInput$taxcountdata
     })
-    
+
     tax_ra_bp <- reactive({
         if (is.null(input$taxl)) {
             return()
         }
         taxdata <- findTaxData()
-        dat <- melt(cbind(taxdata, ind = as.character(rownames(taxdata))), 
+        dat <- melt(cbind(taxdata, ind = as.character(rownames(taxdata))),
             id.vars = c("ind"))
-        dat %>% ggvis(x = ~variable, y = ~value, fill = ~as.factor(ind)) %>% 
-        layer_bars(stack = TRUE) %>% 
+        dat %>% ggvis(x = ~variable, y = ~value, fill = ~as.factor(ind)) %>%
+        layer_bars(stack = TRUE) %>%
         add_tooltip(function(dat2) {
-            paste0("Sample: ", dat2[2], "<br />", "Genome: ", dat2[1], 
+            paste0("Sample: ", dat2[2], "<br />", "Genome: ", dat2[1],
                 "<br />", "RA: ", round(dat2[4] - dat2[3], 4))
-        }, "hover") %>% 
-        # add_axis('x', subdivide = 1, 
+        }, "hover") %>%
+        # add_axis('x', subdivide = 1,
         #   values = 1:length(colnames(shinyInput$data)),
-        add_axis("x", title = "Samples", properties = axis_props(title = 
-            list(fontSize = 15), labels = list(text = "", 
-            fontSize = 10))) %>% 
-        add_axis("y", title = "Relative Abundance (RA)", properties = 
-            axis_props(title = list(fontSize = 15), 
-            labels = list(fontSize = 10))) %>% add_legend("fill", title = 
-            "Genomes", properties = legend_props(title = list(fontSize = 15), 
-            labels = list(fontSize = 10))) %>% set_options(width = "auto", 
+        add_axis("x", title = "Samples", properties = axis_props(title =
+            list(fontSize = 15), labels = list(text = "",
+            fontSize = 10))) %>%
+        add_axis("y", title = "Relative Abundance (RA)", properties =
+            axis_props(title = list(fontSize = 15),
+            labels = list(fontSize = 10))) %>% add_legend("fill", title =
+            "Genomes", properties = legend_props(title = list(fontSize = 15),
+            labels = list(fontSize = 10))) %>% set_options(width = "auto",
             height = "auto")
     })
     tax_ra_bp %>% bind_shiny("TaxRelAbundancePlot")
-    
+
     output$TaxRAsummary <- renderPrint({
         summary(findTaxData())
     })
-    
+
     # These are options for rendering datatables
     dtopts <- list(scrollX=TRUE, paging=TRUE)
 
@@ -130,40 +130,40 @@ shinyServer(function(input, output, session) {
     # Converts percents to strings and expands taxa name
     format_RA_table <- function(tmp) {
       tmp %>% dplyr::add_rownames("fullname") %>%
-        dplyr::mutate_each(dplyr::funs(pct2str), -fullname) %>% 
-        tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl), 
+        dplyr::mutate_each(dplyr::funs(pct2str), -fullname) %>%
+        tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl),
             sep='\\|') %>%
         dplyr::select_(.dots=c(as.name(input$taxl), 'taxid', colnames(tmp)))
     }
-    
-    # Render relative abundance table    
-    output$TaxRAtable <- DT::renderDataTable(format_RA_table(findTaxData()), 
-        options=dtopts, rownames=F)    
-    
+
+    # Render relative abundance table
+    output$TaxRAtable <- DT::renderDataTable(format_RA_table(findTaxData()),
+        options=dtopts, rownames=F)
+
     # Format count table:
     # Just expands taxa name
     format_Count_table <- function(tmp) {
       tmp %>% dplyr::add_rownames("fullname") %>%
-        tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl), 
+        tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl),
             sep='\\|') %>%
         dplyr::select_(.dots=c(as.name(input$taxl), 'taxid', colnames(tmp)))
     }
     # Render count table
     output$TaxCountTable <- DT::renderDataTable(format_Count_table(
         findTaxCountData()), options=dtopts, rownames=F)
-    
+
     output$downloadData <- downloadHandler(filename = function() {
         paste0("sample_data_", input$taxl, ".csv", sep = "")
     }, content = function(file) {
         write.csv(shinyInput$taxdata, file)
     })
-    
+
     output$downloadCountData <- downloadHandler(filename = function() {
         paste0("sample_data_count_", input$taxl, ".csv", sep = "")
     }, content = function(file) {
         write.csv(shinyInput$taxcountdata, file)
     })
-    
+
     findPhyseqData <- function() {
         ids <- rownames(shinyInput$data)
         taxmat <- findTaxonMat(ids, shinyInput$taxonLevels)
@@ -171,7 +171,7 @@ shinyServer(function(input, output, session) {
         TAX <- tax_table(taxmat)
         physeq <- phyloseq(OTU, TAX)
         sampledata = sample_data(data.frame(condition=as.factor(
-            c(sample_data[,2])[[1]]), batch=as.factor(c(sample_data[,1])[[1]]), 
+            c(sample_data[,2])[[1]]), batch=as.factor(c(sample_data[,1])[[1]]),
             row.names=sample_names(physeq), stringsAsFactors=FALSE))
         random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=
             taxa_names(physeq))
@@ -188,7 +188,7 @@ shinyServer(function(input, output, session) {
     scale_fill_discrete <- function(palname = pal, ...) {
         scale_fill_brewer(palette = palname, ...)
     }
-    
+
     output$Heatmap <- renderPlot({
         physeq1 <- shinyInput$pstat
         setGgplotTheme()
@@ -206,14 +206,14 @@ shinyServer(function(input, output, session) {
         cn[1] <- "batch"
         cn[2] <- "condition"
         colnames(physeq1@sam_data) <- cn
-        #alpha_meas <- c("Observed", "Chao1", "ACE", "Shannon", "Simpson", 
+        #alpha_meas <- c("Observed", "Chao1", "ACE", "Shannon", "Simpson",
         #    "InvSimpson")
-        #alpha_meas <- c("Observed", "Chao1", "Shannon", "Simpson", 
+        #alpha_meas <- c("Observed", "Chao1", "Shannon", "Simpson",
         #    "InvSimpson")
         alpha_meas <- c("Shannon", "Simpson", "InvSimpson")
         setGgplotTheme()
         (p <- plot_richness(physeq1, "condition", "batch", measures=alpha_meas))
-        p + ggplot2::geom_boxplot(data=p$data, ggplot2::aes(x=condition, 
+        p + ggplot2::geom_boxplot(data=p$data, ggplot2::aes(x=condition,
             y=value, color=NULL), alpha=0.1)
     })
     output$BetaDiversity <- renderPlot({
@@ -227,7 +227,7 @@ shinyServer(function(input, output, session) {
             titleString="Beta Diversity Distance: Bray-Curtis"
         }
         gplots::heatmap.2(as.matrix(dist), col=gplots::bluered(75), scale="row",
-            key=TRUE, symkey=FALSE, density.info="none", trace="none", 
+            key=TRUE, symkey=FALSE, density.info="none", trace="none",
             margins = c(6, 6))
     })
     output$ExploratoryTree <- renderPlot({
@@ -237,7 +237,7 @@ shinyServer(function(input, output, session) {
         cn[2] <- "condition"
         colnames(physeq1@sam_data) <- cn
         setGgplotTheme()
-        plot_tree(physeq1, color="condition", label.tips="genus", 
+        plot_tree(physeq1, color="condition", label.tips="genus",
             size="Abundance")
     })
     output$BiPlot <- renderPlot({
@@ -251,12 +251,12 @@ shinyServer(function(input, output, session) {
         if (input$shapeBiP=='None') shape <- NULL else shape <- input$shapeBiP
         if (input$labelBiP=='None') label <- NULL else label <- input$labelBiP
         physeq.ord <- ordinate(physeq1, method=input$methodBiP, distance="bray")
-        p <- plot_ordination(physeq1, physeq.ord, type = "biplot", 
+        p <- plot_ordination(physeq1, physeq.ord, type = "biplot",
             color=color, shape=shape, label=label)
         if (!is.null(label))  {
             p$layers <- p$layers[-2]
             p <- p+ggplot2::geom_text(mapping=
-                ggplot2::aes(label=get(label)), size=4, vjust=1.0, 
+                ggplot2::aes(label=get(label)), size=4, vjust=1.0,
                 check_overlap=TRUE)
         }
         p
@@ -271,18 +271,18 @@ shinyServer(function(input, output, session) {
         if (input$colorCo=='None') color <- NULL else color <- input$colorCo
         if (input$shapeCo=='None') shape <- NULL else shape <- input$shapeCo
         if (input$labelCo=='None') label <- NULL else label <- input$labelCo
-        ig<-make_network(physeq1, dist.fun="jaccard", type = "taxa", 
+        ig<-make_network(physeq1, dist.fun="jaccard", type = "taxa",
             max.dist=input$max.dist) #max.dist=0.4 default
-        p <- plot_network(ig, physeq1, line_weight=0.4, type = "taxa", 
+        p <- plot_network(ig, physeq1, line_weight=0.4, type = "taxa",
             color = color, shape = shape, label = label)
         if (!is.null(label))  {
             p$layers <- p$layers[-2]
-            p <- p+ggplot2::geom_text(mapping=ggplot2::aes(label=get(label)), 
+            p <- p+ggplot2::geom_text(mapping=ggplot2::aes(label=get(label)),
                 size=4, vjust=1.0, check_overlap=TRUE)
         }
         p
     })
-    
+
     # interactive PCA
     PCA <- reactive({
         shinyInput <- getShinyInput()
@@ -293,32 +293,32 @@ shinyServer(function(input, output, session) {
     vis_pc <- reactive({
         shinyInput <- getShinyInput()
         pc <- shinyInput$pc
-        
+
         pc$id <- 1:nrow(pc)
-        
+
         all_values <- function(x) {
-            if (is.null(x)) 
+            if (is.null(x))
                 return(NULL)
             row <- pc[pc$id == x$id, ]
-            paste0(paste0("PC", input$xcol), ": ", signif(with(row, 
-                get(names(row)[input$xcol])), 3), "<br>", 
-                paste0("PC", input$ycol), ": ", signif(with(row, 
+            paste0(paste0("PC", input$xcol), ": ", signif(with(row,
+                get(names(row)[input$xcol])), 3), "<br>",
+                paste0("PC", input$ycol), ": ", signif(with(row,
                 get(names(row)[input$ycol])), 3), "<br>")
         }
-        
-        pc %>% 
-        ggvis(~get(names(pc)[input$xcol]), ~get(names(pc)[input$ycol]), 
-            fill = if (input$colbybatchPCA) ~factor(c(sample_data[,1])[[1]]) 
-            else ~factor(c(sample_data[,2])[[1]]), `:=`(key, ~id)) %>% 
-        layer_points(`:=`(size, 75), `:=`(size.hover, 200)) %>% 
-        add_tooltip(all_values, "hover") %>% 
+
+        pc %>%
+        ggvis(~get(names(pc)[input$xcol]), ~get(names(pc)[input$ycol]),
+            fill = if (input$colbybatchPCA) ~factor(c(sample_data[,1])[[1]])
+            else ~factor(c(sample_data[,2])[[1]]), `:=`(key, ~id)) %>%
+        layer_points(`:=`(size, 75), `:=`(size.hover, 200)) %>%
+        add_tooltip(all_values, "hover") %>%
         add_axis("x", title = paste0("PC", input$xcol), properties = axis_props(
-            title = list(fontSize = 15), labels = list(fontSize = 10))) %>% 
+            title = list(fontSize = 15), labels = list(fontSize = 10))) %>%
         add_axis("y", title = paste0("PC", input$ycol), properties = axis_props(
-            title = list(fontSize = 15), labels = list(fontSize = 10))) %>% 
-        add_legend("fill", title = if (input$colbybatchPCA) 
-            "Batches" else "Conditions", properties = legend_props(title = 
-            list(fontSize = 15), labels = list(fontSize = 10)))%>% 
+            title = list(fontSize = 15), labels = list(fontSize = 10))) %>%
+        add_legend("fill", title = if (input$colbybatchPCA)
+            "Batches" else "Conditions", properties = legend_props(title =
+            list(fontSize = 15), labels = list(fontSize = 10)))%>%
         set_options(width = "auto", height = "auto")
     })
     # interactive PCA summary
@@ -335,11 +335,11 @@ shinyServer(function(input, output, session) {
         shinyInput <- getShinyInput()
         pc <- shinyInput$pc
         pcs <- t(pc)
-        explained_variation <- BatchQC::batchqc_pc_explained_variation(pcs, 
+        explained_variation <- BatchQC::batchqc_pc_explained_variation(pcs,
             shinyInput$vars, c(sample_data[,2])[[1]], c(sample_data[,1])[[1]])
         explained_variation
     })
-    
+
     output$PCoAplot <- renderPlot({
         physeq1 <- shinyInput$pstat
         cn <- colnames(physeq1@sam_data)
@@ -351,7 +351,7 @@ shinyServer(function(input, output, session) {
         DistUF = distance(physeq1, method = "wUniFrac")
         ordBC = ordinate(physeq1, method = "PCoA", distance = DistBC)
         ordUF = ordinate(physeq1, method = "PCoA", distance = DistUF)
-        if (input$colbybatchPCoA) colorstring="batch" 
+        if (input$colbybatchPCoA) colorstring="batch"
         else colorstring="condition"
         if (input$methodPCoA)  {
             ordMethod=ordUF
@@ -360,14 +360,14 @@ shinyServer(function(input, output, session) {
             ordMethod=ordBC
             titleString="PCoA: Bray-Curtis"
         }
-        plot_ordination(physeq1, ordMethod, axes=c(input$xcolA, input$ycolA), 
-            color=colorstring) + 
+        plot_ordination(physeq1, ordMethod, axes=c(input$xcolA, input$ycolA),
+            color=colorstring) +
             ggplot2::geom_point(size=3) +
             #ggplot2::geom_point(mapping=ggplot2::aes(size=2)) +
             #ggplot2::geom_point(mapping=ggplot2::aes(shape=factor(batch))) +
             ggplot2::ggtitle(titleString)
     })
-    
+
     # interactive Differential Expression boxplot
     BP <- reactive({
         findTaxCountDataDE()
@@ -379,7 +379,7 @@ shinyServer(function(input, output, session) {
         dat <- lcounts
         batch1 <- as.factor(Inbatch)
         batch2 <- split(which(Inbatch == batch1), batch1)
-        batch3 <- unlist(lapply(1:length(batch2), 
+        batch3 <- unlist(lapply(1:length(batch2),
             function(x) batch2[[x]][1:input$noSamples]))
         dat1 <- dat[, batch3]
         colnames(dat1) <- seq(1:ncol(dat))[batch3]
@@ -395,7 +395,7 @@ shinyServer(function(input, output, session) {
         dat <- lcounts
         cond1 <- as.factor(Incondition)
         cond2 <- split(which(Incondition == cond1), cond1)
-        cond3 <- unlist(lapply(1:length(cond2), 
+        cond3 <- unlist(lapply(1:length(cond2),
             function(x) cond2[[x]][1:input$ncSamples]))
         dat1 <- dat[, cond3]
         colnames(dat1) <- seq(1:ncol(dat))[cond3]
@@ -434,9 +434,9 @@ shinyServer(function(input, output, session) {
         dat2 %>% group_by(batch) %>% ggvis(~samples, ~value, fill =
                 if (input$colbybatch) ~batch else ~condition) %>%
             layer_boxplots() %>%
-            add_tooltip(function(dat2) { paste0("Sample: ", 
+            add_tooltip(function(dat2) { paste0("Sample: ",
                 colnames(shinyInput$pstat@otu_table)[dat2$samples],
-                "<br>", if (input$colbybatch) input$secondary 
+                "<br>", if (input$colbybatch) input$secondary
                 else input$primary, ": ",
                 if (input$colbybatch) dat2$batch else dat2$condition)
             }, "hover") %>%
@@ -444,14 +444,14 @@ shinyServer(function(input, output, session) {
                 paste(input$noSamples, "Sample(s) Per ", input$secondary,
                     sep = " ")
                 else
-                    paste(input$ncSamples, "Sample(s) Per ", input$primary, 
+                    paste(input$ncSamples, "Sample(s) Per ", input$primary,
                         sep=" "),
                 properties = axis_props(title = list(fontSize = 15),
                 labels = list(fontSize = 5, angle = 90))) %>%
             add_axis("y", title = "Expression", properties = axis_props(title =
                 list(fontSize = 15),labels = list(fontSize = 10))) %>%
             add_legend("fill", title = if (input$colbybatch)
-                input$secondary else input$primary, 
+                input$secondary else input$primary,
                 properties = legend_props(title =
                 list(fontSize = 15), labels = list(fontSize = 10))) %>%
             set_options(width="auto", height="auto")
@@ -464,7 +464,7 @@ shinyServer(function(input, output, session) {
             summary(DE())
         }
     })
-    
+
     output$DEtable <- renderTable({
         if (input$sortbybatch) {
             BP()
@@ -482,7 +482,7 @@ shinyServer(function(input, output, session) {
       dat <- lcounts
       cond1 <- as.factor(Incondition)
       cond2 <- split(which(Incondition == cond1), cond1)
-      cond3 <- unlist(lapply(1:length(cond2), 
+      cond3 <- unlist(lapply(1:length(cond2),
                              function(x) cond2[[x]]))
       dat1 <- dat[, cond3]
       colnames(dat1) <- seq(1:ncol(dat))[cond3]
@@ -494,7 +494,7 @@ shinyServer(function(input, output, session) {
         Incondition <- sample_data(physeq1)[[input$primary]]
         Inbatch <- sample_data(physeq1)[[input$secondary]]
         pdata <- data.frame(Inbatch, Incondition)
-        mod <- model.matrix(if (input$primary == input$secondary) 
+        mod <- model.matrix(if (input$primary == input$secondary)
             ~as.factor(Incondition)
             else ~as.factor(Incondition) + ~as.factor(Inbatch), data = pdata)
         dat1 <- DELim()
@@ -503,7 +503,7 @@ shinyServer(function(input, output, session) {
         ncond <- nlevels(as.factor(Incondition))
         limmaTable <- topTable(fit2, coef = 2:ncond, number = input$noTaxons)
         for (j in 2:ncond)  {
-            colnames(limmaTable)[j-1] <- paste("Primary Covariate: ", 
+            colnames(limmaTable)[j-1] <- paste("Primary Covariate: ",
                 levels(as.factor(Incondition))[j], " (logFC)", sep='')
         }
         limmaTable
@@ -520,30 +520,30 @@ shinyServer(function(input, output, session) {
 
     #Time Series
     output$Allustax <- renderUI({
-      checkboxGroupInput(inputId="Allustax", label="Taxa of interest ", 
+      checkboxGroupInput(inputId="Allustax", label="Taxa of interest ",
                          choices = as.character(unique(unlist((
                            shinyInput$pstat@tax_table)[,input$Alluglom]))))
-      
+
     })
-    
+
     Alluvialdata <- reactive({
         if(input$Allurar==T){
-            DR<-rarefy_even_depth(pstat, 
+            DR<-rarefy_even_depth(pstat,
                 sample.size =min(colSums(otu_table(pstat))),
                 replace=FALSE, rngseed=T)
         }else{
           DR<-pstat
         }
- 
-        if(is.null(input$Allusset) || 
-            is.null(input$Alluglom) || 
+
+        if(is.null(input$Allusset) ||
+            is.null(input$Alluglom) ||
             is.null(input$Allustax)){
             return()
         }
         tryCatch({
             tg<-paste("tax_glom(DR, taxrank='",input$Alluglom,"')",sep ='')
             glom = eval(parse(text=tg))
-            tg<-paste("subset_taxa(glom, tax_table(glom)[,",input$Alluglom,"] 
+            tg<-paste("subset_taxa(glom, tax_table(glom)[,",input$Alluglom,"]
                 %in% ",input$Allustax ,")",sep ='')
             glom = eval(parse(text=tg))
         },error=function(cond){
@@ -559,11 +559,11 @@ shinyServer(function(input, output, session) {
         glom_otu_time$sample <- NULL
         glom_otu_time <- ddply(glom_otu_time,input$Allusset,numcolwise(mean))
         tryCatch({
-            colnames(glom_otu_time) <- c(input$Allusset, 
+            colnames(glom_otu_time) <- c(input$Allusset,
                 tax_table(glom)[as.matrix(colnames(
                 glom_otu_time)[-1]),input$Alluglom])
-                glom_otu_time_melted <- melt(glom_otu_time, 
-                    id.vars=c(input$Allusset), measure.vars=input$Allustax, 
+                glom_otu_time_melted <- melt(glom_otu_time,
+                    id.vars=c(input$Allusset), measure.vars=input$Allustax,
                     variable.name="taxa", value.name="proportion")
         },error=function(cond){
             return()
@@ -573,34 +573,35 @@ shinyServer(function(input, output, session) {
         }
         glom_otu_time_melted$proportion <- glom_otu_time_melted$proportion*100
         glom_otu_time_melted <- glom_otu_time_melted[c(2,1,3)]
-        glom_otu_time_melted["proportion"]<-rapply( 
-        glom_otu_time_melted["proportion"], 
+        glom_otu_time_melted["proportion"]<-rapply(
+        glom_otu_time_melted["proportion"],
         f=function(x) ifelse(is.nan(x),0,x), how="replace" )
         return(glom_otu_time_melted)
     })
-    
+
     output$TimePlotVisu<- renderPlot({
         if(is.null(Alluvialdata())){
             return()
         }
-        alluvial_ts(Alluvialdata(), wave = .4, ygap = 2,plotdir = 'centred', 
-            alpha=.9, rankup = FALSE, grid = TRUE, grid.lwd = 5, xmargin = 0.2, 
-            lab.cex = 1, xlab = input$Allusset, ylab = '', border = NA, 
+        alluvial_ts(Alluvialdata(), wave = .4, ygap = 2,plotdir = 'centred',
+            alpha=.9, rankup = FALSE, grid = TRUE, grid.lwd = 5, xmargin = 0.2,
+            lab.cex = 1, xlab = input$Allusset, ylab = '', border = NA,
             axis.cex = 1, title = '')
     })
-    
+
     output$downloadAlluvialPlot <- downloadHandler(
         filename = function() { paste('Alluvialplot', '.pdf', sep='') },
         content = function(file) {
             pdf(file, width = 18, height = 10)
-            alluvial_ts(Alluvialdata(), wave = .4, ygap = 2,plotdir = 'centred', 
-                alpha=.8, rankup = FALSE, grid = TRUE, grid.lwd = 5, 
-                xmargin = 0.2, lab.cex = 1, xlab = input$Allusset, ylab = '', 
+            alluvial_ts(Alluvialdata(), wave = .4, ygap = 2,plotdir = 'centred',
+                alpha=.8, rankup = FALSE, grid = TRUE, grid.lwd = 5,
+                xmargin = 0.2, lab.cex = 1, xlab = input$Allusset, ylab = '',
                 border = NA,axis.cex = 1, title = '')
             dev.off()
         }
     )
-    
+
     callModule( coreOTUModule, "coreOTUModule", pstat )
+    callModule( diversityModule, "diversityModule", pstat )
 })
 

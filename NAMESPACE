@@ -3,6 +3,8 @@
 export(coreOTUModule)
 export(coreOTUModuleUI)
 export(createPathoStat)
+export(diversityModule)
+export(diversityModuleUI)
 export(findRAfromCount)
 export(findTaxonLevel)
 export(findTaxonLevelData)

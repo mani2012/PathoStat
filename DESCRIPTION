@@ -3,11 +3,11 @@ Type: Package
 Title: PathoScope Statistical Analysis Package
 Version: 0.99.0
 Date: 2016-03-22
-Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>, 
+Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>,
     W. Evan Johnson <wej@bu.edu>
 Maintainer: Solaiappan Manimaran <manimaran_1975@hotmail.com>
-Description: Performs Statistical Analysis on the PathoScope generated reports 
-    files. 
+Description: Performs Statistical Analysis on the PathoScope generated reports
+    files.
 URL: https://github.com/mani2012/PathoStat
 BugReports: https://github.com/mani2012/PathoStat/issues
 License: GPL (>= 2)
@@ -37,8 +37,9 @@ Collate:
     'confRegion.R'
     'allClasses.R'
     'coreOTUModule.R'
+    'diversityModule.R'
 Suggests: testthat
-biocViews: GraphAndNetwork, Microarray, PrincipalComponent, 
+biocViews: GraphAndNetwork, Microarray, PrincipalComponent,
     Sequencing, Software, Visualization, RNASeq
 SystemRequirements: pandoc (http://pandoc.org/installing.html) for generating
     reports from markdown files.
