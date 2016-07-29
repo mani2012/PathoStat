@@ -2,6 +2,26 @@
 tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 'family',
               'genus', 'species', 'no rank')
 
+availableDistances <- c(phyloseq::distanceMethodList$UniFrac,
+                        phyloseq::distanceMethodList$vegdist,
+                        phyloseq::distanceMethodList$JSD,
+                        phyloseq::distanceMethodList$dist
+)
+
+#' Try to identify the main covariate from sample data.
+#' Assume that the main covariate is a variable with 2-6 levels, inclusive.
+#' If multiple variables satisfy this criteria choose the first column on the
+#' left. If none are found return the first variable.
+getMainCovariate <- function(pstat) {
+    # Get the number of levels for each variable
+    nlevels <- sapply(sample_variables(pstat), function(v) {
+        length(levels(factor(sample_data(pstat)[[v]])))
+    })
+    v <- sample_variables(pstat)[nlevels > 1 & nlevels <= 6]
+    if(length(v)>0) return(v[1])
+    sample_variables(pstat)[1]
+}
+
 #' UI function for Diversity Module
 #'
 #' @param id Namespace for module
@@ -17,13 +37,28 @@ diversityModuleUI <-
         tabPanel(label,
                  tabsetPanel(
                      tabPanel("Alpha Diversity", plotOutput(ns("AlphaDiversity"),
-                                                            height = "550px")),
+                                                            height = "550px")
+                     ), # end tabPanel
+                     tabPanel("Ordination",
+                              sidebarLayout(
+                                  sidebarPanel(
+                                      uiOutput(ns("ordMethodControl")),
+                                      uiOutput(ns("ordDistanceControl")),
+                                      uiOutput(ns("ordFormulaControl"))
+                                  ),
+                                  mainPanel(
+                                      plotOutput(ns("ordinationPlot"), height = "500px")
+                                  ) # end mainPanel
+                              ) # end sidebarLayout
+                     ), #end tabPanel
                      tabPanel("Beta Diversity",
                               checkboxInput(ns("methodBeta"),
                                             "Weigthed Unifrac (Default: Bray-Curtis)", FALSE),
-                              plotOutput(ns("BetaDiversity"), height = "500px")),
+                              plotOutput(ns("BetaDiversity"), height = "500px")
+                     ), # end tabPanel
                      tabPanel("Exploratory Tree", plotOutput(ns("ExploratoryTree"),
-                                                             height = "550px")),
+                                                             height = "550px")
+                     ), # end tabPanel
                      tabPanel("BiPlot",
                               sidebarLayout(
                                   sidebarPanel(
@@ -82,6 +117,115 @@ diversityModuleUI <-
 #'
 #' @export
 diversityModule <- function(input, output, session, pstat) {
+
+    output$ordMethodControl <- renderUI({
+        ns <- session$ns
+        selectizeInput(ns("ordinationMethod"),
+                       'Ordination Method',
+                       choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA",
+                                   "NMDS", "MDS", "PCoA"),
+                       selected="DCA")
+    })
+
+    output$ordDistanceControl <- renderUI({
+        ns <- session$ns
+        if(is.null(input$ordinationMethod)) return(invisible())
+        if(! input$ordinationMethod %in% c("CAP", "NMDS", "MDS", "PCoA")) return(invisible())
+        selectizeInput(ns("distanceMethod"),
+                           'Distance Method',
+                           choices = availableDistances,
+                       selected="bray"
+        )
+    })
+
+    output$ordFormulaControl <- renderUI({
+        ns <- session$ns
+        if(is.null(input$ordinationMethod)) return()
+        if(! input$ordinationMethod %in% c("CCA", "RDA", "CAP")) return()
+        if(input$ordinationMethod == 'CAP')
+            return(selectizeInput(ns("ordFormula"),
+                           "Formula",
+                           choices = sample_variables(pstat),
+                           selected = getMainCovariate(pstat),
+                           multiple = TRUE))
+        selectizeInput(ns("ordFormula"),
+                              "Formula",
+                              choices = c("Conditioning variables..." = "", sample_variables(pstat)),
+                              multiple = TRUE
+                       )
+        
+        
+        # selectizeInput("test","test",choices = sample_variables(pstat),multiple=TRUE)
+        #                
+        #     'e2', '2. Multi-select', choices = state.name, multiple = TRUE
+        # ),
+        # 
+        # if(input$ordinationMethod %in% c("CCA", "RDA"))
+        #     return(textInput(ns("ordFormula"),
+        #                'Formula',
+        #                 placeholder = "Constraining variables, ex. ~Condition"
+        #     ))
+        # # ordination method is CAP, formula is required
+        # textInput(ns("ordFormula"),
+        #               'Formula',
+        #               value = paste0('~', getMainCovariate(pstat))
+        # )
+    })
+
+    output$ordinationPlot <- renderPlot({
+        # DCA - none
+        # CCA - formula
+        # RDA - formula
+        # CAP - formula, distance
+        # DPCoA - none
+        # NMDS - distance
+        # MDS - distance
+        # PCoA - distance
+        
+        if(is.null(input$ordinationMethod)) return(invisible())
+        ordInput  <- input$ordinationMethod
+        distInput <- input$distanceMethod
+        frmInput  <-  input$ordFormula
+        
+        cat("Ordination method ", ordInput, '\n')
+        cat("Distance method ", distInput, '\n')
+        cat("Formula ", frmInput, '\n')
+
+        if(ordInput=='DCA')
+            pstat.ord <- phyloseq::ordinate(pstat,method=ordInput)        
+        if(ordInput=='DPCoA')
+            # Need to create phyloseq object for some reason
+            pstat.ord <- phyloseq::ordinate(phyloseq(otu_table(pstat),phy_tree(pstat)), 
+                                                     method=ordInput)
+        if(ordInput %in% c('NMDS','MDS','PCoA')) {
+            if(is.null(distInput)) return(invisible())
+            pstat.ord <- phyloseq::ordinate(pstat, method=ordInput,
+                                            distance = distInput)
+        }
+        if(ordInput %in% c('CCA','RDA')) {
+            if(is.null(frmInput)) {
+                cat("No formula")
+                pstat.ord <- phyloseq::ordinate(pstat, method=ordInput)
+            } else {
+                frmTxt <- paste0('~ ', paste(frmInput,collapse=' + '))
+                cat(frmTxt, '\n')
+                frmObj <- formula(frmTxt)
+                pstat.ord <- phyloseq::ordinate(pstat, method=ordInput,
+                                                formula=frmObj)
+            }
+        }
+        if(ordInput == "CAP") {
+                if(is.null(frmInput) | is.null(distInput)) return(invisible())
+                frmTxt <- paste0('~ ', paste(frmInput,collapse=' + '))
+                cat(frmTxt, '\n')
+                frmObj <- formula(frmTxt)
+                pstat.ord <- phyloseq::ordinate(pstat, method=ordInput,
+                                                formula = frmObj,
+                                                distance = distInput)
+        }
+        
+        phyloseq::plot_ordination(pstat, pstat.ord)
+    })
 
     output$AlphaDiversity <- renderPlot({
         # physeq1 <- shinyInput$pstat
@@ -162,3 +306,5 @@ diversityModule <- function(input, output, session, pstat) {
         p
     })
 }
+
+
