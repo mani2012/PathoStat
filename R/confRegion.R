@@ -1,4 +1,3 @@
-library(boot)
 library(gtools)
 
 # Function to calculate confidence interval and returns the margin of error
@@ -71,7 +70,7 @@ logitcheckregion <- function(x1, x2, chisqval,x,information) {
 #' @param n Total number of simulation points to generate
 #' @param seed Seed to use in random simulation
 #' @return Confidence region plot
-#' @importFrom stats rmultinom
+#' @import stats graphics
 #' @importFrom gtools logit
 #' @export
 plotConfRegion <- function(p1, p2, size=100, uselogit=TRUE, n=10000, 

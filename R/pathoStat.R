@@ -18,6 +18,7 @@ require(phyloseq)
 #' @return outputfile The output file with all the statistical plots
 #' @import pander stats graphics reshape2 ggplot2 rentrez phyloseq
 #' @importFrom scales percent_format
+#' @importFrom ape rtree
 #' @export
 #' @examples
 #' example_data_dir <- system.file("example/data", package = "PathoStat")

@@ -93,7 +93,8 @@ readPathoscopeData <- function(input_dir = ".",
 #' @export
 #' @examples
 #' input_dir <- system.file("example/data", package = "PathoStat")
-#' reportfiles <- list.files(input_dir, pattern = "*.tsv", full.names = TRUE)
+#' reportfiles <- list.files(input_dir, pattern = "*-sam-report.tsv", 
+#'     full.names = TRUE)
 #' loadPathoscopeReports(reportfiles)
 loadPathoscopeReports <- function(reportfiles, nrows=NULL) {
     # Report basenames
