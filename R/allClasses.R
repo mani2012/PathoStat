@@ -1,5 +1,4 @@
 require(phyloseq)
-#' @importFrom methods setClass
 ################################################################################
 #' The PathoStat class to store PathoStat input data including phyloseq object
 #'
