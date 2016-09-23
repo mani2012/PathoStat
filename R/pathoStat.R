@@ -13,9 +13,9 @@ require(phyloseq)
 #' analysis using the interactive shiny app
 #' 
 #' @param input_dir Directory where the tsv files from PathoScope are located
-#' @param batch Batch covariate 
-#' @param condition Covariates or conditions of interest besides batch
-#' @return outputfile The output file with all the statistical plots
+#' @param sample_data_file Sample Data file with information about samples 
+#' @param pathoreport_file_suffix PathoScope report files suffix
+#' @return pstat The pathostat object generated from the given tsv files
 #' @import pander stats graphics reshape2 ggplot2 rentrez phyloseq
 #' @importFrom scales percent_format
 #' @importFrom ape rtree

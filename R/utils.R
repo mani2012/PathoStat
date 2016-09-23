@@ -29,6 +29,7 @@ log2CPM <- function(qcounts, lib.size = NULL) {
 #' 
 #' @param input_dir Directory where the tsv files from PathoScope are located
 #' @return List of final guess relative abundance and count data
+#' @importFrom utils read.table
 #' @export
 #' @examples
 #' example_data_dir <- system.file("example/data", package = "PathoStat")
