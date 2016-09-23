@@ -1,5 +1,6 @@
 #' Simple function to convert binary string to decimal
 #'
+#' @param x Input binary string
 BinToDec <- function(x) 
     sum(2^(which(rev(unlist(strsplit(as.character(x), "")) == 1)) - 1))
 
@@ -28,6 +29,7 @@ log2CPM <- function(qcounts, lib.size = NULL) {
 #' final guess relative abundance and count data
 #' 
 #' @param input_dir Directory where the tsv files from PathoScope are located
+#' @param pathoreport_file_suffix PathoScope report files suffix
 #' @return List of final guess relative abundance and count data
 #' @importFrom utils read.table
 #' @export
@@ -86,6 +88,7 @@ readPathoscopeData <- function(input_dir = ".",
 #' first line of the PathoID report.
 #' 
 #' @param reportfiles Paths to report files
+#' @param nrows Option to read first N rows of PathoScope reports
 #' @return Returns a list where each element is named according to
 #' the PathoID column. For example, ret[["Final.Best.Hit.Read.Numbers"]]
 #' on the result of this function will get you the final count matrix.

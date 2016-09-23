@@ -20,6 +20,8 @@ runPathoStat(pstat = NULL, report_file = "PathoStat_report.html",
 display and hide in the report}
 
 \item{view_report}{when TRUE, opens the report in a browser}
+
+\item{interactive}{when TRUE, opens the interactive shinyApp}
 }
 \value{
 outputfile The output file with all the statistical plots
@@ -29,6 +31,6 @@ Statistical Analysis of the PathoScope reports and generates a html report
 and produces interactive shiny app plots
 }
 \examples{
-runPathoStat()
+runPathoStat(interactive = FALSE)
 }
 

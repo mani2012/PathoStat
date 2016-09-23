@@ -1,3 +1,5 @@
+require(shiny)
+require(grDevices)
 
 #' Select rows of OTU matrix that meet given detection and prevalence thresholds
 #' 
@@ -58,6 +60,7 @@ get_coremat_lineplot <- function(coremat) {
     labs(x="Detection threshold", y="OTU count")
 }
 
+#' @import grDevices
 get_coremat_heatmap <- function(pstat) {
   det <- 10^seq(0,log10(max(otu_table(pstat), na.rm = T)), length = 20)
   # det <- unlist(lapply(0:7, function(p){c(1,2,5) * 10^p}))
@@ -87,6 +90,7 @@ get_coremat_heatmap <- function(pstat) {
 #' 
 #' @return None
 #' 
+#' @importFrom DT dataTableOutput
 #' @export
 coreOTUModuleUI <-
   function(id, label = "Core OTUs") {

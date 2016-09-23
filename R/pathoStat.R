@@ -8,6 +8,22 @@ require(rentrez)
 require(ape)
 require(phyloseq)
 
+#' pathostat object generated from the included example pathoscope report files 
+#'
+#' This example data consists of 33 samples from a diet study with 11 subjects 
+#' taking 3 different diets in random order
+#'
+#' @name pstat_data
+#' @format pathostat object extension of phyloseq-class experiment-level object:
+#' \describe{
+#'     \item{otu_table}{OTU table with  41 taxa and 33 samples}
+#'     \item{sample_data}{Sample Data with 33 samples by 18 sample variables}
+#'     \item{tax_table}{Taxonomy Table with 41 taxa by 9 taxonomic ranks}
+#'     \item{sample_data}{Phylogenetic Tree with 41 tips and 40 internal nodes}
+#' }
+#' @return pathostat object
+"pstat"
+
 ###############################################################################
 #' Generates a PathoStat object from the PathoScope reports for further 
 #' analysis using the interactive shiny app
@@ -57,6 +73,7 @@ createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
 #' @param report_option_binary 9 bits Binary String representing the plots to 
 #'  display and hide in the report 
 #' @param view_report when TRUE, opens the report in a browser 
+#' @param interactive when TRUE, opens the interactive shinyApp 
 #' @return outputfile The output file with all the statistical plots
 #' @import pander stats graphics reshape2 ggplot2 rentrez phyloseq
 #' @importFrom scales percent_format
@@ -64,7 +81,7 @@ createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
 #' @importFrom shiny runApp
 #' @export
 #' @examples
-#' runPathoStat()
+#' runPathoStat(interactive = FALSE)
 runPathoStat <- function(pstat=NULL, report_file = "PathoStat_report.html", 
     report_dir = ".", report_option_binary = "111111111", view_report = FALSE, 
     interactive = TRUE) {

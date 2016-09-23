@@ -11,12 +11,12 @@ createPathoStat(input_dir = ".", sample_data_file = "sample_data.tsv",
 \arguments{
 \item{input_dir}{Directory where the tsv files from PathoScope are located}
 
-\item{batch}{Batch covariate}
+\item{sample_data_file}{Sample Data file with information about samples}
 
-\item{condition}{Covariates or conditions of interest besides batch}
+\item{pathoreport_file_suffix}{PathoScope report files suffix}
 }
 \value{
-outputfile The output file with all the statistical plots
+pstat The pathostat object generated from the given tsv files
 }
 \description{
 Generates a PathoStat object from the PathoScope reports for further 

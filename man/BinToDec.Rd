@@ -6,6 +6,9 @@
 \usage{
 BinToDec(x)
 }
+\arguments{
+\item{x}{Input binary string}
+}
 \description{
 Simple function to convert binary string to decimal
 }

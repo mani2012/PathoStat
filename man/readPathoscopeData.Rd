@@ -10,6 +10,8 @@ readPathoscopeData(input_dir = ".",
 }
 \arguments{
 \item{input_dir}{Directory where the tsv files from PathoScope are located}
+
+\item{pathoreport_file_suffix}{PathoScope report files suffix}
 }
 \value{
 List of final guess relative abundance and count data

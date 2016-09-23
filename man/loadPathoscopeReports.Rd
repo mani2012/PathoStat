@@ -15,6 +15,8 @@ loadPathoscopeReports(reportfiles, nrows = NULL)
 }
 \arguments{
 \item{reportfiles}{Paths to report files}
+
+\item{nrows}{Option to read first N rows of PathoScope reports}
 }
 \value{
 Returns a list where each element is named according to
