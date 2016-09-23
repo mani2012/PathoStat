@@ -136,6 +136,7 @@ coreOTUModuleUI <-
 #' 
 #' @return None
 #' 
+#' @importFrom shiny reactive renderUI sliderInput selectizeInput
 #' @export
 coreOTUModule <- function(input, output, session, pstat) {
     glom <- reactive({

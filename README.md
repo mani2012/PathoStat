@@ -25,9 +25,10 @@ few dependencies that PathoStat uses:
 
 ```r
 source("http://bioconductor.org/biocLite.R")
-biocLite(c('phyloseq', 'pander', 'MCMCpack', 'limma', 'preprocessCore', 
-'stringi', 'corpcor', 'matrixStats', 'shiny', 'ggvis', 'd3heatmap', 'reshape2',
-'scales', 'rentrez', 'devtools', 'BatchQC'))
+biocLite(c('MCMCpack', 'limma', 'corpcor', 'rmarkdown', 'knitr', 'pander',
+'matrixStats', 'reshape2', 'scales', 'ggplot2', 'rentrez', 'BatchQC', 'DT', 
+'gtools', 'plyr', 'tidyr', 'dplyr', 'ape', 'phyloseq', 'shiny', 'grDevices', 
+'stats', 'methods', 'alluvial'))
 ```
 Install the alluvial package:
 	

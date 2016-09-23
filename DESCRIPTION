@@ -19,7 +19,6 @@ Imports:
     rmarkdown,
     knitr,
     pander,
-    gplots,
     matrixStats,
     reshape2,
     scales,
@@ -28,15 +27,16 @@ Imports:
     BatchQC,
     DT,
     gtools,
-    plyr,
     tidyr,
+    plyr,
     dplyr,
     ape,
     phyloseq,
     shiny,
     grDevices,
     stats,
-    methods
+    methods,
+    alluvial
 Collate:
     'pathoStat.R'
     'utils.R'

@@ -5,8 +5,8 @@ library(reshape2)
 library(limma)
 library(phyloseq)
 library(ape)
+library(stats)
 library(PathoStat)
-library(plyr)
 library(alluvial)
 
 # Converts decimal percentage to string with specified digits
@@ -557,7 +557,8 @@ shinyServer(function(input, output, session) {
         cbind(glom_time, glom_otu) -> glom_otu_time
         row.names(glom_otu_time) <- NULL
         glom_otu_time$sample <- NULL
-        glom_otu_time <- ddply(glom_otu_time,input$Allusset,numcolwise(mean))
+        glom_otu_time <- plyr::ddply(glom_otu_time,input$Allusset,
+            plyr::numcolwise(mean))
         tryCatch({
             colnames(glom_otu_time) <- c(input$Allusset, 
                 tax_table(glom)[as.matrix(colnames(

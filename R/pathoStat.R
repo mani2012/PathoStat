@@ -76,6 +76,10 @@ createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
 #' @param interactive when TRUE, opens the interactive shinyApp 
 #' @return outputfile The output file with all the statistical plots
 #' @import pander stats graphics reshape2 ggplot2 rentrez phyloseq
+#' @import MCMCpack corpcor knitr limma matrixStats methods alluvial
+#' @importFrom plyr ddply numcolwise
+#' @importFrom dplyr add_rownames mutate_each select_ add_rownames
+#' @importFrom BatchQC batchqc_pca
 #' @importFrom scales percent_format
 #' @importFrom utils browseURL
 #' @importFrom shiny runApp
@@ -96,7 +100,7 @@ runPathoStat <- function(pstat=NULL, report_file = "PathoStat_report.html",
     }
     shinyInput <- list(pstat = pstat, report_dir = report_dir)
     setShinyInput(shinyInput)
-    rmdfile <- system.file("reports/PathoStat_report.Rmd", package = 
+    rmdfile <- system.file("reports/pathostat_report.Rmd", package = 
         "PathoStat")
     report_option_vector <- unlist(strsplit(as.character(report_option_binary), 
         ""))
