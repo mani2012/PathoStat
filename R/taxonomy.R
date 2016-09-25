@@ -4,6 +4,7 @@ require(rentrez)
 #'
 #' @param tid Given taxon id
 #' @return taxonomy LineageEx
+#' @importFrom XML xmlToList
 #' @import rentrez
 #' @export
 findTaxonLevel <- function(tid) {

@@ -243,7 +243,7 @@ loadPstat <- function(indir=".", infileName="pstat_data.rda") {
 #' data_dir <- system.file("data", package = "PathoStat")
 #' infileName <- "pstat_data.rda"
 #' pstat <- loadPstat(data_dir, infileName)
-#' ra_otu <- findRAfromCount(pstat@otu_table)
+#' ra_otu <- findRAfromCount(phyloseq::otu_table(pstat))
 findRAfromCount <- function(count_otu) {
     ra_otu <- otu_table(count_otu)
     numcol <- dim(count_otu)[2]

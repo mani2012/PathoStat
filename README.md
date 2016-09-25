@@ -6,13 +6,15 @@ PathoScope generated reports file.
 
 The package includes:
 
-1. Relative Abundance plots (Stacked Bar Plot, Heatmap)
-2. Diversity plots (Alpha, Beta, Exploratory Tree, BiPlot, Co-Occurrence)
-3. Differential Abundance (Abundance Plots, Limma)
-4. Confidence Region Plots
-5. PCA plots
-6. PCoA plots
-7. Alluvial Plots for longitudinal data
+    1. Relative Abundance plots (Stacked Bar Plot, Heatmap)
+    2. Diversity plots (Alpha and Beta diversity, Exploratory Tree, BiPlot, 
+        Co-Occurrence)
+    3. Differential Expression (Expression Plots, Limma)
+    4. Confidence Region Plots
+    5. PCA plots
+    6. PCoA plots
+    7. Alluvial Plots for longitudinal data
+    8. Core OTU analysis
 
 `runPathoStat` is the pipeline function that generates the PathoStat report
 and launches shiny app when in interactive mode. It combines all the functions 
@@ -28,11 +30,8 @@ source("http://bioconductor.org/biocLite.R")
 biocLite(c('MCMCpack', 'limma', 'corpcor', 'rmarkdown', 'knitr', 'pander',
 'matrixStats', 'reshape2', 'scales', 'ggplot2', 'rentrez', 'BatchQC', 'DT', 
 'gtools', 'plyr', 'tidyr', 'dplyr', 'ape', 'phyloseq', 'shiny', 'grDevices', 
-'stats', 'methods', 'alluvial'))
+'stats', 'methods', 'XML', 'alluvial'))
 ```
-Install the alluvial package:
-	
-	install_github("mbojan/alluvial")
 
 Install 'pandoc' package by following the instructions at the following URL:
 http://pandoc.org/installing.html
@@ -45,7 +44,7 @@ Next, use [devtools](https://github.com/hadley/devtools) to install the latest
 version of PathoStat from Github:
 ```r
 require(devtools)
-install_github("mani2012/PathoStat", build_vignettes=TRUE, auth_token="dadf36cdaef71a2f761f193862a8f6f3f36e3966")
+install_github("mani2012/PathoStat", build_vignettes=TRUE)
 ```
 
 If all went well you should now be able to load PathoStat:
@@ -59,7 +58,7 @@ runPathoStat()
 
 If you are having issues with the installation, you may have to setup local 
 directory, if you do not have permissions to install in the default location 
-for R. You may also want to load a version of R 3.3 or higher.
+for R. You may also want to load a version of R 3.3.1 or higher.
 ```r
 export R_LIBS="/my_own_local_directory/R_libs"
 module load R/R-3.2.4

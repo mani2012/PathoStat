@@ -1,6 +1,3 @@
-require(shiny)
-require(grDevices)
-
 #' Select rows of OTU matrix that meet given detection and prevalence thresholds
 #' 
 #' @param pstat PathoStat object
@@ -11,7 +8,8 @@ require(grDevices)
 #'
 #' @return Subsetted PathoStat object
 get_core <- function(pstat, detection, prevalence) {
-  filter_taxa(pstat, function(x){ sum(x >= detection, na.rm=T) >= prevalence}, prune = T)
+    filter_taxa(pstat, function(x){ sum(x >= detection, na.rm=TRUE) >= 
+        prevalence}, prune = TRUE)
 }
 
 #' Create core OTU matrix containing number of OTUs detected at varying 
@@ -47,7 +45,7 @@ get_coremat <- function(pstat) {
 #' 
 #' @import ggplot2
 #' @importFrom dplyr mutate
-#' @importFrom tidyr gather
+#' @importFrom tidyr gather %>%
 get_coremat_lineplot <- function(coremat) {
   coremat %>% 
     dplyr::mutate(prev=factor(prev)) %>%
@@ -61,6 +59,7 @@ get_coremat_lineplot <- function(coremat) {
 }
 
 #' @import grDevices
+#' @importFrom tidyr %>%
 get_coremat_heatmap <- function(pstat) {
   det <- 10^seq(0,log10(max(otu_table(pstat), na.rm = T)), length = 20)
   # det <- unlist(lapply(0:7, function(p){c(1,2,5) * 10^p}))
@@ -90,6 +89,7 @@ get_coremat_heatmap <- function(pstat) {
 #' 
 #' @return None
 #' 
+#' @importFrom shiny uiOutput h4 textOutput mainPanel fluidRow column plotOutput
 #' @importFrom DT dataTableOutput
 #' @export
 coreOTUModuleUI <-
@@ -136,7 +136,8 @@ coreOTUModuleUI <-
 #' 
 #' @return None
 #' 
-#' @importFrom shiny reactive renderUI sliderInput selectizeInput
+#' @importFrom shiny reactive renderUI sliderInput selectizeInput renderPlot
+#' renderText NS tabPanel sidebarLayout sidebarPanel tabsetPanel
 #' @export
 coreOTUModule <- function(input, output, session, pstat) {
     glom <- reactive({

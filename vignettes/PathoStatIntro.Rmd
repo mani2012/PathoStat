@@ -4,21 +4,24 @@ author: "Solaiappan Manimaran"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{PathoStatIntro}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+    %\VignetteIndexEntry{PathoStatIntro}
+    %\VignetteEngine{knitr::rmarkdown}
+    \usepackage[utf8]{inputenc}
 ---
 The purpose of this package is to perform Statistical Analysis on the 
 PathoScope generated reports file.
 
 The package includes:
 
-1. Relative Abundance plots (Stacked Bar Plot, Heatmap)
-2. Diversity plots (Alpha, Beta, Exploratory Tree, BiPlot, Co-Occurrence)
-3. Differential Expression (Expression Plots, Limma)
-4. Confidence Region Plots
-5. PCA plots
-6. PCoA plots
+    1. Relative Abundance plots (Stacked Bar Plot, Heatmap)
+    2. Diversity plots (Alpha and Beta diversity, Exploratory Tree, BiPlot, 
+        Co-Occurrence)
+    3. Differential Expression (Expression Plots, Limma)
+    4. Confidence Region Plots
+    5. PCA plots
+    6. PCoA plots
+    7. Alluvial Plots for longitudinal data
+    8. Core OTU analysis
 
 `runPathoStat` is the pipeline function that generates the PathoStat report
 and launches shiny app when in interactive mode. It combines all the functions 
@@ -59,22 +62,14 @@ runPathoStat()
 
 ### Example 2: L1 set
 ```r
-example2_data_dir <- system.file("example/data2/L1", package = "PathoStat")
-pstat <- createPathoStat(input_dir=example2_data_dir, 
-    sample_data_file="sample_data.tsv")
-# Save for future use
-savePstat(pstat, outdir=".", outfileName="pstat_data_2_L1.rda")
+example2_data_dir <- system.file("data", package = "PathoStat")
 # Load and run PathoStat
-pstat <- loadPstat(indir=".", infileName="pstat_data_2_L1.rda")
+pstat <- loadPstat(indir=example2_data_dir, infileName="pstat_data_2_L1.rda")
 runPathoStat(pstat)
 ```
 ### Example 2: L2 set
 ```r
-example2_data_dir <- system.file("example/data2/L2", package = "PathoStat")
-pstat <- createPathoStat(input_dir=example2_data_dir, 
-    sample_data_file="sample_data.tsv")
-# Save for future use
-savePstat(pstat, outdir=".", outfileName="pstat_data_2_L2.rda")
+example2_data_dir <- system.file("data", package = "PathoStat")
 # Load and run PathoStat
 pstat <- loadPstat(indir=".", infileName="pstat_data_2_L2.rda")
 runPathoStat(pstat)
