@@ -22,18 +22,18 @@ get_core <- function(pstat, detection, prevalence) {
 #' columns corresponding to detection thresholds. An additional column called
 #' "prev"contains the sample threshold for each row.
 get_coremat <- function(pstat) {
-  # Detection values to calculate
-  det <- unlist(lapply(0:7, function(p){c(1,2,5) * 10^p}))
-  det <- det[1:min(which(det > max(otu_table(pstat))))]
-  # Prevalence values to calculate
-  prev <- seq(1,nsamples(pstat))
-
-  coremat <- data.frame(do.call(rbind, lapply(prev, function(p){
-    sapply(det, function(d) sum(rowSums(otu_table(pstat) >= d) >= p))
-  })))
-  colnames(coremat) <- det
-  coremat$prev <- prev
-  coremat  
+    # Detection values to calculate
+    det <- unlist(lapply(0:7, function(p){c(1,2,5) * 10^p}))
+    det <- det[1:min(which(det > max(otu_table(pstat))))]
+    # Prevalence values to calculate
+    prev <- seq(1,nsamples(pstat))
+    
+    coremat <- data.frame(do.call(rbind, lapply(prev, function(p){
+        sapply(det, function(d) sum(rowSums(otu_table(pstat) >= d) >= p))
+    })))
+    colnames(coremat) <- det
+    coremat$prev <- prev
+    coremat  
 }
 
 #' Create line plot from core OTU matrix
@@ -47,7 +47,7 @@ get_coremat <- function(pstat) {
 #' @importFrom dplyr mutate
 #' @importFrom tidyr gather %>%
 get_coremat_lineplot <- function(coremat) {
-  coremat %>% 
+    coremat %>% 
     dplyr::mutate(prev=factor(prev)) %>%
     tidyr::gather(det, count, -prev) %>%
     dplyr::mutate(det=as.numeric(det)) %>%
@@ -61,24 +61,24 @@ get_coremat_lineplot <- function(coremat) {
 #' @import grDevices
 #' @importFrom tidyr %>%
 get_coremat_heatmap <- function(pstat) {
-  det <- 10^seq(0,log10(max(otu_table(pstat), na.rm = T)), length = 20)
-  # det <- unlist(lapply(0:7, function(p){c(1,2,5) * 10^p}))
-  # det <- det[1:min(which(det > max(otu_table(pstat))))]
-  coremat2 <- data.frame(do.call(cbind, lapply(det, function(d){
-    rowSums(otu_table(pstat) > d) / nsamples(pstat)
-  })))
-  colnames(coremat2) <- det
-  taxorder <- rownames(coremat2[order(-rowSums(coremat2)),])
-  coremat2 <- coremat2[taxorder,]
-  coremat2$Taxa <- factor(rownames(coremat2),levels=taxorder)
+    det <- 10^seq(0,log10(max(otu_table(pstat), na.rm = TRUE)), length = 20)
+    # det <- unlist(lapply(0:7, function(p){c(1,2,5) * 10^p}))
+    # det <- det[1:min(which(det > max(otu_table(pstat))))]
+    coremat2 <- data.frame(do.call(cbind, lapply(det, function(d){
+        rowSums(otu_table(pstat) > d) / nsamples(pstat)
+    })))
+    colnames(coremat2) <- det
+    taxorder <- rownames(coremat2[order(-rowSums(coremat2)),])
+    coremat2 <- coremat2[taxorder,]
+    coremat2$Taxa <- factor(rownames(coremat2),levels=taxorder)
 
-  coremat2 %>%
+    coremat2 %>%
     tidyr::gather(det, prev, -Taxa) %>%
     dplyr::mutate(det=as.numeric(det)) %>%
     ggplot(aes(x=det, y=Taxa, fill=prev)) + geom_tile() + scale_x_log10() +
     scale_fill_gradientn("Prevalence", 
-                         breaks = seq(from = 0, to = 1, by = 0.2),
-                         colours = gray(seq(0,1,length=5)))
+        breaks = seq(from = 0, to = 1, by = 0.2),
+        colours = gray(seq(0,1,length=5)))
 }
 
 
@@ -92,39 +92,39 @@ get_coremat_heatmap <- function(pstat) {
 #' @importFrom shiny uiOutput h4 textOutput mainPanel fluidRow column plotOutput
 #' @importFrom DT dataTableOutput
 #' @export
-coreOTUModuleUI <-
-  function(id, label = "Core OTUs") {
+coreOTUModuleUI <- function(id, label = "Core OTUs") {
     # This is the namespace for the module
     ns <- NS(id)
     tabPanel("Core OTUs",
-             sidebarLayout(
-               sidebarPanel(
-                 sliderInput(ns("detThresh"), "Detection threshold", value=5, min=1, max=100, step=1),
-                 uiOutput(ns("prevThreshControl")),
-                 uiOutput(ns("taxLevelControl")),
-                 h4(textOutput(ns("coreSummary")), style="color:goldenrod;"),
-                 width=3
-               ),
-               mainPanel(
-                 fluidRow(column(12,
-                               tabsetPanel(
-                                   tabPanel("2D lineplot",
-                                       plotOutput(ns("coreLine"), click = "plot_click")
-                                   ),
-                                   tabPanel("Heatmap", 
-                                       plotOutput(ns("coreHeat"))
-                                   )
-                               )
-                 )),
-                 #fluidRow(column(12,
-                 #                h3(textOutput(ns("coreSummary")))
-                 #), style="padding:9px;"),                 
-                 fluidRow(column(12,
-                                 DT::dataTableOutput(ns("coreTable"), width='95%')
-                 ))
-               ) # end mainPanel
-            ) # end sidebarLayout
-        ) # end tabPanel
+        sidebarLayout(
+            sidebarPanel(
+                sliderInput(ns("detThresh"), "Detection threshold", value=5, 
+                    min=1, max=100, step=1),
+                uiOutput(ns("prevThreshControl")),
+                uiOutput(ns("taxLevelControl")),
+                h4(textOutput(ns("coreSummary")), style="color:goldenrod;"),
+                width=3
+            ),
+            mainPanel(
+                fluidRow(column(12,
+                    tabsetPanel(
+                        tabPanel("2D lineplot",
+                            plotOutput(ns("coreLine"), click = "plot_click")
+                        ),
+                        tabPanel("Heatmap", 
+                            plotOutput(ns("coreHeat"))
+                        )
+                    )
+                )),
+                #fluidRow(column(12,
+                #   h3(textOutput(ns("coreSummary")))
+                #), style="padding:9px;"),                 
+                fluidRow(column(12,
+                    DT::dataTableOutput(ns("coreTable"), width='95%')
+                ))
+            ) # end mainPanel
+        ) # end sidebarLayout
+    ) # end tabPanel
 }
 
 #' Server function for Core OTU Module
@@ -185,7 +185,7 @@ coreOTUModule <- function(input, output, session, pstat) {
                             ,"% prevalence) ")
         cols <- ifelse(cur$prev == input$prevThresh, "#253494", "#bdbdbd33")
         cur_plot + 
-            scale_colour_manual(values=cols, guide=F) +
+            scale_colour_manual(values=cols, guide=FALSE) +
             annotate("text", x=Inf, y=Inf, vjust=1, hjust=1,
                      size=8, color="#253494",
                      label=prevLabel) +

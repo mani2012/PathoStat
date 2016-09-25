@@ -83,6 +83,7 @@ createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
 #' @importFrom scales percent_format
 #' @importFrom utils browseURL
 #' @importFrom shiny runApp
+#' @importFrom rmarkdown render
 #' @export
 #' @examples
 #' runPathoStat(interactive = FALSE)

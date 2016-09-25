@@ -37,6 +37,8 @@ Imports:
     stats,
     methods,
     XML,
+    graphics,
+    utils,
     alluvial
 Collate:
     'pathoStat.R'

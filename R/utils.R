@@ -1,6 +1,9 @@
 #' Simple function to convert binary string to decimal
 #'
 #' @param x Input binary string
+#' @return number Decimal value of the given binary string
+#' @examples
+#' number <- BinToDec("1011")
 BinToDec <- function(x) 
     sum(2^(which(rev(unlist(strsplit(as.character(x), "")) == 1)) - 1))
 
@@ -114,8 +117,8 @@ loadPathoscopeReports <- function(reportfiles, nrows=NULL) {
     
     # Read all reports into list
     mlist <- lapply(reportfiles, function(rf){
-        read.table(rf, sep='\t', header=T, stringsAsFactors=F, row.names=1, 
-            skip=1, comment.char="")
+        read.table(rf, sep='\t', header=TRUE, stringsAsFactors=FALSE, 
+            row.names=1, skip=1, comment.char="")
     })
     
     if(!is.null(nrows)) mlist <- lapply(mlist, function(tbl){tbl[1:nrows, ]})

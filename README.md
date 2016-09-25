@@ -1,8 +1,12 @@
 PathoStat: PathoScope Statistical Analysis package
 ==================================================
 
-The purpose of this package is to perform Statistical Analysis on the 
-PathoScope generated reports file.
+The purpose of this package is to perform Statistical Microbiome Analysis on 
+metagenomics results from sequencing data samples. In particular, it supports 
+analyses on the PathoScope generated report files. PathoStat provides various 
+functionalities including Relative Abundance charts, Diversity estimates and 
+plots, tests of Differential Abundance, Time Series visualization, and 
+Core OTU analysis.
 
 The package includes:
 
@@ -30,7 +34,7 @@ source("http://bioconductor.org/biocLite.R")
 biocLite(c('MCMCpack', 'limma', 'corpcor', 'rmarkdown', 'knitr', 'pander',
 'matrixStats', 'reshape2', 'scales', 'ggplot2', 'rentrez', 'BatchQC', 'DT', 
 'gtools', 'plyr', 'tidyr', 'dplyr', 'ape', 'phyloseq', 'shiny', 'grDevices', 
-'stats', 'methods', 'XML', 'alluvial'))
+'stats', 'methods', 'XML', 'graphics', 'utils', 'alluvial'))
 ```
 
 Install 'pandoc' package by following the instructions at the following URL:
