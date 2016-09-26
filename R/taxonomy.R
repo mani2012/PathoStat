@@ -7,6 +7,14 @@ require(rentrez)
 #' @importFrom XML xmlToList
 #' @import rentrez
 #' @export
+#' @examples
+#' example_data_dir <- system.file("example/data", package = "PathoStat")
+#' pathoreport_file_suffix <- "-sam-report.tsv"
+#' datlist <- readPathoscopeData(example_data_dir, pathoreport_file_suffix)
+#' dat <- datlist$data
+#' ids <- rownames(dat)
+#' tids <- unlist(lapply(ids, FUN = grepTid))
+#' taxonLevel <- findTaxonomy(tids[1])
 findTaxonLevel <- function(tid) {
     if (is.na(tid)) 
         return(tid)
@@ -25,6 +33,14 @@ findTaxonLevel <- function(tid) {
 #' @return taxondata Data with the taxonomy information
 #' @import rentrez
 #' @export
+#' @examples
+#' example_data_dir <- system.file("example/data", package = "PathoStat")
+#' pathoreport_file_suffix <- "-sam-report.tsv"
+#' datlist <- readPathoscopeData(example_data_dir, pathoreport_file_suffix)
+#' dat <- datlist$data
+#' ids <- rownames(dat)
+#' tids <- unlist(lapply(ids, FUN = grepTid))
+#' taxonLevels <- findTaxonomy(tids[1:5])
 findTaxonomy <- function(tids) {
     if (is.null(tids)) {
         return(NULL)
@@ -85,7 +101,6 @@ taxon_hash_update <- function(taxon_hash, taxon, length) {
 #' @param taxonLevels Taxon Levels of all tids
 #' @param level Selected Taxonomy Level
 #' @return taxdata Taxonomy Level Data
-#' @export
 findTaxonLevelData <- function(data, taxonLevels, level) {
     if (level == "no rank") 
         return(data)
@@ -116,6 +131,15 @@ findTaxonLevelData <- function(data, taxonLevels, level) {
 #' @param taxonLevels Taxon Levels of all tids
 #' @return taxmat Taxonomy Information Matrix
 #' @export
+#' @examples
+#' example_data_dir <- system.file("example/data", package = "PathoStat")
+#' pathoreport_file_suffix <- "-sam-report.tsv"
+#' datlist <- readPathoscopeData(example_data_dir, pathoreport_file_suffix)
+#' dat <- datlist$data
+#' ids <- rownames(dat)
+#' tids <- unlist(lapply(ids, FUN = grepTid))
+#' taxonLevels <- findTaxonomy(tids[1:5])
+#' taxmat <- findTaxonMat(ids[1:5], taxonLevels)
 findTaxonMat <- function(names, taxonLevels) {
     # tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 
     #     'suborder', 'family', 'subfamily', 'genus', 'subgenus', 'species', 

@@ -73,6 +73,11 @@ logitcheckregion <- function(x1, x2, chisqval,x,information) {
 #' @import stats graphics
 #' @importFrom gtools logit
 #' @export
+#' @examples
+#' p1 <- 20
+#' p2 <- 25
+#' size <- 200
+#' plotConfRegion(p1, p2, size, uselogit=FALSE)
 plotConfRegion <- function(p1, p2, size=100, uselogit=TRUE, n=10000, 
     seed=1000) {
 

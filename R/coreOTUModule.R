@@ -146,9 +146,9 @@ coreOTUModule <- function(input, output, session, pstat) {
     })
     
     coremat <- reactive({
-      v <- glom()
-      if(is.null(v)) return()
-      get_coremat(v)
+        v <- glom()
+        if(is.null(v)) return()
+        get_coremat(v)
     })
     
     lineplot <- reactive({
@@ -158,22 +158,23 @@ coreOTUModule <- function(input, output, session, pstat) {
     })
     
     output$prevThreshControl <- renderUI({
-      ns <- session$ns
-      sliderInput(ns("prevThresh"), "Samples detected",
-                  value=5, step=1, min=1, max=nsamples(pstat))
+        ns <- session$ns
+        sliderInput(ns("prevThresh"), "Samples detected",
+            value=5, step=1, min=1, max=nsamples(pstat))
     })
     
     output$taxLevelControl <- renderUI({
-      ns <- session$ns
-      rnames <- rev(rank_names(pstat))
-      selectizeInput(ns("taxLevel") , 'Taxonomy Level', choices = rnames, 
-                     selected=rnames[1])
+        ns <- session$ns
+        rnames <- rev(rank_names(pstat))
+        selectizeInput(ns("taxLevel") , 'Taxonomy Level', choices = rnames, 
+            selected=rnames[1])
     })
 
     output$coreTable <- DT::renderDataTable({
         cur <- glom()
         if(is.null(cur)) return(invisible())
-        formatTaxTable(tax_table(get_core(cur, input$detThresh, input$prevThresh)))
+        formatTaxTable(tax_table(get_core(cur, input$detThresh, 
+            input$prevThresh)))
     })
 
     output$coreLine <- renderPlot({
@@ -181,15 +182,15 @@ coreOTUModule <- function(input, output, session, pstat) {
         cur_plot <- lineplot()
         if(is.null(cur) | is.null(cur_plot)) return(invisible())
         prevLabel <- paste0("Samples: ", input$prevThresh, " (",
-                            sprintf('%.1f', 100*(input$prevThresh / nsamples(pstat)))
-                            ,"% prevalence) ")
+            sprintf('%.1f', 100*(input$prevThresh / nsamples(pstat)))
+            ,"% prevalence) ")
         cols <- ifelse(cur$prev == input$prevThresh, "#253494", "#bdbdbd33")
         cur_plot + 
             scale_colour_manual(values=cols, guide=FALSE) +
             annotate("text", x=Inf, y=Inf, vjust=1, hjust=1,
-                     size=8, color="#253494",
-                     label=prevLabel) +
-            geom_vline(xintercept = input$detThresh, color="#990000", linetype=2)
+                size=8, color="#253494", label=prevLabel) +
+            geom_vline(xintercept = input$detThresh, color="#990000", 
+                linetype=2)
     })
     
     output$coreHeat <- renderPlot({
@@ -197,9 +198,9 @@ coreOTUModule <- function(input, output, session, pstat) {
     })
     
     output$coreSummary <- renderText({
-          cur <- glom()
-          if(is.null(cur)) return(invisible())
-          nt <- ntaxa(get_core(cur, input$detThresh, input$prevThresh))
-          paste0(nt, " core OTUs detected.")
+        cur <- glom()
+        if(is.null(cur)) return(invisible())
+        nt <- ntaxa(get_core(cur, input$detThresh, input$prevThresh))
+        paste0(nt, " core OTUs detected.")
     })
 }
