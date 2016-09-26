@@ -1,4 +1,5 @@
-#' Select rows of OTU matrix that meet given detection and prevalence thresholds
+#' Select rows of OTU matrix that meet given detection and prevalence 
+#' thresholds
 #' 
 #' @param pstat PathoStat object
 #' @param detection An integer specifying the minimum value considered to be 

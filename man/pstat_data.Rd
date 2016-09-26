@@ -4,7 +4,7 @@
 \name{pstat_data}
 \alias{pstat}
 \alias{pstat_data}
-\title{pathostat object generated from the included example pathoscope report files}
+\title{pathostat object generated from example pathoscope report files}
 \format{pathostat object extension of phyloseq-class experiment-level object:
 \describe{
     \item{otu_table}{OTU table with  41 taxa and 33 samples}

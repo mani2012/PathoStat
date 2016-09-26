@@ -8,7 +8,7 @@ require(rentrez)
 require(ape)
 require(phyloseq)
 
-#' pathostat object generated from the included example pathoscope report files 
+#' pathostat object generated from example pathoscope report files 
 #'
 #' This example data consists of 33 samples from a diet study with 11 subjects 
 #' taking 3 different diets in random order
@@ -64,8 +64,8 @@ createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
 }
 
 ###############################################################################
-#' Statistical Analysis of the PathoScope reports and generates a html report 
-#' and produces interactive shiny app plots
+#' Statistical Microbiome Analysis on the pathostat input and generates a 
+#' html report and produces interactive shiny app plots
 #' 
 #' @param pstat phyloseq extension pathostat object
 #' @param report_file Output report file name 
@@ -87,9 +87,9 @@ createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
 #' @export
 #' @examples
 #' runPathoStat(interactive = FALSE)
-runPathoStat <- function(pstat=NULL, report_file = "PathoStat_report.html", 
-    report_dir = ".", report_option_binary = "111111111", view_report = FALSE, 
-    interactive = TRUE) {
+runPathoStat <- function(pstat=NULL, report_file="PathoStat_report.html", 
+    report_dir=".", report_option_binary="111111111", view_report=FALSE, 
+    interactive=TRUE) {
     
     if (is.null(pstat))  {
         data_dir <- system.file("data", package = "PathoStat")

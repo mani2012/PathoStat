@@ -78,8 +78,9 @@ logitcheckregion <- function(x1, x2, chisqval,x,information) {
 #' p2 <- 25
 #' size <- 200
 #' plotConfRegion(p1, p2, size, uselogit=FALSE)
-plotConfRegion <- function(p1, p2, size=100, uselogit=TRUE, n=10000, 
-    seed=1000) {
+plotConfRegion <- 
+    function(p1, p2, size=100, uselogit=TRUE, n=10000, seed=1000)
+{
 
     actualprop = c(p1,p2,(size-(p1+p2)))
     #actualprop = c(1,1,18)

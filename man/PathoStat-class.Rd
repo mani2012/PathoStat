@@ -4,7 +4,7 @@
 \name{PathoStat-class}
 \alias{PathoStat-class}
 \alias{pathostat}
-\title{The PathoStat class to store PathoStat input data including phyloseq object}
+\title{PathoStat class to store PathoStat input data including phyloseq object}
 \description{
 Contains all currently-supported BatchQC output data classes:
 }

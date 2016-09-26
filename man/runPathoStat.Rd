@@ -2,12 +2,12 @@
 % Please edit documentation in R/pathoStat.R
 \name{runPathoStat}
 \alias{runPathoStat}
-\title{Statistical Analysis of the PathoScope reports and generates a html report 
-and produces interactive shiny app plots}
+\title{Statistical Microbiome Analysis on the pathostat input and generates a 
+html report and produces interactive shiny app plots}
 \usage{
 runPathoStat(pstat = NULL, report_file = "PathoStat_report.html",
-  report_dir = ".", report_option_binary = "111111111",
-  view_report = FALSE, interactive = TRUE)
+    report_dir = ".", report_option_binary = "111111111",
+    view_report = FALSE, interactive = TRUE)
 }
 \arguments{
 \item{pstat}{phyloseq extension pathostat object}
@@ -27,8 +27,8 @@ display and hide in the report}
 outputfile The output file with all the statistical plots
 }
 \description{
-Statistical Analysis of the PathoScope reports and generates a html report 
-and produces interactive shiny app plots
+Statistical Microbiome Analysis on the pathostat input and generates a 
+html report and produces interactive shiny app plots
 }
 \examples{
 runPathoStat(interactive = FALSE)

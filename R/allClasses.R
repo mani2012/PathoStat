@@ -1,6 +1,6 @@
 require(phyloseq)
 ################################################################################
-#' The PathoStat class to store PathoStat input data including phyloseq object
+#' PathoStat class to store PathoStat input data including phyloseq object
 #'
 #' Contains all currently-supported BatchQC output data classes: 
 #' 

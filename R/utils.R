@@ -36,8 +36,8 @@ log2CPM <- function(qcounts, lib.size = NULL) {
 #' @examples
 #' example_data_dir <- system.file("example/data", package = "PathoStat")
 #' readPathoscopeData(input_dir=example_data_dir)
-readPathoscopeData <- function(input_dir = ".", 
-    pathoreport_file_suffix="-sam-report.tsv") {
+readPathoscopeData <- 
+    function(input_dir=".", pathoreport_file_suffix="-sam-report.tsv") {
     if (input_dir == ".") {
         input_dir <- getwd()
     }

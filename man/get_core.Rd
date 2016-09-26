@@ -2,7 +2,8 @@
 % Please edit documentation in R/coreOTUModule.R
 \name{get_core}
 \alias{get_core}
-\title{Select rows of OTU matrix that meet given detection and prevalence thresholds}
+\title{Select rows of OTU matrix that meet given detection and prevalence 
+thresholds}
 \usage{
 get_core(pstat, detection, prevalence)
 }
@@ -19,6 +20,7 @@ must be detected}
 Subsetted PathoStat object
 }
 \description{
-Select rows of OTU matrix that meet given detection and prevalence thresholds
+Select rows of OTU matrix that meet given detection and prevalence 
+thresholds
 }
 
