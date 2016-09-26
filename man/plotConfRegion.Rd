@@ -26,4 +26,10 @@ Confidence region plot
 \description{
 Compute the confidence region for the given proportions
 }
+\examples{
+p1 <- 20
+p2 <- 25
+size <- 200
+plotConfRegion(p1, p2, size, uselogit=FALSE)
+}
 

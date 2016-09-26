@@ -7,6 +7,33 @@
 BinToDec <- function(x) 
     sum(2^(which(rev(unlist(strsplit(as.character(x), "")) == 1)) - 1))
 
+#' Compute log2(counts per mil reads) and library size for each sample
+#'
+#' @param qcounts quantile normalized counts
+#' @param lib.size default is colsums(qcounts)
+#' @return list containing log2(quantile counts per mil reads) and library sizes
+#' @export
+#' @examples
+#' example_data_dir <- system.file("example/data", package = "PathoStat")
+#' pathoreport_file_suffix <- "-sam-report.tsv"
+#' datlist <- readPathoscopeData(example_data_dir, pathoreport_file_suffix)
+#' countdat <- datlist$countdata
+#' lcpm <- log2CPM(countdat)
+log2CPM <- function(qcounts, lib.size = NULL) {
+    if (is.null(lib.size)) 
+        lib.size <- colSums(qcounts)
+    minimum <- min(qcounts)
+    if (minimum < 0) {
+        qcounts <- qcounts - minimum
+    }
+    avg <- mean(colMeans(qcounts))
+    qcounts <- apply(qcounts, 1:2, FUN = function(x) {
+        ifelse(x < 0, avg, x)
+    })
+    y <- t(log2(t(qcounts + 0.5)/(lib.size + 1) * 1e+06))
+    return(list(y = y, lib.size = lib.size))
+}
+
 #' Reads the data from PathoScope reports and returns a list of 
 #' final guess relative abundance and count data
 #' 

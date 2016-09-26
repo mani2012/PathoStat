@@ -15,4 +15,13 @@ taxondata Data with the taxonomy information
 \description{
 Find the taxonomy for each taxon ids
 }
+\examples{
+example_data_dir <- system.file("example/data", package = "PathoStat")
+pathoreport_file_suffix <- "-sam-report.tsv"
+datlist <- readPathoscopeData(example_data_dir, pathoreport_file_suffix)
+dat <- datlist$data
+ids <- rownames(dat)
+tids <- unlist(lapply(ids, FUN = grepTid))
+taxonLevels <- findTaxonomy(tids[1:5])
+}
 

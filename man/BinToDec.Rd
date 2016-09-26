@@ -9,7 +9,13 @@ BinToDec(x)
 \arguments{
 \item{x}{Input binary string}
 }
+\value{
+number Decimal value of the given binary string
+}
 \description{
 Simple function to convert binary string to decimal
+}
+\examples{
+number <- BinToDec("1011")
 }
 
