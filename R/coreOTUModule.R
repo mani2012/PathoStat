@@ -22,16 +22,31 @@ get_core <- function(pstat, detection, prevalence) {
 #' prevalence thresholds, with rows corresponding to number of samples and
 #' columns corresponding to detection thresholds. An additional column called
 #' "prev"contains the sample threshold for each row.
+#' @importFrom tidyr %>%
+#' @importFrom phyloseq otu_table nsamples
 get_coremat <- function(pstat) {
+    # Get the OTU counts table
+    otu_counts <- otu_table(pstat)
+    
     # Detection values to calculate
     det <- unlist(lapply(0:7, function(p){c(1,2,5) * 10^p}))
-    det <- det[1:min(which(det > max(otu_table(pstat))))]
+    det <- det[1:min(which(det > max(otu_counts)))]
     # Prevalence values to calculate
-    prev <- seq(1,nsamples(pstat))
+    prev <- seq(1, nsamples(pstat))
     
-    coremat <- data.frame(do.call(rbind, lapply(prev, function(p){
-        sapply(det, function(d) sum(rowSums(otu_table(pstat) >= d) >= p))
-    })))
+    # Difficult to parse:
+    # coremat <- data.frame(do.call(rbind, lapply(prev, function(p){
+    #     sapply(det, function(d) sum(rowSums(otu_counts >= d) >= p))
+    # })))
+    
+    # Number of samples where OTU is detected
+    # Rows are OTUs, columns are detection thresholds
+    nsamp_det <- sapply(det, function(d) rowSums(otu_counts >= d))
+    
+    # Number of OTUs for each prevalence and detection threshold
+    # Rows are prevalence (number of samples), columns are detection thresholds    
+    coremat <- sapply(prev, function(p) colSums(nsamp_det >= p))
+    coremat <- t(coremat) %>% data.frame
     colnames(coremat) <- det
     coremat$prev <- prev
     coremat  
