@@ -10,13 +10,12 @@ Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>,
     Tyler Faits <tfaits@gmail.com>, 
     W. Evan Johnson <wej@bu.edu>
 Maintainer: Solaiappan Manimaran <manimaran_1975@hotmail.com>
-Description: 
-The purpose of this package is to perform Statistical Microbiome Analysis on 
-metagenomics results from sequencing data samples. In particular, it supports 
-analyses on the PathoScope generated report files. PathoStat provides various 
-functionalities including Relative Abundance charts, Diversity estimates and 
-plots, tests of Differential Abundance, Time Series visualization, and 
-Core OTU analysis. 
+Description: The purpose of this package is to perform Statistical 
+Microbiome Analysis on metagenomics results from sequencing data samples. 
+In particular, it supports analyses on the PathoScope generated report files. 
+PathoStat provides various functionalities including Relative Abundance charts, 
+Diversity estimates and plots, tests of Differential Abundance, Time Series 
+visualization, and Core OTU analysis. 
 URL: https://github.com/mani2012/PathoStat
 BugReports: https://github.com/mani2012/PathoStat/issues
 License: GPL (>= 2)
