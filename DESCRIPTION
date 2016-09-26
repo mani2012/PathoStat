@@ -56,8 +56,8 @@ Collate:
     'allClasses.R'
     'coreOTUModule.R'
 Suggests: testthat
-biocViews: GraphAndNetwork, Microarray, PrincipalComponent, 
-    Sequencing, Software, Visualization, RNASeq
+biocViews: Microbiome, Metagenomics, GraphAndNetwork, Microarray, 
+    PrincipalComponent, Sequencing, Software, Visualization, RNASeq
 SystemRequirements: pandoc (http://pandoc.org/installing.html) for generating
     reports from markdown files.
 VignetteBuilder: knitr
