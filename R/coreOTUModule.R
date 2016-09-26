@@ -60,54 +60,90 @@ get_coremat <- function(pstat) {
 #' on the y-axis. Lines connect data points with the same number of samples.
 #' 
 #' @import ggplot2
-#' @importFrom dplyr mutate
-#' @importFrom tidyr gather %>%
+#' @importFrom dplyr mutate_
+#' @importFrom tidyr gather_ %>%
 get_coremat_lineplot <- function(coremat) {
+    cols_to_gather <- colnames(coremat)[colnames(coremat) != "prev"]
     coremat %>% 
-    dplyr::mutate(prev=factor(prev)) %>%
-    tidyr::gather(det, count, -prev) %>%
-    dplyr::mutate(det=as.numeric(det)) %>%
-    ggplot(aes(x=det, y=count, group=prev, color=prev)) + 
-    geom_point() + 
-    geom_line() +
-    scale_x_log10() +
-    labs(x="Detection threshold", y="OTU count")
+        dplyr::mutate_(prev="factor(prev)") %>%
+        tidyr::gather_("det", "count", cols_to_gather) %>%
+        dplyr::mutate_(det="as.numeric(det)") %>%
+        ggplot(aes_string(x="det", y="count", group="prev", color="prev")) + 
+            geom_point() + 
+            geom_line() +
+            scale_x_log10() +
+            labs(x="Detection threshold", y="OTU count")
 }
 
 #' @import grDevices
 #' @importFrom tidyr %>%
+#' @importFrom phyloseq nsamples
 get_coremat_heatmap <- function(pstat) {
-    det <- 10^seq(0,log10(max(otu_table(pstat), na.rm = TRUE)), length = 20)
-    # det <- unlist(lapply(0:7, function(p){c(1,2,5) * 10^p}))
-    # det <- det[1:min(which(det > max(otu_table(pstat))))]
-    coremat2 <- data.frame(do.call(cbind, lapply(det, function(d){
-        rowSums(otu_table(pstat) > d) / nsamples(pstat)
-    })))
+    # Get the OTU counts table
+    otu_counts <- otu_table(pstat)
+
+    # Detection values to calculate    
+    det <- 10^seq(0,log10(max(otu_counts, na.rm = TRUE)), length = 20)
+
+    # Difficult to parse:
+    # coremat2 <- data.frame(do.call(cbind, lapply(det, function(d){
+    #    rowSums(otu_counts > d) / nsamples(pstat)
+    #})))
+    
+    # Number of samples where OTU is detected
+    # Rows are OTUs, columns are detection thresholds
+    nsamp_det <- sapply(det, function(d) rowSums(otu_counts >= d))
+
+    # Proportion of samples where OTU is detected
+    coremat2 <- nsamp_det / nsamples(pstat) 
+    coremat2 <- coremat2 %>% data.frame
     colnames(coremat2) <- det
+    
+    # Reorder from most to least prevalent 
     taxorder <- rownames(coremat2[order(-rowSums(coremat2)),])
-    coremat2 <- coremat2[taxorder,]
-    coremat2$Taxa <- factor(rownames(coremat2),levels=taxorder)
+    coremat2 <- coremat2[taxorder, ]
+    coremat2$Taxa <- factor(rownames(coremat2), levels=taxorder)
 
     coremat2 %>%
-    tidyr::gather(det, prev, -Taxa) %>%
-    dplyr::mutate(det=as.numeric(det)) %>%
-    ggplot(aes(x=det, y=Taxa, fill=prev)) + geom_tile() + scale_x_log10() +
-    scale_fill_gradientn("Prevalence", 
-        breaks = seq(from = 0, to = 1, by = 0.2),
-        colours = gray(seq(0,1,length=5)))
+        tidyr::gather_("det", "prev", as.character(det)) %>% 
+        dplyr::mutate(det=as.numeric(det)) %>%
+        ggplot(aes_string(x="det", y="Taxa", fill="prev")) + geom_tile() + 
+            scale_x_log10() +
+            scale_fill_gradientn("Prevalence", 
+                breaks = seq(from = 0, to = 1, by = 0.2),
+                colours = gray(seq(0,1,length=5)))
 }
 
 
 #' UI function for Core OTU Module
-#'
+#' 
+#' This function creates the UI for the Core OTU tab. The tab panel can be
+#' included within a tabsetPanel, thus providing a simple way to add or remove
+#' this module from the Shiny app. The first argument, \code{id}, is the ID to 
+#' be used for the namespace \emph{and} must match the \code{id} argument
+#' provided to \code{\link{coreOTUModule}}.
+#' 
 #' @param id Namespace for module
 #' @param label Tab label
 #' 
-#' @return None
+#' @return A \code{\link[shiny]{tabPanel}} that can be included within a 
+#' \code{\link[shiny]{tabsetPanel}}.
 #' 
 #' @importFrom shiny uiOutput h4 textOutput mainPanel fluidRow column plotOutput
 #' @importFrom DT dataTableOutput
 #' @export
+#' @examples
+#' shiny::mainPanel(
+#'     shiny::tabsetPanel(
+#'         coreOTUModuleUI("coreOTUModule")
+#'     )
+#' )
+#' 
+#' @seealso \code{\link{coreOTUModule}} for the server function, 
+#'     \code{\link[shiny]{tabPanel}} for the UI component returned by this 
+#'     function, or \url{ http://shiny.rstudio.com/articles/modules.html} for
+#'     more information about Shiny modules.
+#' 
 coreOTUModuleUI <- function(id, label = "Core OTUs") {
     # This is the namespace for the module
     ns <- NS(id)
@@ -144,17 +180,48 @@ coreOTUModuleUI <- function(id, label = "Core OTUs") {
 }
 
 #' Server function for Core OTU Module
+#' 
+#' This function provides the server logic for the Core OTU tab. This function 
+#' is not called directly; instead, it should be invoked within the Shiny app's 
+#' server function using the \code{\link[shiny]{callModule}} function.
+#' See \url{ http://shiny.rstudio.com/articles/modules.html} for information
+#' about this design pattern.
+#' 
+#' The \code{\link[shiny]{callModule}} function should be invoked with this
+#' function as the first argument. \code{callModule} is responsible for creating
+#' the namespaced \code{input}, \code{output}, and \code{session} arguments.
+#' The second argument to \code{callModule} is the ID to be used for the 
+#' namespace and \emph{must} match the \code{id} argument provided to 
+#' \link{coreOTUModuleUI}. The third argument to \code{callModule} should
+#' be a \linkS4class{PathoStat} object from the app's server function, and is
+#' passed to this function as the \code{pstat} argument.
 #'
-#' @param input Shiny server input object
-#' @param output Shiny server output object
-#' @param session This is the session
-#' @param pstat PathoStat object
+#' @param input Shiny server input object created by \code{callModule}
+#' @param output Shiny server output object created by \code{callModule}
+#' @param session Session created by \code{callModule}
+#' @param pstat PathoStat object (third argument to \code{callModule}).
 #' 
 #' @return None
 #' 
 #' @importFrom shiny reactive renderUI sliderInput selectizeInput renderPlot
 #' renderText NS tabPanel sidebarLayout sidebarPanel tabsetPanel
 #' @export
+#' @examples
+#' # This function is not called directly; instead, it should be invoked within
+#' # the app's server function using the shiny::callModule function.
+#' \dontrun{
+#' shinyServer(function(input, output, session) {
+#'     shinyInput <- getShinyInput()
+#'     pstat <- shinyInput$pstat
+#'     callModule( coreOTUModule, "coreOTUModule", pstat )
+#' }
+#' }
+#' 
+#' @seealso \code{\link{coreOTUModuleUI}} for the UI function, 
+#'     \code{\link[shiny]{callModule}} to see how to invoke this function, or
+#'     \url{ http://shiny.rstudio.com/articles/modules.html} for more 
+#'     information about Shiny modules.
+#'
 coreOTUModule <- function(input, output, session, pstat) {
     glom <- reactive({
         if(is.null(input$taxLevel)) return()
