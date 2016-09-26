@@ -1,12 +1,3 @@
-#' Simple function to convert binary string to decimal
-#'
-#' @param x Input binary string
-#' @return number Decimal value of the given binary string
-#' @examples
-#' number <- BinToDec("1011")
-BinToDec <- function(x) 
-    sum(2^(which(rev(unlist(strsplit(as.character(x), "")) == 1)) - 1))
-
 #' Compute log2(counts per mil reads) and library size for each sample
 #'
 #' @param qcounts quantile normalized counts
