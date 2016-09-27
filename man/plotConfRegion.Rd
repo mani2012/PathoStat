@@ -5,7 +5,7 @@
 \title{Compute the confidence region for the given proportions}
 \usage{
 plotConfRegion(p1, p2, size = 100, uselogit = TRUE, n = 10000,
-    seed = 1000)
+  seed = 1000)
 }
 \arguments{
 \item{p1}{Read counts for first taxon}
