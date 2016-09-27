@@ -17,6 +17,5 @@ inst/doc
 tmp/
 .DS_Store
 packrat/lib*/
-packrat/src/
 packrat
 .Rprofile
