@@ -12,9 +12,28 @@ coreOTUModuleUI(id, label = "Core OTUs")
 \item{label}{Tab label}
 }
 \value{
-None
+A \code{\link[shiny]{tabPanel}} that can be included within a 
+\code{\link[shiny]{tabsetPanel}}.
 }
 \description{
-UI function for Core OTU Module
+This function creates the UI for the Core OTU tab. The tab panel can be
+included within a tabsetPanel, thus providing a simple way to add or remove
+this module from the Shiny app. The first argument, \code{id}, is the ID to 
+be used for the namespace \emph{and} must match the \code{id} argument
+provided to \code{\link{coreOTUModule}}.
+}
+\examples{
+shiny::mainPanel(
+    shiny::tabsetPanel(
+        coreOTUModuleUI("coreOTUModule")
+    )
+)
+
+}
+\seealso{
+\code{\link{coreOTUModule}} for the server function, 
+    \code{\link[shiny]{tabPanel}} for the UI component returned by this 
+    function, or \url{ http://shiny.rstudio.com/articles/modules.html} for
+    more information about Shiny modules.
 }
 
