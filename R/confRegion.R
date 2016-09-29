@@ -1,19 +1,11 @@
-library(gtools)
-
 # Function to calculate confidence interval and returns the margin of error
-confinterval <- function(x, size) {
-    delta <- 0.0001
-    for (i in 1:3)  {
-        if (x[i] <= 0)  {
-            x[i] = delta
-        }
-    }
+confinterval <- function(x, size, delta=0.0001) {
+    x[which(x <= 0)] <- delta
     information <- matrix(c((1/x[1])+(1/x[3]), 1/x[3], 1/x[3], 
         (1/x[2])+(1/x[3])),2,2)
     information <- size*information
     variance <- solve(information)
     marginerror <- c(1.96*sqrt(variance[1,1]), 1.96*sqrt(variance[2,2]))
-    #  marginerror <- c(1.645*sqrt(variance[1,1]), 1.645*sqrt(variance[2,2]))
     return (marginerror)
 } 
 
@@ -23,21 +15,13 @@ checkregion <- function(x1, x2, chisqval,x,information) {
     d2 <- x2-x[2]
     chi <- (d1*information[1,1]+d2*information[2,1])*d1 + 
         (d1*information[1,2]+d2*information[2,2])*d2 
-    check <- FALSE
-    if (chi < chisqval) {
-        check <- TRUE
-    }
+    check <- (chi < chisqval)
     return (check)
-} 
+}
 
 # Function to calculate confidence interval and returns the margin of error
-logitconfinterval <- function(x, size) {
-    delta <- 0.0001
-    for (i in 1:3)  {
-        if (x[i] <= 0)  {
-            x[i] = delta
-        }
-    }
+logitconfinterval <- function(x, size, delta=0.0001) {
+    x[which(x <= 0)] <- delta
     information <- matrix(c((1/x[1])+(1/x[3]), 1/x[3], 1/x[3], 
         (1/x[2])+(1/x[3])),2,2)
     information <- size*information
@@ -54,12 +38,9 @@ logitcheckregion <- function(x1, x2, chisqval,x,information) {
     d2 <- (x2-lx[2])*x[2]*(1-x[2])
     chi <- (d1*information[1,1]+d2*information[2,1])*d1 + 
         (d1*information[1,2]+d2*information[2,2])*d2 
-    check <- FALSE
-    if (chi < chisqval) {
-        check <- TRUE
-    }
+    check <- (chi < chisqval)
     return (check)
-} 
+}
 
 #' Compute the confidence region for the given proportions
 #'
@@ -81,28 +62,22 @@ logitcheckregion <- function(x1, x2, chisqval,x,information) {
 plotConfRegion <- 
     function(p1, p2, size=100, uselogit=TRUE, n=10000, seed=1000)
 {
-
+    if (p1 <= 0) p1 <- 1
+    if (p2 <= 0) p2 <- 1
+    if (size <= (p1+p2)) size <- (p1+p2)+1
     actualprop = c(p1,p2,(size-(p1+p2)))
-    #actualprop = c(1,1,18)
     set.seed(seed, kind = NULL, normal.kind = NULL)
     A = rmultinom(n,size,actualprop)
     A = A/size
-    jitA <- jitter(A)
-    p1up <- 0
-    p1low <- 0
-    p2up <- 0
-    p2low <- 0
-    for (i in 1:n) {
-        me <- confinterval(A[,i], size)
-        p1up <- p1up + A[,i][1]+me[1]
-        p1low <- p1low + A[,i][1]-me[1]
-        p2up <- p2up + A[,i][2]+me[2]
-        p2low <- p2low + A[,i][2]-me[2]
-    }
-    p1up <- p1up/n
-    p1low <- p1low/n
-    p2up <- p2up/n
-    p2low <- p2low/n
+    amount <- 1/(5*size)
+    jitA <- jitter(A,1,amount)
+    jitA <- abs(jitA)
+    me <- apply(A, 2, confinterval, size)
+    p1up <- sum(A[1,] + me[,1])/n
+    p1low <- sum(A[1,] - me[,1])/n
+    p2up <- sum(A[2,] + me[,2])/n
+    p2low <- sum(A[2,] - me[,2])/n
+    
     chisqval <- qchisq(0.95, 2, ncp = 0, lower.tail = TRUE, log.p = FALSE)
     x <- rep(0,3)
     x[1] <- (p1up+p1low)/2
@@ -115,7 +90,7 @@ plotConfRegion <-
     if (!uselogit)  {
         plot(jitA[1,],jitA[2,], xlab="Proportion 1", ylab="Proportion 2")
         #plot(A[1,],A[2,], xlab="Proportion 1", ylab="Proportion 2")
-        for (i in 1:n) {
+        for (i in seq_len(n)) {
             if (checkregion(A[1,i],A[2,i],chisqval,x,information))  {
                 points(jitA[1,i],jitA[2,i], col="green")
             }
@@ -130,52 +105,21 @@ plotConfRegion <-
         title(main="Two Proportions with 95% Confidence Interval", 
             col.main="red", font.main=4)
     } else {
-        #quantile (A[1,],.95)
-        #quantile (A[1,],.05)
-        #quantile (A[2,],.95)
-        #quantile (A[2,],.05)
-        
-        delta = 0.001
-        B = logit(A+delta)
-        #B = logit(A)
-        
-        lp1up <- 0
-        lp1low <- 0
-        lp2up <- 0
-        lp2low <- 0
-        for (i in 1:n) {
-            lme <- logitconfinterval(A[,i], size)
-            lp1up <- lp1up + B[,i][1]+lme[1]
-            lp1low <- lp1low + B[,i][1]-lme[1]
-            lp2up <- lp2up + B[,i][2]+lme[2]
-            lp2low <- lp2low + B[,i][2]-lme[2]
-        }
-        lp1up <- lp1up/n
-        lp1low <- lp1low/n
-        lp2up <- lp2up/n
-        lp2low <- lp2low/n
+        delta <- 1/(5*size)
+        B <- A
+        B <- apply(B, c(1, 2), 
+            function(x, delta) {if(x <= 0) delta else x}, delta)
+        B <- logit(B)
+
+        lme <- apply(A, 2, logitconfinterval, size)
+        lp1up <- sum(B[1,] + lme[,1])/n
+        lp1low <- sum(B[1,] - lme[,1])/n
+        lp2up <- sum(B[2,] + lme[,2])/n
+        lp2low <- sum(B[2,] - lme[,2])/n
         jitB <- jitter(B)
         
-        #plot(jitB[1,],jitB[2,], xlab="logit(Proportion 1)", 
-        #    ylab="logit(Proportion 2)")
-
-        #for (i in 1:n) {
-        #    if (logitcheckregion(B[1,i],B[2,i],chisqval,x,information))  {
-        #        points(jitB[1,i],jitB[2,i], col="green")
-        #    }
-        #}
-        
-        #abline(v=lp1up, col="red")
-        #abline(v=lp1low, col="red")
-        #abline(h=lp2up, col="red")
-        #abline(h=lp2low, col="red")
-        
-        # Create a title with a red, bold/italic font
-        #title(main="Logit Two Proportions with 95% Confidence Interval", 
-        #    col.main="red", font.main=4)
-        
         plot(jitA[1,],jitA[2,], xlab="Proportion 1", ylab="Proportion 2")
-        for (i in 1:n) {
+        for (i in seq_len(n)) {
             if (logitcheckregion(B[1,i],B[2,i],chisqval,x,information))  {
                 points(jitA[1,i],jitA[2,i], col="green")
             }

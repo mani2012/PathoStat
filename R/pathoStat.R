@@ -1,13 +1,3 @@
-require(limma)
-require(pander)
-require(stats)
-require(graphics)
-require(reshape2)
-require(ggplot2)
-require(rentrez)
-require(ape)
-require(phyloseq)
-
 #' pathostat object generated from example pathoscope report files 
 #'
 #' This example data consists of 33 samples from a diet study with 11 subjects 

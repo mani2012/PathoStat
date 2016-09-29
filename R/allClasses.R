@@ -1,4 +1,3 @@
-require(phyloseq)
 ################################################################################
 #' PathoStat class to store PathoStat input data including phyloseq object
 #'

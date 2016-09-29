@@ -1,5 +1,3 @@
-require(rentrez)
-
 #' Find the taxonomy for the given taxon id
 #'
 #' @param tid Given taxon id
@@ -97,6 +95,7 @@ taxon_hash_update <- function(taxon_hash, taxon, length) {
 
 #' Find the taxonomy level data for the given taxon level
 #'
+#' @keywords internal
 #' @param data Given Relative abundance data
 #' @param taxonLevels Taxon Levels of all tids
 #' @param level Selected Taxonomy Level
