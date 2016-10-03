@@ -43,27 +43,21 @@ readPathoscopeData <-
     }
     pattern <- paste("*", pathoreport_file_suffix, sep="")
     filenames <- list.files(input_dir, pattern = pattern, full.names = TRUE)
-    genomes <- c()
-    for (i in 1:length(filenames)) {
-        filename <- filenames[i]
-        tbl <- read.table(filename, skip=1, header=TRUE, sep="\t", nrows=10)
-        genomes <- c(genomes, levels(tbl[, 1]))
-    }
+
+    ltbl <- lapply(filenames, read.table, skip=1, header=TRUE, sep="\t", 
+        nrows=10)
+    lgenomes <- lapply(ltbl, function(tbl) {return(levels(tbl[,1]))})
+    genomes <- unique(unlist(lgenomes))
     genomes <- c(genomes, "others")
-    genomes <- unique(genomes)
-    lprop <- vector("list", length(filenames))
-    lcprop <- vector("list", length(filenames))
-    for (i in 1:length(filenames)) {
-        filename <- filenames[i]
-        numReads <- 1
-        fl <- readLines(filename, n = 1)
-        numReads <- as.numeric(strsplit(fl, "\t")[[1]][2])
-        tbl <- read.table(filename, skip=1, header=TRUE, sep="\t", nrows=10)
-        hasht <- prop_hash(tbl)
-        lprop[[i]] <- proportion(hasht, genomes)  # the column data
-        lcprop[[i]] <- proportion(hasht, genomes, countdata = TRUE, numReads)  
-        # the column data
-    }
+    
+    lfl <- lapply(filenames, readLines, n = 1)
+    lnumReads <- unlist(lapply(lfl, function(fl) 
+        {return(as.numeric(strsplit(fl, "\t")[[1]][2]))}))
+    lhasht <- lapply(ltbl, prop_hash)
+    lprop <- lapply(lhasht, proportion, genomes)
+    lcprop <- lapply(seq_along(lhasht), proportionc, lhasht=lhasht, 
+        genomes=genomes, lnumReads=lnumReads)
+    
     do.call(cbind, lprop)
     do.call(cbind, lcprop)
     samplenames <- unlist(lapply(filenames, function(x) {
@@ -180,6 +174,12 @@ proportion <- function(hasht, genomes, countdata = FALSE, numReads = 1) {
         }
     }
     return(prop)
+}
+
+proportionc <- function(lhasht, genomes, lnumReads, i) {
+    propc <- proportion(lhasht[[i]], genomes, countdata = TRUE, 
+        numReads=lnumReads[i])
+    return(propc)
 }
 
 #' Greps the tid from the given identifier string 
