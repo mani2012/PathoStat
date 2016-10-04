@@ -150,7 +150,7 @@ loadPathoscopeReports <- function(reportfiles, nrows=NULL) {
 prop_hash <- function(tbl) {
     prop_hash <- new.env()
     sum <- 0
-    for (i in 1:nrow(tbl)) {
+    for (i in seq_len(nrow(tbl))) {
         prop_hash[[as.character(tbl[i, 1])]] <- tbl[i, 2]
         sum <- sum + tbl[i, 2]
     }
@@ -247,7 +247,7 @@ loadPstat <- function(indir=".", infileName="pstat_data.rda") {
 findRAfromCount <- function(count_otu) {
     ra_otu <- otu_table(count_otu)
     numcol <- dim(count_otu)[2]
-    for (i in 1:numcol)  {
+    for (i in seq_len(numcol))  {
         ra_otu[,i] <- ra_otu[,i]/sum(ra_otu[,i])
     }
     return(ra_otu)

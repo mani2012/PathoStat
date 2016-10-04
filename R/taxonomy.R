@@ -55,7 +55,7 @@ findSelectedTaxonId <- function(tLineageEx, level) {
     if (is.na(tLineageEx[1])) {
         return(id)
     }
-    for (i in 1:length(tLineageEx)) {
+    for (i in seq_len(length(tLineageEx))) {
         rank <- tLineageEx[[i]]["Rank"]
         scientificName <- tLineageEx[[i]]["ScientificName"]
         taxid <- tLineageEx[[i]]["TaxId"]
@@ -106,7 +106,7 @@ findTaxonLevelData <- function(data, taxonLevels, level) {
     taxdata <- data.frame(stringsAsFactors = FALSE)
     taxon_hash <- NULL
     length <- 0
-    for (i in 1:dim(data)[1]) {
+    for (i in seq_len(dim(data)[1])) {
         id <- findSelectedTaxonId(taxonLevels[[i]], level)
         taxon_hash_list <- taxon_hash_update(taxon_hash, id, length)
         taxon_hash <- taxon_hash_list$taxon_hash
@@ -115,7 +115,7 @@ findTaxonLevelData <- function(data, taxonLevels, level) {
             taxdata <- rbind(taxdata, data[i, ])
             rownames(taxdata)[length + 1] <- as.character(id)
         } else {
-            for (j in 1:dim(data)[2]) {
+            for (j in seq_len(dim(data)[2])) {
                 taxdata[index, j] <- taxdata[index, j] + data[i, j]
             }
         }
@@ -150,7 +150,7 @@ findTaxonMat <- function(names, taxonLevels) {
         tl[tax.name[i]] <- "others"
     }
     taxmat <- NULL
-    for (i in 1:length(taxonLevels)) {
+    for (i in seq_len(length(taxonLevels))) {
         taxrow <- tl
         tLineageEx <- taxonLevels[[i]]
         for (j in 1:length(tLineageEx)) {

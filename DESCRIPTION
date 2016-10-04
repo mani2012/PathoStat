@@ -1,8 +1,8 @@
 Package: PathoStat
 Type: Package
 Title: PathoStat Statistical Microbiome Analysis Package
-Version: 0.99.0
-Date: 2016-09-25
+Version: 0.99.1
+Date: 2016-10-03
 Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>, 
     Matthew Bendall <bendall@gwmail.gwu.edu>, 
     Sandro Valenzuela Diaz <sandrolvalenzuelad@gmail.com>, 
