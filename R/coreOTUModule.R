@@ -44,7 +44,7 @@ get_coremat <- function(pstat) {
     nsamp_det <- sapply(det, function(d) rowSums(otu_counts >= d))
     
     # Number of OTUs for each prevalence and detection threshold
-    # Rows are prevalence (number of samples), columns are detection thresholds    
+    # Rows are prevalence (number of samples), columns are detection thresholds
     coremat <- sapply(prev, function(p) colSums(nsamp_det >= p))
     coremat <- t(coremat) %>% data.frame
     colnames(coremat) <- det

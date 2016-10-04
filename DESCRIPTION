@@ -1,7 +1,7 @@
 Package: PathoStat
 Type: Package
 Title: PathoStat Statistical Microbiome Analysis Package
-Version: 0.99.1
+Version: 0.99.2
 Date: 2016-10-03
 Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>, 
     Matthew Bendall <bendall@gwmail.gwu.edu>, 
@@ -56,7 +56,7 @@ Collate:
     'allClasses.R'
     'coreOTUModule.R'
 Suggests: testthat
-biocViews: Microbiome, Metagenomics, GraphAndNetwork, Microarray, 
+biocViews: Microbiome, Metagenomics, GraphAndNetwork, Microarray, PatternLogic,
     PrincipalComponent, Sequencing, Software, Visualization, RNASeq
 SystemRequirements: pandoc (http://pandoc.org/installing.html) for generating
     reports from markdown files.
