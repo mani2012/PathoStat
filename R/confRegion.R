@@ -72,17 +72,27 @@ plotConfRegion <-
     amount <- 1/(5*size)
     jitA <- jitter(A,1,amount)
     jitA <- abs(jitA)
-    me <- apply(A, 2, confinterval, size)
-    p1up <- sum(A[1,] + me[,1])/n
-    p1low <- sum(A[1,] - me[,1])/n
-    p2up <- sum(A[2,] + me[,2])/n
-    p2low <- sum(A[2,] - me[,2])/n
+    
+    # Calculating interval based on averages from all points here
+    # me <- apply(A, 2, confinterval, size)
+    # p1up <- sum(A[1,] + me[,1])/n
+    # p1low <- sum(A[1,] - me[,1])/n
+    # p2up <- sum(A[2,] + me[,2])/n
+    # p2low <- sum(A[2,] - me[,2])/n
+    
+    # Calculating interval based on the exact value
+    x <- actualprop/size
+    me <- confinterval(x, size)
+    p1up <- x[1] + me[1]
+    p1low <- x[1] - me[1]
+    p2up <- x[2] + me[2]
+    p2low <- x[2] - me[2]
     
     chisqval <- qchisq(0.95, 2, ncp = 0, lower.tail = TRUE, log.p = FALSE)
-    x <- rep(0,3)
-    x[1] <- (p1up+p1low)/2
-    x[2] <- (p2up+p2low)/2
-    x[3] <- 1-x[1]-x[2]
+    # x <- rep(0,3)
+    # x[1] <- (p1up+p1low)/2
+    # x[2] <- (p2up+p2low)/2
+    # x[3] <- 1-x[1]-x[2]
     information <- matrix(c((1/x[1])+(1/x[3]), 1/x[3], 1/x[3], 
                             (1/x[2])+(1/x[3])),2,2)
     information <- size*information
@@ -110,13 +120,21 @@ plotConfRegion <-
         B <- apply(B, c(1, 2), 
             function(x, delta) {if(x <= 0) delta else x}, delta)
         B <- logit(B)
-
-        lme <- apply(A, 2, logitconfinterval, size)
-        lp1up <- sum(B[1,] + lme[,1])/n
-        lp1low <- sum(B[1,] - lme[,1])/n
-        lp2up <- sum(B[2,] + lme[,2])/n
-        lp2low <- sum(B[2,] - lme[,2])/n
-        jitB <- jitter(B)
+        
+        # Calculating interval based on averages from all points here
+        # lme <- apply(A, 2, logitconfinterval, size)
+        # lp1up <- sum(B[1,] + lme[,1])/n
+        # lp1low <- sum(B[1,] - lme[,1])/n
+        # lp2up <- sum(B[2,] + lme[,2])/n
+        # lp2low <- sum(B[2,] - lme[,2])/n
+        
+        # Calculating interval based on the exact value
+        lx <- logit(x)
+        lme <- logitconfinterval(x, size)
+        lp1up <- lx[1] + lme[1]
+        lp1low <- lx[1] - lme[1]
+        lp2up <- lx[2] + lme[2]
+        lp2low <- lx[2] - lme[2]
         
         plot(jitA[1,],jitA[2,], xlab="Proportion 1", ylab="Proportion 2")
         for (i in seq_len(n)) {
