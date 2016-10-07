@@ -72,6 +72,7 @@ plotConfRegion <-
     amount <- 1/(5*size)
     jitA <- jitter(A,1,amount)
     jitA <- abs(jitA)
+    jitA <- apply(jitA, c(1, 2), function(x) {if(x > 1) 2-x else x})
     
     # Calculating interval based on averages from all points here
     # me <- apply(A, 2, confinterval, size)
@@ -115,10 +116,7 @@ plotConfRegion <-
         title(main="Two Proportions with 95% Confidence Interval", 
             col.main="red", font.main=4)
     } else {
-        delta <- 1/(5*size)
         B <- jitA
-        B <- apply(B, c(1, 2), 
-            function(x, delta) {if(x <= 0) delta else x}, delta)
         B <- logit(B)
         
         # Calculating interval based on averages from all points here
