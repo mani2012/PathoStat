@@ -101,7 +101,7 @@ plotConfRegion <-
         plot(jitA[1,],jitA[2,], xlab="Proportion 1", ylab="Proportion 2")
         #plot(A[1,],A[2,], xlab="Proportion 1", ylab="Proportion 2")
         for (i in seq_len(n)) {
-            if (checkregion(A[1,i],A[2,i],chisqval,x,information))  {
+            if (checkregion(jitA[1,i],jitA[2,i],chisqval,x,information))  {
                 points(jitA[1,i],jitA[2,i], col="green")
             }
         }
@@ -116,7 +116,7 @@ plotConfRegion <-
             col.main="red", font.main=4)
     } else {
         delta <- 1/(5*size)
-        B <- A
+        B <- jitA
         B <- apply(B, c(1, 2), 
             function(x, delta) {if(x <= 0) delta else x}, delta)
         B <- logit(B)
