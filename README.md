@@ -26,17 +26,14 @@ into one step.
 
 ## Installation
 
-To begin, install [Bioconductor](http://www.bioconductor.org/) along with a
-few dependencies that PathoStat uses:
+To begin, install [Bioconductor](http://www.bioconductor.org/) and simply
+run the following to automatically install PathoStat and all the dependencies, 
+except pandoc, which you have to manually install as follows.
 
 ```r
 source("http://bioconductor.org/biocLite.R")
-biocLite(c('MCMCpack', 'limma', 'corpcor', 'rmarkdown', 'knitr', 'pander',
-'matrixStats', 'reshape2', 'scales', 'ggplot2', 'rentrez', 'BatchQC', 'DT', 
-'gtools', 'plyr', 'tidyr', 'dplyr', 'ape', 'phyloseq', 'shiny', 'grDevices', 
-'stats', 'methods', 'XML', 'graphics', 'utils', 'alluvial'))
+biocLite("PathoStat")
 ```
-
 Install 'pandoc' package by following the instructions at the following URL:
 http://pandoc.org/installing.html
 
@@ -44,17 +41,28 @@ Rstudio also provides pandoc binaries at the following location for Windows,
 Linux and Mac:
 https://s3.amazonaws.com/rstudio-buildtools/pandoc-1.13.1.zip 
 
-Next, use [devtools](https://github.com/hadley/devtools) to install the latest
-version of PathoStat from Github:
+If you want to install the latest development version of PathoStat from Github, 
+use [devtools](https://github.com/hadley/devtools) to install it as follows:
 ```r
 require(devtools)
 install_github("mani2012/PathoStat", build_vignettes=TRUE)
+```
+
+If you want to manually install the PathoStat dependencies, run the following:
+```r
+source("http://bioconductor.org/biocLite.R")
+biocLite(c('MCMCpack', 'limma', 'corpcor', 'rmarkdown', 'knitr', 'pander',
+'matrixStats', 'reshape2', 'scales', 'ggplot2', 'rentrez', 'BatchQC', 'DT', 
+'gtools', 'plyr', 'tidyr', 'dplyr', 'ape', 'phyloseq', 'shiny', 'grDevices', 
+'stats', 'methods', 'XML', 'graphics', 'utils', 'alluvial', 'BiocStyle'))
 ```
 
 If all went well you should now be able to load PathoStat:
 ```r
 require(PathoStat)
 vignette('PathoStatIntro', package='PathoStat')
+vignette("PathoStatUserManual", package='PathoStat')
+vignette("PathoStatAdvanced", package='PathoStat')
 runPathoStat()
 ```
 

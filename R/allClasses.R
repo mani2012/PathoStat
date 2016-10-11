@@ -14,7 +14,7 @@
 #' @name PathoStat-class
 #' @rdname PathoStat-class
 #' @exportClass PathoStat
-pathostat <- setClass(Class="PathoStat", 
+pathostat1 <- setClass(Class="PathoStat", 
     representation=representation(
         average_count="otu_tableOrNULL",
         besthit_count="otu_tableOrNULL",

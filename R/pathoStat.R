@@ -49,7 +49,24 @@ createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
     random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=
         taxa_names(physeq))
     physeq1 <- merge_phyloseq(physeq, sampledata, random_tree)
-    pstat <- pathostat(physeq1)
+    pstat <- pathostat1(physeq1)
+    return(pstat)
+}
+
+###############################################################################
+#' Build PathoStat-class object from its phyloseq component. 
+#' 
+#' @param physeq1 phyloseq object
+#' @return pstat The pathostat object generated from the given phyloseq object
+#' @import phyloseq
+#' @export
+#' @examples
+#' rich_dense_biom  = system.file("extdata", "rich_dense_otu_table.biom", 
+#'     package="phyloseq")
+#' phyob <- phyloseq::import_biom(rich_dense_biom)
+#' pstat_biom <- pathostat(phyob)
+pathostat <- function(physeq1) {
+    pstat <- pathostat1(physeq1)
     return(pstat)
 }
 
