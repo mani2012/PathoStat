@@ -83,7 +83,7 @@ pathostat <- function(physeq1) {
 #' @param interactive when TRUE, opens the interactive shinyApp 
 #' @return outputfile The output file with all the statistical plots
 #' @import pander stats graphics reshape2 ggplot2 rentrez phyloseq
-#' @import MCMCpack corpcor knitr limma matrixStats methods alluvial
+#' @import MCMCpack corpcor knitr limma matrixStats methods alluvial BiocStyle
 #' @importFrom plyr ddply numcolwise
 #' @importFrom dplyr add_rownames mutate_each select_ add_rownames
 #' @importFrom BatchQC batchqc_pca

@@ -4,9 +4,9 @@ author: "Sandro L. Valenzuela, Eduardo Castro-Nallar, Solaiappan Manimaran"
 date: "`r Sys.Date()`"
 package: "`r pkg_ver('PathoStat')`"
 vignette: >
-  %\VignetteIndexEntry{PathoStatUserManual}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+    %\VignetteIndexEntry{PathoStatUserManual}
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
 output: BiocStyle::pdf_document
 ---
 
@@ -233,7 +233,7 @@ others.
 The Time Series tab allows you to understand variation in relative abundance as 
 a function of time. Strictly speaking, you could use any discrete numerical 
 variable from your dataset for visualization. In the example below, we use 
-SubjectID (not a numerical variable though) and agglomerate the data by Phylum.  
+SubjectID (not a numerical variable though) and agglomerate the data by Phylum.
 
 | ![Time Series](img/ts.png)
 

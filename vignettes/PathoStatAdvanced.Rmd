@@ -4,9 +4,9 @@ author: "Sandro L. Valenzuela, Eduardo Castro-Nallar, Solaiappan Manimaran"
 date: "`r Sys.Date()`"
 package: "`r pkg_ver('PathoStat')`"
 vignette: >
-  %\VignetteIndexEntry{PathoStatAdvanced}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+    %\VignetteIndexEntry{PathoStatAdvanced}
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
 output: BiocStyle::html_document
 ---
 
@@ -114,15 +114,15 @@ the `plotConfRegion`
 n<-nrow(as.matrix(rownames(otut)))
 m<-nrow(as.matrix(colnames(otut)))
 
-p1 <- pstat@otu_table[rownames(otut)[ sample(1:n, 1)], 
-                      colnames(otut)[sample(1:m, 1)]]
+p1 <- otut[rownames(otut)[ sample(1:n, 1)], 
+    colnames(otut)[sample(1:m, 1)]]
 if (p1 <= 0) p1 <- 1
 
 #random taxon for p2 in this case again
 n<-nrow(as.matrix(rownames(otut)))
 m<-nrow(as.matrix(colnames(otut)))
 p2 <- otut[rownames(otut)[ sample(1:n, 1)], 
-                      colnames(otut)[sample(1:m, 1)]]
+    colnames(otut)[sample(1:m, 1)]]
 if (p2 <= 0) p2 <- 1
 size <- sum(otut[,colnames(otut)])
 plotConfRegion(p1, p2, size, uselogit=FALSE)
