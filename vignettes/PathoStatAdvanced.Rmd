@@ -1,0 +1,148 @@
+---
+title: "PathoStat Advanced Usage"
+author: "Sandro L. Valenzuela, Eduardo Castro-Nallar, Solaiappan Manimaran"
+date: "`r Sys.Date()`"
+package: "`r pkg_ver('PathoStat')`"
+vignette: >
+    %\VignetteIndexEntry{PathoStatAdvanced}
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
+output: BiocStyle::html_document
+---
+
+# Introduction  
+Welcome to the PathoStat Advanced Usage vignette. PathoStat is a software 
+package implemented in Shiny that lets you explore metagenomic data and perform 
+statistical microbiome analysis with the confort of a graphical user interface
+(GUI).  
+While most of the PathoStat functions are interactive, i.e., through the GUI, 
+you still can use some of the functions for very practical things, 
+notwithstanding, reading data from PathoScope2 results, BIOM-formatted files, 
+and phyloseq objects.  
+
+# Create Pathostat Object (pstat) from PathoScope2 output
+First, we choose the path where Pathoscope output files (.tsv) and sample 
+information, i.e., metadata, are. In this case, we will be using the example 
+data within the PathoStat package.  
+```{r example_data, eval=TRUE}
+library(PathoStat)
+example_data_dir <- system.file("example/data", package = "PathoStat")
+```
+
+Next, simply execute the `createPathoStat()` function in order to combine all 
+.tsv files within `example_data_dir`. Remember we need a metadata file that is 
+also tab-delimited (in this case `sample_data.tsv`)  
+```{r create_pathostat, eval=TRUE}
+pstat <- createPathoStat(input_dir=example_data_dir, 
+    sample_data_file="sample_data.tsv")
+```
+
+# Create Pathostat Object (pstat) from BIOM file
+PathoStat objects (pstat) are an extension of the phyloseq-class and can be 
+created from biom files using the `import_biom` function from the `phyloseq` 
+package. For example:
+```{r create_pathostat_from_biom, eval=TRUE}
+library(phyloseq)
+rich_dense_biom  = system.file("extdata", "rich_dense_otu_table.biom", 
+    package="phyloseq")
+phyob <- import_biom(rich_dense_biom)
+
+#and finally, we convert the phyloseq object into a pstat object
+pstat_biom <- pathostat(phyob)
+```
+
+# Saving and loading data, and running PathoStat
+pstat objects can be saved or loaded from disk, e.g., to be shared with 
+collaborators. For this, we have created the `savePstat()` and `loadPstat()` 
+functions.
+```{r save_load_pathostat, eval=FALSE}
+# Saving data
+savePstat(pstat, outdir=".", outfileName="pstat_data.rda")
+# Loading data
+pstat <- loadPstat(indir=".", infileName="pstat_data.rda")
+# Calling the runPathoStat() function to execute Pathostat interactively
+runPathoStat(pstat)
+```
+
+# Example functions for Shiny developers: coreOTUModule and coreOTUModuleUI
+If you are creating a Shiny app, you could easily implement the coreOTU tab 
+using the example code below
+```{r coreOTU, eval=FALSE}
+#create a UI calling coreOTUModuleUI() function
+shinyUI(mainPanel( 
+    coreOTUModuleUI("coreOTUModule")
+))
+
+#and a server
+shinyServer(function(input, output) {
+    callModule( coreOTUModule, "coreOTUModule", pstat )
+})
+```
+
+# Estimating taxon abundances: findRAfromCount
+Once your data are in, you can easily estimate taxon abundances by using the 
+`findRAfromCount()` function
+```{r taxon_abundance, eval=TRUE}
+#first, get the otu_table from pstat calling a phyloseq function
+library(phyloseq)
+otut<-otu_table(pstat)
+ffc<-findRAfromCount(otut)
+#lets see, for example, the abundances for sample 01 on the ffc object
+head(ffc[,1], n = 15)
+```
+
+# Assigning lineages to taxonomy IDs: findTaxonomy and findTaxonMat
+We can fetch the lineages (and their Ids) by invoking the functions 
+`findTaxonomy()` and `findTaxonMat()`
+```{r taxon_matrix, eval=TRUE}
+dat <- ffc
+ids <- rownames(dat)
+tids <- unlist(lapply(ids, FUN = grepTid))
+taxonLevels <- findTaxonomy(tids[1:4])
+taxmat <- findTaxonMat(ids[1:4], taxonLevels)
+taxmat
+```
+
+# Obtaining a 95% confidence interval: plotConfRegion
+Many times researchers are interested in the accuracy of taxon abundance 
+estimates. In this subtab, we provide a way to compare within-sample taxa in 
+terms of their abundance estimate and 95% confidence interval. You can estimate 
+the 95% confidence interval for a two-taxon within sample comparison by using 
+the `plotConfRegion`
+```{r plot_confidence_region, eval=TRUE}
+#select taxon 1 and 2, from your samples (randomly in this case)
+n<-nrow(as.matrix(rownames(otut)))
+m<-nrow(as.matrix(colnames(otut)))
+
+p1 <- otut[rownames(otut)[ sample(1:n, 1)], 
+    colnames(otut)[sample(1:m, 1)]]
+if (p1 <= 0) p1 <- 1
+
+#random taxon for p2 in this case again
+n<-nrow(as.matrix(rownames(otut)))
+m<-nrow(as.matrix(colnames(otut)))
+p2 <- otut[rownames(otut)[ sample(1:n, 1)], 
+    colnames(otut)[sample(1:m, 1)]]
+if (p2 <= 0) p2 <- 1
+size <- sum(otut[,colnames(otut)])
+plotConfRegion(p1, p2, size, uselogit=FALSE)
+```
+
+# Obtaining counts per million: log2CPM
+log2cpm can compute log2(counts per million reads) and library size for each 
+sample
+```{r log2cpm, eval=TRUE}
+# Only to sample one:
+lcpm <- log2CPM(otut[,1])
+lcpm
+```
+
+# Heatmap using pstat data
+Lets create a heatmap from our `pstat` object. We siply use the `phyloseq` 
+function `plot_heatmap`.
+```{r plot_heatmap, eval=TRUE,warning=FALSE}
+#select a tax level for the heatmap plot
+taxonLevel<-"class"
+physeq <- tax_glom(pstat,taxonLevel)
+plot_heatmap(physeq, taxa.label=taxonLevel)
+```

@@ -1,0 +1,36 @@
+Package: PathoStat
+Type: Package
+Title: PathoStat Statistical Microbiome Analysis Package
+Version: 0.99.7
+Date: 2016-10-11
+Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>, Matthew
+        Bendall <bendall@gwmail.gwu.edu>, Sandro Valenzuela Diaz
+        <sandrolvalenzuelad@gmail.com>, Eduardo Castro
+        <castronallar@gmail.com>, Tyler Faits <tfaits@gmail.com>, W.
+        Evan Johnson <wej@bu.edu>
+Maintainer: Solaiappan Manimaran <manimaran_1975@hotmail.com>
+Description: The purpose of this package is to perform Statistical
+        Microbiome Analysis on metagenomics results from sequencing
+        data samples. In particular, it supports analyses on the
+        PathoScope generated report files. PathoStat provides various
+        functionalities including Relative Abundance charts, Diversity
+        estimates and plots, tests of Differential Abundance, Time
+        Series visualization, and Core OTU analysis.
+URL: https://github.com/mani2012/PathoStat
+BugReports: https://github.com/mani2012/PathoStat/issues
+License: GPL (>= 2)
+Depends: R (>= 3.3.1)
+Imports: MCMCpack, limma, corpcor, rmarkdown, knitr, pander,
+        matrixStats, reshape2, scales, ggplot2, rentrez, BatchQC, DT,
+        gtools, tidyr, plyr, dplyr, ape, phyloseq, shiny, grDevices,
+        stats, methods, XML, graphics, utils, alluvial, BiocStyle
+Collate: 'pathoStat.R' 'utils.R' 'taxonomy.R' 'confRegion.R'
+        'allClasses.R' 'coreOTUModule.R'
+Suggests: testthat
+biocViews: Microbiome, Metagenomics, GraphAndNetwork, Microarray,
+        PatternLogic, PrincipalComponent, Sequencing, Software,
+        Visualization, RNASeq
+SystemRequirements: pandoc (http://pandoc.org/installing.html) for
+        generating reports from markdown files.
+VignetteBuilder: knitr
+RoxygenNote: 5.0.1

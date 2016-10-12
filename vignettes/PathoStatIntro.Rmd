@@ -1,0 +1,72 @@
+---
+title: "PathoStat package Introduction"
+author: "Solaiappan Manimaran"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+    %\VignetteIndexEntry{PathoStatIntro}
+    %\VignetteEngine{knitr::rmarkdown}
+    \usepackage[utf8]{inputenc}
+---
+The purpose of this package is to perform Statistical Microbiome Analysis on 
+metagenomics results from sequencing data samples. In particular, it supports 
+analyses on the PathoScope generated report files. PathoStat provides various 
+functionalities including Relative Abundance charts, Diversity estimates and 
+plots, tests of Differential Abundance, Time Series visualization, and 
+Core OTU analysis.
+
+The package includes:
+
+    1. Relative Abundance plots (Stacked Bar Plot, Heatmap)
+    2. Diversity plots (Alpha and Beta diversity, Exploratory Tree, BiPlot, 
+        Co-Occurrence)
+    3. Differential Expression (Expression Plots, Limma)
+    4. Confidence Region Plots
+    5. PCA plots
+    6. PCoA plots
+    7. Alluvial Plots for longitudinal data
+    8. Core OTU analysis
+
+`runPathoStat` is the pipeline function that generates the PathoStat report
+and launches shiny app when in interactive mode. It combines all the functions 
+into one step.
+
+## Installation
+
+To begin, install [Bioconductor](http://www.bioconductor.org/) and simply
+run the following to automatically install PathoStat and all the dependencies, 
+except pandoc, which you have to manually install as follows.
+
+```r
+source("http://bioconductor.org/biocLite.R")
+biocLite("PathoStat")
+```
+Install 'pandoc' package by following the instructions at the following URL:
+http://pandoc.org/installing.html
+
+Rstudio also provides pandoc binaries at the following location for Windows, 
+Linux and Mac:
+https://s3.amazonaws.com/rstudio-buildtools/pandoc-1.13.1.zip 
+
+If all went well you should now be able to load PathoStat. 
+Here are some examples usage of the pipeline.
+
+### Example 1: Run PathoStat
+```r
+runPathoStat()
+```
+
+### Example 2: L1 set
+```r
+example2_data_dir <- system.file("data", package = "PathoStat")
+# Load and run PathoStat
+pstat <- loadPstat(indir=example2_data_dir, infileName="pstat_data_2_L1.rda")
+runPathoStat(pstat)
+```
+### Example 2: L2 set
+```r
+example2_data_dir <- system.file("data", package = "PathoStat")
+# Load and run PathoStat
+pstat <- loadPstat(indir=".", infileName="pstat_data_2_L2.rda")
+runPathoStat(pstat)
+```
