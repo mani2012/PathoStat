@@ -3,6 +3,7 @@ library(ggvis)
 library(d3heatmap)
 library(reshape2)
 library(limma)
+library(edgeR)
 library(phyloseq)
 library(ape)
 library(stats)
@@ -473,20 +474,11 @@ shinyServer(function(input, output, session) {
         }
     })
     DELim <- reactive({
-      physeq1 <- shinyInput$pstat
-      Incondition <- sample_data(physeq1)[[input$primary]]
       findTaxCountDataDE()
       shinyInput <- getShinyInput()
       lcpm <- log2CPM(shinyInput$taxcountdata)
       lcounts <- lcpm$y
-      dat <- lcounts
-      cond1 <- as.factor(Incondition)
-      cond2 <- split(which(Incondition == cond1), cond1)
-      cond3 <- unlist(lapply(1:length(cond2), 
-                             function(x) cond2[[x]]))
-      dat1 <- dat[, cond3]
-      colnames(dat1) <- seq(1:ncol(dat))[cond3]
-      dat1
+      lcounts
     })
     output$LimmaTable <- renderTable({
         shinyInput <- getShinyInput()
@@ -507,7 +499,43 @@ shinyServer(function(input, output, session) {
                 levels(as.factor(Incondition))[j], " (logFC)", sep='')
         }
         limmaTable
+    }, rownames = TRUE)
+
+    DEEdgeR <- reactive({
+      physeq1 <- shinyInput$pstat
+      Incondition <- sample_data(physeq1)[[input$primary]]
+      findTaxCountDataDE()
+      shinyInput <- getShinyInput()
+      dat <- shinyInput$taxcountdata
+      dat
     })
+    output$EdgeRTable <- renderTable({
+        shinyInput <- getShinyInput()
+        physeq1 <- shinyInput$pstat
+        Incondition <- sample_data(physeq1)[[input$primary]]
+        Inbatch <- sample_data(physeq1)[[input$secondary]]
+        pdata <- data.frame(Inbatch, Incondition)
+        group <- factor(Incondition)
+        mod <- model.matrix(if (input$primary == input$secondary) 
+            ~as.factor(Incondition)
+            else ~as.factor(Incondition) + ~as.factor(Inbatch), data = pdata)
+        dat1 <- DEEdgeR()
+        y <- DGEList(counts=dat1,group=group)
+        y <- calcNormFactors(y)
+        y <- estimateGLMCommonDisp(y,mod)
+        y <- estimateGLMTrendedDisp(y,mod)
+        y <- estimateGLMTagwiseDisp(y,mod)
+        fit <- glmFit(y,mod)
+        ncond <- nlevels(group)
+        lrt <- glmLRT(fit,coef=2:ncond)
+        edgeRTags <- topTags(lrt, n=input$noTaxons)
+        edgeRTable <- edgeRTags$table
+        for (j in 2:ncond)  {
+            colnames(edgeRTable)[j-1] <- paste("Primary Covariate: ",
+                levels(group)[j], " (logFC)", sep='')
+        }
+        edgeRTable
+    }, rownames = TRUE)
 
     output$confRegion <- renderPlot({
         p1 <- shinyInput$pstat@otu_table[input$taxon1, input$sample]
