@@ -1,7 +1,7 @@
 Package: PathoStat
 Type: Package
 Title: PathoStat Statistical Microbiome Analysis Package
-Version: 1.1.0
+Version: 1.1.1
 Date: 2016-10-11
 Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>, Matthew
         Bendall <bendall@gwmail.gwu.edu>, Sandro Valenzuela Diaz
@@ -23,7 +23,7 @@ Depends: R (>= 3.3.1)
 Imports: MCMCpack, limma, corpcor, rmarkdown, knitr, pander,
         matrixStats, reshape2, scales, ggplot2, rentrez, BatchQC, DT,
         gtools, tidyr, plyr, dplyr, ape, phyloseq, shiny, grDevices,
-        stats, methods, XML, graphics, utils, alluvial, BiocStyle
+        stats, methods, XML, graphics, utils, alluvial, BiocStyle, edgeR
 Collate: 'pathoStat.R' 'utils.R' 'taxonomy.R' 'confRegion.R'
         'allClasses.R' 'coreOTUModule.R'
 Suggests: testthat
