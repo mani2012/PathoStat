@@ -93,6 +93,20 @@ shinyServer(function(input, output, session) {
         shinyInput$taxcountdata
     })
     
+    findNormalizedCount <- function() {
+        shinyInput <- getShinyInput()
+        if(input$norm == 'Quantile coreOTU Normalization')  {
+            dat <- coreOTUQuantile(shinyInput$taxcountdata, input$otuthreshold, 
+                input$prevalence)
+        } else if(input$norm == 'Library Size Scaling')  {
+            dat <- sizeNormalize(shinyInput$taxcountdata)
+        } else  {
+            dat <- coreOTUNormalize(shinyInput$taxcountdata, input$ebweight,
+                input$otuthreshold, input$prevalence)
+        }
+        dat
+    }
+    
     tax_ra_bp <- reactive({
         if (is.null(input$taxl)) {
             return()
@@ -375,7 +389,10 @@ shinyServer(function(input, output, session) {
         physeq1 <- shinyInput$pstat
         Inbatch <- sample_data(physeq1)[[input$secondary]]
         shinyInput <- getShinyInput()
-        lcpm <- log2CPM(shinyInput$taxcountdata)
+        dat <- shinyInput$taxcountdata
+        dat <- findNormalizedCount()
+        # lcpm <- log2CPM(shinyInput$taxcountdata)
+        lcpm <- log2CPM(dat)
         lcounts <- lcpm$y
         dat <- lcounts
         batch1 <- as.factor(Inbatch)
@@ -391,7 +408,10 @@ shinyServer(function(input, output, session) {
         Incondition <- sample_data(physeq1)[[input$primary]]
         findTaxCountDataDE()
         shinyInput <- getShinyInput()
-        lcpm <- log2CPM(shinyInput$taxcountdata)
+        dat <- shinyInput$taxcountdata
+        dat <- findNormalizedCount()
+        # lcpm <- log2CPM(shinyInput$taxcountdata)
+        lcpm <- log2CPM(dat)
         lcounts <- lcpm$y
         dat <- lcounts
         cond1 <- as.factor(Incondition)
@@ -473,12 +493,14 @@ shinyServer(function(input, output, session) {
             DE()
         }
     })
-    DELim <- reactive({
-      findTaxCountDataDE()
-      shinyInput <- getShinyInput()
-      lcpm <- log2CPM(shinyInput$taxcountdata)
-      lcounts <- lcpm$y
-      lcounts
+    
+    DELimnorm <- reactiveValues()
+    observeEvent(c(input$taxlde, input$apply), {
+        findAllTaxData(input$taxlde)
+        dat <- findNormalizedCount()
+        lcpm <- log2CPM(dat)
+        lcounts <- lcpm$y
+        DELimnorm$data <- lcounts
     })
     output$LimmaTable <- renderTable({
         shinyInput <- getShinyInput()
@@ -489,8 +511,8 @@ shinyServer(function(input, output, session) {
         mod <- model.matrix(if (input$primary == input$secondary) 
             ~as.factor(Incondition)
             else ~as.factor(Incondition) + ~as.factor(Inbatch), data = pdata)
-        dat1 <- DELim()
-        fit <- lmFit(dat1, mod)
+        dat1 <- DELimnorm
+        fit <- lmFit(dat1$data, mod)
         fit2 <- eBayes(fit)
         ncond <- nlevels(as.factor(Incondition))
         limmaTable <- topTable(fit2, coef = 2:ncond, number = input$noTaxons)
@@ -501,13 +523,10 @@ shinyServer(function(input, output, session) {
         limmaTable
     }, rownames = TRUE)
 
-    DEEdgeR <- reactive({
-      physeq1 <- shinyInput$pstat
-      Incondition <- sample_data(physeq1)[[input$primary]]
-      findTaxCountDataDE()
-      shinyInput <- getShinyInput()
-      dat <- shinyInput$taxcountdata
-      dat
+    DEEdgeRnorm <- reactiveValues()
+    observeEvent(c(input$taxlde, input$apply),  {
+        findAllTaxData(input$taxlde)
+        DEEdgeRnorm$data <- findNormalizedCount()
     })
     output$EdgeRTable <- renderTable({
         shinyInput <- getShinyInput()
@@ -519,8 +538,8 @@ shinyServer(function(input, output, session) {
         mod <- model.matrix(if (input$primary == input$secondary) 
             ~as.factor(Incondition)
             else ~as.factor(Incondition) + ~as.factor(Inbatch), data = pdata)
-        dat1 <- DEEdgeR()
-        y <- DGEList(counts=dat1,group=group)
+        dat1 <- DEEdgeRnorm
+        y <- DGEList(counts=dat1$data,group=group)
         y <- calcNormFactors(y)
         y <- estimateGLMCommonDisp(y,mod)
         y <- estimateGLMTrendedDisp(y,mod)

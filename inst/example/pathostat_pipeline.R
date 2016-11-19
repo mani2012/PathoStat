@@ -24,3 +24,8 @@ data_dir <- system.file("data", package = "PathoStat")
 # Load and run PathoStat
 pstat <- loadPstat(indir=data_dir, infileName="pstat_data_2_L2.rda")
 runPathoStat(pstat)
+
+### Example 3: Asthma dataset
+data_dir <- system.file("data", package = "PathoStat")
+pstat <- loadPstat(indir=data_dir, infileName="asthma_pstat_data.rda")
+runPathoStat(pstat)
