@@ -6,6 +6,8 @@ library(ape)
 
 tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 'family', 
     'genus', 'species', 'no rank')
+norm.methods <- c('EBayes coreOTU Normalization', 
+    'Quantile coreOTU Normalization', 'Library Size Scaling')
 measure.type <- c('Final Guess', 'Final Best Hit', 'Final High Confidence Hit')
 minbatch <- function(batch1){
     batch2 <- as.factor(batch1)
@@ -108,7 +110,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
             )
         )
     ),
-    tabPanel("Differential Expression",
+    tabPanel("Differential Abundance",
         sidebarLayout(
             sidebarPanel(
                 selectizeInput('taxlde', 'Taxonomy Level', choices = tax.name, 
@@ -117,6 +119,15 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                     choices = covariates, selected=covariates[2]),
                 selectizeInput('secondary', 'Secondary Covariate', 
                     choices = covariates, selected=covariates[1]),
+                selectizeInput('norm', 'Normalization', choices=norm.methods, 
+                    selected='EBayes coreOTU Normalization'),
+                actionButton("apply", "Apply"),
+                sliderInput("otuthreshold", "OTU cutoff threshold:", 
+                    min = 0, max = 1, value = 0.05, step= 0.01),
+                sliderInput("prevalence", "OTU cutoff prevalence:", 
+                    min = 0, max = 1, value = 0.4, step= 0.01),
+                sliderInput("ebweight", "Empirical Bayes Weight:", 
+                    min = 0, max = 1, value = 0.25, step= 0.01),
                 numericInput('ncSamples', 
                     'No. of Sample(s) Per Primary Covariate', 
                     if (maxcondElems>defaultDisp) defaultDisp 
