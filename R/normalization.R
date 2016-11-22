@@ -64,7 +64,8 @@ coreOTU <- function(zcounts, otuthreshold=0.05, prevalence=0.4) {
 #' datlist <- readPathoscopeData(example_data_dir, pathoreport_file_suffix)
 #' countdat <- datlist$countdata
 #' coreotunormdat <- coreOTUNormalize(countdat)
-coreOTUNormalize <- function(zcounts, wt=0.25, otuthreshold=0.05, prevalence=0.4) {
+coreOTUNormalize <- function(zcounts, wt=0.25, otuthreshold=0.05, 
+    prevalence=0.4) {
     zcounts <- sizeNormalize(zcounts)
     coreotus <- coreOTU(zcounts, otuthreshold, prevalence)
     if (is.null(coreotus) || length(coreotus)<=1)  {
@@ -79,6 +80,7 @@ coreOTUNormalize <- function(zcounts, wt=0.25, otuthreshold=0.05, prevalence=0.4
             if (wt >= 1) wt <- 1-0.0001
             w <- wt/(1-wt)
             asize <- (size + w*avg)/(w+1)
+            if (asize <= 0) asize <- 1
             x <- x*avg/asize
         }, coreotus, avg)
     }
@@ -110,27 +112,3 @@ coreOTUQuantile <- function(zcounts, otuthreshold=0.05, prevalence=0.4) {
     }
     return(acounts)
 }
-
-## Example code
-# thedata = textConnection(
-# "7 8 7 6 9 7 8 7 6 9\
-#  8 9 7 8 7 8 9 7 8 7\
-#  0 0 0 0 0 10 11 0 0 0\
-#  0 0 0 0 0 0 0 9 10 0\
-#  0 0 0 0 0 0 0 0 0 11\
-#  ")
-# data.matrix <- matrix(scan(thedata),ncol=10,byrow=TRUE)
-# library(preprocessCore)
-# norm.data.matrix <- normalize.quantiles(data.matrix)
-# otunorm.data <- otuNormalize(data.matrix, 0)
-
-# library(BatchQC)
-# ### simulate data
-# nbatch <- 3
-# ncond <- 2
-# npercond <- 10
-# data.matrix <- rnaseq_sim(ngenes=50, nbatch=nbatch, ncond=ncond, npercond=
-#     npercond, basemean=10000, ggstep=50, bbstep=2000, ccstep=800, 
-#     basedisp=100, bdispstep=-10, swvar=1000, seed=1234)
-# batch <- rep(1:nbatch, each=ncond*npercond)
-# condition <- rep(rep(1:ncond, each=npercond), nbatch)
