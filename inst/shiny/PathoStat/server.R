@@ -4,6 +4,7 @@ library(d3heatmap)
 library(reshape2)
 library(limma)
 library(edgeR)
+library(DESeq2)
 library(phyloseq)
 library(ape)
 library(stats)
@@ -523,10 +524,10 @@ shinyServer(function(input, output, session) {
         limmaTable
     }, rownames = TRUE)
 
-    DEEdgeRnorm <- reactiveValues()
+    DEnorm <- reactiveValues()
     observeEvent(c(input$taxlde, input$apply),  {
         findAllTaxData(input$taxlde)
-        DEEdgeRnorm$data <- findNormalizedCount()
+        DEnorm$data <- findNormalizedCount()
     })
     output$EdgeRTable <- renderTable({
         shinyInput <- getShinyInput()
@@ -538,9 +539,9 @@ shinyServer(function(input, output, session) {
         mod <- model.matrix(if (input$primary == input$secondary) 
             ~as.factor(Incondition)
             else ~as.factor(Incondition) + ~as.factor(Inbatch), data = pdata)
-        dat1 <- DEEdgeRnorm
+        dat1 <- DEnorm
         y <- DGEList(counts=dat1$data,group=group)
-        y <- calcNormFactors(y)
+        #y <- calcNormFactors(y)
         y <- estimateGLMCommonDisp(y,mod)
         y <- estimateGLMTrendedDisp(y,mod)
         y <- estimateGLMTagwiseDisp(y,mod)
@@ -556,6 +557,45 @@ shinyServer(function(input, output, session) {
         edgeRTable
     }, rownames = TRUE)
 
+    output$DeSeq2Table <- renderTable({
+        shinyInput <- getShinyInput()
+        physeq1 <- shinyInput$pstat
+        Incondition <- sample_data(physeq1)[[input$primary]]
+        Inbatch <- sample_data(physeq1)[[input$secondary]]
+        pdata <- data.frame(Inbatch, Incondition)
+        group <- factor(Incondition)
+        design <- if (input$primary == input$secondary) 
+            ~as.factor(Incondition)
+            else ~as.factor(Incondition) + ~as.factor(Inbatch)
+        fCondition <- factor(Incondition)
+        fBatch <- factor(Inbatch)
+        design <- ~fCondition + ~fBatch
+        mod <- model.matrix(design, data = pdata)
+        dat1 <- DEnorm
+        dat1$data <- apply(as.matrix(dat1$data),1:2, as.integer)
+        coldata <- data.frame(row.names=colnames(dat1$data), fCondition, fBatch)
+        dds <- DESeqDataSetFromMatrix(countData=dat1$data, colData=coldata, 
+            design=design)
+        
+        #dds <- DESeq(dds)
+        sizeFactors(dds) <- rep(1, dim(dat1$data)[2])
+        dds <- estimateDispersions(dds)
+        dds <- nbinomWaldTest(dds)
+        
+        cvec <- rep(0, length(resultsNames(dds)))
+        cvec[2:ncond] <- 1
+        res <- results(dds, contrast=cvec)
+        ## Order by adjusted p-value
+        DeSeq2table <- res[order(res$padj), ]
+        DeSeq2table <- DeSeq2table[1:input$noTaxons,]
+        #DeSeq2table <- table(res$padj<0.05)
+        # for (j in 2:ncond)  {
+        #     colnames(DeSeq2table)[j-1] <- paste("Primary Covariate: ",
+        #         levels(group)[j], " (logFC)", sep='')
+        # }
+        DeSeq2table
+    }, rownames = TRUE)
+    
     output$confRegion <- renderPlot({
         p1 <- shinyInput$pstat@otu_table[input$taxon1, input$sample]
         if (p1 <= 0) p1 <- 1
