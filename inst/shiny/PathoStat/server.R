@@ -234,12 +234,14 @@ shinyServer(function(input, output, session) {
     })
     output$BetaDiversity <- renderPlot({
         physeq1 <- shinyInput$pstat
+        physeq1 <- phyloseq(otu_table(physeq1), phy_tree(physeq1), 
+            tax_table(physeq1), sample_data(physeq1))
         setGgplotTheme()
         if (input$methodBeta)  {
-            dist = distance(physeq1, method = "wUniFrac")
+            dist = phyloseq::distance(physeq1, method = "wUniFrac")
             titleString="Beta Diversity Distance: Weigthed Unifrac"
         } else  {
-            dist = distance(physeq1, method = "bray")
+            dist = phyloseq::distance(physeq1, method = "bray")
             titleString="Beta Diversity Distance: Bray-Curtis"
         }
         gplots::heatmap.2(as.matrix(dist), col=gplots::bluered(75), scale="row",
@@ -258,6 +260,8 @@ shinyServer(function(input, output, session) {
     })
     output$BiPlot <- renderPlot({
         physeq1 <- shinyInput$pstat
+        physeq1 <- phyloseq(otu_table(physeq1), phy_tree(physeq1), 
+            tax_table(physeq1), sample_data(physeq1))
         cn <- colnames(physeq1@sam_data)
         cn[1] <- "batch"
         cn[2] <- "condition"
@@ -358,13 +362,15 @@ shinyServer(function(input, output, session) {
     
     output$PCoAplot <- renderPlot({
         physeq1 <- shinyInput$pstat
+        physeq1 <- phyloseq(otu_table(physeq1), phy_tree(physeq1), 
+            tax_table(physeq1), sample_data(physeq1))
         cn <- colnames(physeq1@sam_data)
         cn[1] <- "batch"
         cn[2] <- "condition"
         colnames(physeq1@sam_data) <- cn
         setGgplotTheme()
-        DistBC = distance(physeq1, method = "bray")
-        DistUF = distance(physeq1, method = "wUniFrac")
+        DistBC = phyloseq::distance(physeq1, method = "bray")
+        DistUF = phyloseq::distance(physeq1, method = "wUniFrac")
         ordBC = ordinate(physeq1, method = "PCoA", distance = DistBC)
         ordUF = ordinate(physeq1, method = "PCoA", distance = DistUF)
         if (input$colbybatchPCoA) colorstring="batch" 

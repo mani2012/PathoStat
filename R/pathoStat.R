@@ -84,7 +84,9 @@ pathostat <- function(physeq1) {
 #' @return outputfile The output file with all the statistical plots
 #' @import pander stats graphics reshape2 ggplot2 rentrez phyloseq
 #' @import MCMCpack corpcor knitr limma matrixStats methods alluvial BiocStyle
-#' @import edgeR DESeq2
+#' @import edgeR
+#' @importFrom DESeq2 DESeqDataSetFromMatrix sizeFactors estimateDispersions
+#'  nbinomWaldTest results
 #' @importFrom plyr ddply numcolwise
 #' @importFrom dplyr add_rownames mutate_each select_ add_rownames
 #' @importFrom BatchQC batchqc_pca
