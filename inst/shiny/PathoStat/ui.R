@@ -153,7 +153,8 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                     tabPanel("Summary", verbatimTextOutput("DEsummary")),
                     tabPanel("Table", tableOutput("DEtable")), 
                     tabPanel("LIMMA",tableOutput("LimmaTable")),
-                    tabPanel("EdgeR",tableOutput("EdgeRTable"))
+                    tabPanel("EdgeR",tableOutput("EdgeRTable")),
+                    tabPanel("DeSeq2",tableOutput("DeSeq2Table"))
                 ), width=9
             )
             )
