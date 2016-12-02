@@ -13,9 +13,9 @@ coreOTUNormalize(zcounts, wt = 0.25, otuthreshold = 0.05,
 \item{wt}{Weight parameter indicating how much information to borrow
 across samples using Empirical Bayes}
 
-\item{prevalence}{Prevalence of the OTU at threshold cutoff among samples}
+\item{otuthreshold}{Abundance cutoff threshold for the OTU to be picked}
 
-\item{threshold}{Abundance cutoff threshold for the OTU to be picked}
+\item{prevalence}{Prevalence of the OTU at threshold cutoff among samples}
 }
 \value{
 list containing Empirical Bayes coreOTU Normalized data

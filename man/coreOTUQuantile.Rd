@@ -9,9 +9,9 @@ coreOTUQuantile(zcounts, otuthreshold = 0.05, prevalence = 0.4)
 \arguments{
 \item{zcounts}{counts data to be normalized}
 
-\item{prevalence}{Prevalence of the OTU at threshold cutoff among samples}
+\item{otuthreshold}{Abundance cutoff threshold for the OTU to be picked}
 
-\item{threshold}{Abundance cutoff threshold for the OTU to be picked}
+\item{prevalence}{Prevalence of the OTU at threshold cutoff among samples}
 }
 \value{
 list containing coreOTU Quantile Normalized data

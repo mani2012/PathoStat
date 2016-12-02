@@ -79,7 +79,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                             selected='None'),
                         selectizeInput('methodBiP', 'Method', 
                             choices=c("DCA", "CCA", "RDA", "DPCoA", 
-                            "NMDS", "MDS", "PCoA"), selected='NMDS'),
+                            "NMDS", "PCoA"), selected='NMDS'),
                         width=3
                     ),
                     mainPanel(

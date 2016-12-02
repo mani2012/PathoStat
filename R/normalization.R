@@ -54,7 +54,7 @@ coreOTU <- function(zcounts, otuthreshold=0.05, prevalence=0.4) {
 #' @param zcounts counts data to be normalized
 #' @param wt Weight parameter indicating how much information to borrow
 #' across samples using Empirical Bayes 
-#' @param threshold Abundance cutoff threshold for the OTU to be picked
+#' @param otuthreshold Abundance cutoff threshold for the OTU to be picked
 #' @param prevalence Prevalence of the OTU at threshold cutoff among samples
 #' @return list containing Empirical Bayes coreOTU Normalized data
 #' @export
@@ -90,7 +90,7 @@ coreOTUNormalize <- function(zcounts, wt=0.25, otuthreshold=0.05,
 #' Compute coreOTU Quantile Normalized data
 #'
 #' @param zcounts counts data to be normalized
-#' @param threshold Abundance cutoff threshold for the OTU to be picked
+#' @param otuthreshold Abundance cutoff threshold for the OTU to be picked
 #' @param prevalence Prevalence of the OTU at threshold cutoff among samples
 #' @return list containing coreOTU Quantile Normalized data
 #' @importFrom preprocessCore normalize.quantiles
