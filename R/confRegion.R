@@ -50,6 +50,7 @@ logitcheckregion <- function(x1, x2, chisqval,x,information) {
 #' @param uselogit Use logit transformation to compute confidence region
 #' @param n Total number of simulation points to generate
 #' @param seed Seed to use in random simulation
+#' @param jit jitter option (FALSe by default) for the plot
 #' @return Confidence region plot
 #' @import stats graphics
 #' @importFrom gtools logit
@@ -60,7 +61,7 @@ logitcheckregion <- function(x1, x2, chisqval,x,information) {
 #' size <- 200
 #' plotConfRegion(p1, p2, size, uselogit=FALSE)
 plotConfRegion <- 
-    function(p1, p2, size=100, uselogit=TRUE, n=10000, seed=1000)
+    function(p1, p2, size=100, uselogit=TRUE, n=10000, seed=1000, jit=FALSE)
 {
     if (p1 <= 0) p1 <- 1
     if (p2 <= 0) p2 <- 1
@@ -70,9 +71,15 @@ plotConfRegion <-
     A = rmultinom(n,size,actualprop)
     A = A/size
     amount <- 1/(5*size)
-    jitA <- jitter(A,1,amount)
-    jitA <- abs(jitA)
-    jitA <- apply(jitA, c(1, 2), function(x) {if(x > 1) 2-x else x})
+    if (jit)  {
+        jitA <- jitter(A,1,amount)
+        jitA <- abs(jitA)
+        jitA <- apply(jitA, c(1, 2), function(x) {if(x > 1) 2-x else x})
+    } else  {
+        jitA <- A
+        jitA <- apply(jitA, c(1, 2), function(x, amount) 
+            {if(x <= 0) amount else x}, amount)
+    }
     
     # Calculating interval based on averages from all points here
     # me <- apply(A, 2, confinterval, size)
