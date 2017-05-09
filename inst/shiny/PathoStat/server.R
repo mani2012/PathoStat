@@ -171,12 +171,14 @@ shinyServer(function(input, output, session) {
     output$downloadData <- downloadHandler(filename = function() {
         paste0("sample_data_", input$taxl, ".csv", sep = "")
     }, content = function(file) {
+        shinyInput <- getShinyInput()
         write.csv(shinyInput$taxdata, file)
     })
     
     output$downloadCountData <- downloadHandler(filename = function() {
         paste0("sample_data_count_", input$taxl, ".csv", sep = "")
     }, content = function(file) {
+        shinyInput <- getShinyInput()
         write.csv(shinyInput$taxcountdata, file)
     })
     
