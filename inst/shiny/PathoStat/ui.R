@@ -142,14 +142,14 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 checkboxInput("colbybatch", 
 "Color By Secondary Covariate (Default: Color By Primary Covariate)", FALSE),
                 numericInput('noTaxons', 
-                    'No. of top Differentially Expressed Taxons to display', 
+                    'No. of top Differentially Abundant Taxons to display', 
                     if (maxGenes>defaultGenesDisp) defaultGenesDisp 
                     else maxGenes, min = 1, max = maxGenes),
                 width=3
             ),
             mainPanel(
                 tabsetPanel(
-                    tabPanel("Expression Plots",ggvisOutput("DiffExPlot")), 
+                    tabPanel("Differential Abundance",ggvisOutput("DiffExPlot")), 
                     tabPanel("Summary", verbatimTextOutput("DEsummary")),
                     tabPanel("Table", tableOutput("DEtable")), 
                     tabPanel("LIMMA",tableOutput("LimmaTable")),
