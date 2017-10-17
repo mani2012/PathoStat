@@ -478,7 +478,7 @@ shinyServer(function(input, output, session) {
                         sep=" "),
                 properties = axis_props(title = list(fontSize = 15),
                 labels = list(fontSize = 5, angle = 90))) %>%
-            add_axis("y", title = "Expression", properties = axis_props(title =
+            add_axis("y", title = "Transformed Abundance", properties = axis_props(title =
                 list(fontSize = 15),labels = list(fontSize = 10))) %>%
             add_legend("fill", title = if (input$colbybatch)
                 input$secondary else input$primary, 
