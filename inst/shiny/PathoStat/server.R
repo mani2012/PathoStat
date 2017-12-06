@@ -400,6 +400,9 @@ shinyServer(function(input, output, session) {
         shinyInput <- getShinyInput()
         dat <- shinyInput$taxcountdata
         dat <- findNormalizedCount()
+        dat <- apply(dat, 1:2, FUN = function(x) {
+            ifelse(is.null(x) || is.na(x) || is.nan(x), 0, x)
+        })
         # lcpm <- log2CPM(shinyInput$taxcountdata)
         lcpm <- log2CPM(dat)
         lcounts <- lcpm$y
@@ -419,6 +422,9 @@ shinyServer(function(input, output, session) {
         shinyInput <- getShinyInput()
         dat <- shinyInput$taxcountdata
         dat <- findNormalizedCount()
+        dat <- apply(dat, 1:2, FUN = function(x) {
+            ifelse(is.null(x) || is.na(x) || is.nan(x), 0, x)
+        })
         # lcpm <- log2CPM(shinyInput$taxcountdata)
         lcpm <- log2CPM(dat)
         lcounts <- lcpm$y
