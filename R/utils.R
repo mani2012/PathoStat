@@ -13,6 +13,9 @@
 log2CPM <- function(qcounts, lib.size = NULL) {
     if (is.null(lib.size)) 
         lib.size <- colSums(qcounts)
+    qcounts <- apply(qcounts, 1:2, FUN = function(x) {
+        ifelse(is.null(x) || is.na(x) || is.nan(x), 0, x)
+    })
     minimum <- min(qcounts)
     if (minimum < 0) {
         qcounts <- qcounts - minimum
