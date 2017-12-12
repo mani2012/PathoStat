@@ -124,7 +124,8 @@ shinyServer(function(input, output, session) {
         # add_axis('x', subdivide = 1,
         #   values = 1:length(colnames(shinyInput$data)),
         add_axis("x", title = "Samples", properties = axis_props(title =
-            list(fontSize = 15))) %>%
+            list(fontSize = 15), labels = list(angle = 90,
+             align = "left", baseline = "middle"))) %>%
         add_axis("y", title = "Relative Abundance (RA)", properties =
             axis_props(title = list(fontSize = 15),
             labels = list(fontSize = 10))) %>% add_legend("fill", title =
