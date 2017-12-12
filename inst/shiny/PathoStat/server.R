@@ -123,9 +123,8 @@ shinyServer(function(input, output, session) {
         }, "hover") %>%
         # add_axis('x', subdivide = 1,
         #   values = 1:length(colnames(shinyInput$data)),
-        add_axis("x", title = "Test samples", properties = axis_props(title =
-            list(fontSize = 15), labels = list(text = "",
-            fontSize = 10))) %>%
+        add_axis("x", title = "Samples", properties = axis_props(title =
+            list(fontSize = 15))) %>%
         add_axis("y", title = "Relative Abundance (RA)", properties =
             axis_props(title = list(fontSize = 15),
             labels = list(fontSize = 10))) %>% add_legend("fill", title =
