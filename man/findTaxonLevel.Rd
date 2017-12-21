@@ -24,4 +24,3 @@ ids <- rownames(dat)
 tids <- unlist(lapply(ids, FUN = grepTid))
 taxonLevel <- findTaxonomy(tids[1])
 }
-

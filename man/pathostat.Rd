@@ -21,4 +21,3 @@ rich_dense_biom  = system.file("extdata", "rich_dense_otu_table.biom",
 phyob <- phyloseq::import_biom(rich_dense_biom)
 pstat_biom <- pathostat(phyob)
 }
-

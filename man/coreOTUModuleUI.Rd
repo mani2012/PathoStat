@@ -36,4 +36,3 @@ shiny::mainPanel(
     function, or \url{ http://shiny.rstudio.com/articles/modules.html} for
     more information about Shiny modules.
 }
-

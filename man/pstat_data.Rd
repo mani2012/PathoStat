@@ -2,8 +2,8 @@
 % Please edit documentation in R/pathoStat.R
 \docType{data}
 \name{pstat_data}
-\alias{pstat}
 \alias{pstat_data}
+\alias{pstat}
 \title{pathostat object generated from example pathoscope report files}
 \format{pathostat object extension of phyloseq-class experiment-level object:
 \describe{
@@ -23,4 +23,3 @@ This example data consists of 33 samples from a diet study with 11 subjects
 taking 3 different diets in random order
 }
 \keyword{datasets}
-

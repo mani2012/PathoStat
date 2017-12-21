@@ -22,4 +22,3 @@ datlist <- readPathoscopeData(example_data_dir, pathoreport_file_suffix)
 countdat <- datlist$countdata
 acounts <- sizeNormalize(countdat)
 }
-

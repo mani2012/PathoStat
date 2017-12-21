@@ -15,4 +15,3 @@ Formatted table suitable for rendering with. DT::renderDataTable
 \description{
 Format taxonomy table for rendering
 }
-

@@ -53,4 +53,3 @@ shinyServer(function(input, output, session) {
     \url{ http://shiny.rstudio.com/articles/modules.html} for more 
     information about Shiny modules.
 }
-

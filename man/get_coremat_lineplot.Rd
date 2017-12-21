@@ -16,4 +16,3 @@ on the y-axis. Lines connect data points with the same number of samples.
 \description{
 Create line plot from core OTU matrix
 }
-

@@ -34,4 +34,4 @@ biocViews: Microbiome, Metagenomics, GraphAndNetwork, Microarray,
 SystemRequirements: pandoc (http://pandoc.org/installing.html) for
         generating reports from markdown files.
 VignetteBuilder: knitr
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

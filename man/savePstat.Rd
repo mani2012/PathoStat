@@ -23,4 +23,3 @@ Save the pathostat object to R data(.rda) file
 data(pstat_data)
 outfile <- savePstat(pstat)
 }
-

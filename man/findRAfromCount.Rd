@@ -21,4 +21,3 @@ infileName <- "pstat_data.rda"
 pstat <- loadPstat(data_dir, infileName)
 ra_otu <- findRAfromCount(phyloseq::otu_table(pstat))
 }
-

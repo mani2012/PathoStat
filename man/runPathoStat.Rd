@@ -6,8 +6,8 @@
 html report and produces interactive shiny app plots}
 \usage{
 runPathoStat(pstat = NULL, report_file = "PathoStat_report.html",
-    report_dir = ".", report_option_binary = "111111111",
-    view_report = FALSE, interactive = TRUE)
+  report_dir = ".", report_option_binary = "111111111",
+  view_report = FALSE, interactive = TRUE)
 }
 \arguments{
 \item{pstat}{phyloseq extension pathostat object}
@@ -33,4 +33,3 @@ html report and produces interactive shiny app plots
 \examples{
 runPathoStat(interactive = FALSE)
 }
-
