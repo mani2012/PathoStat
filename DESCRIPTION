@@ -6,7 +6,7 @@ Date: 2017-12-06
 Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>, Matthew
         Bendall <bendall@gwmail.gwu.edu>, Sandro Valenzuela Diaz
         <sandrolvalenzuelad@gmail.com>, Eduardo Castro
-        <castronallar@gmail.com>, Tyler Faits <tfaits@gmail.com>, W.
+        <castronallar@gmail.com>, Tyler Faits <tfaits@gmail.com>, Yue Zhao <jasonzhao0307@gmail.com>, W.
         Evan Johnson <wej@bu.edu>
 Maintainer: Solaiappan Manimaran <manimaran_1975@hotmail.com>
 Description: The purpose of this package is to perform Statistical
@@ -24,9 +24,9 @@ Imports: MCMCpack, limma, corpcor, rmarkdown, knitr, pander,
         matrixStats, reshape2, scales, ggplot2, rentrez, BatchQC, DT,
         gtools, tidyr, plyr, dplyr, ape, phyloseq, shiny, grDevices,
         stats, methods, XML, graphics, utils, alluvial, BiocStyle, edgeR,
-        preprocessCore, DESeq2
+        preprocessCore, DESeq2, pheatmap, ComplexHeatmap, SummarizedExperiment
 Collate: 'pathoStat.R' 'utils.R' 'taxonomy.R' 'confRegion.R'
-        'allClasses.R' 'coreOTUModule.R' 'normalization.R'
+        'allClasses.R' 'coreOTUModule.R' 'normalization.R' 'visualization.R'
 Suggests: testthat
 biocViews: Microbiome, Metagenomics, GraphAndNetwork, Microarray,
         PatternLogic, PrincipalComponent, Sequencing, Software,

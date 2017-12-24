@@ -20,6 +20,17 @@ shinyInput <- getShinyInput()
 
 pstat <- shinyInput$pstat
 covariates <- colnames(sample_data(pstat))
+
+# choose the covariates that has less than 8 levels
+covariates.colorbar <- c()
+for (i in 1:length(covariates)){
+  num.levels <- length(unique(sample_data(pstat)[[covariates[i]]]))
+  if (num.levels < 8){
+    covariates.colorbar <- c(covariates.colorbar, covariates[i])
+  }
+}
+
+
 maxbatchElems <- minbatch(c(pstat@sam_data[,1])[[1]])
 maxcondElems <- minbatch(c(pstat@sam_data[,2])[[1]])
 defaultDisp <- 30
@@ -37,15 +48,22 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 downloadButton('downloadCountData', 'Download Count CSV'),
                 br(),
                 p(" "),
-                radioButtons('sortBy', 'Sort By',
-                    c('None'=0, 'Condition'=1,'Batch'=2), 0),
+                selectInput("select_condition", "Select Condition:",
+                            covariates),
                 width=3
             ),
             mainPanel(
                 tabsetPanel(
                     tabPanel("Taxonomy level RA",
                         ggvisOutput("TaxRelAbundancePlot")),
-                    tabPanel("Heatmap", plotOutput("Heatmap", height="550px")),
+                    # new heatmap
+                    tabPanel("Heatmap", 
+                             helpText("Note: Only variables with less than 8 levels could be mapped to color bar."),
+                             selectInput("select_heatmap_condition", "Add colorbar based on:",
+                                         covariates.colorbar),
+                             checkboxInput("checkbox_heatmap", "Add colorbar", value = FALSE),
+                             downloadButton('download_heatmap_pdf', 'Download heatmap PDF'),
+                             plotOutput("Heatmap", height="550px")),
                     tabPanel("Summary", verbatimTextOutput("TaxRAsummary")),
                     tabPanel("RA Table(%)", DT::dataTableOutput("TaxRAtable", 
                         width='95%')),

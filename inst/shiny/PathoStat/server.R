@@ -14,6 +14,11 @@ library(alluvial)
 # Converts decimal percentage to string with specified digits
 pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
 
+
+
+
+
+
 shinyServer(function(input, output, session) {
     # needed information from PathoStat
     shinyInput <- getShinyInput()
@@ -82,6 +87,7 @@ shinyServer(function(input, output, session) {
         shinyInput$taxdata
     })
 
+
     findTaxCountData <- eventReactive(input$taxl, {
         findAllTaxData(input$taxl)
         shinyInput <- getShinyInput()
@@ -115,7 +121,26 @@ shinyServer(function(input, output, session) {
         taxdata <- findTaxData()
         dat <- melt(cbind(taxdata, ind = as.character(rownames(taxdata))),
             id.vars = c("ind"))
-        dat %>% ggvis(x = ~variable, y = ~value, fill = ~as.factor(ind)) %>%
+        
+        if ((input$taxl == "no rank")){
+          covariates.tmp <- colnames(sample_data(shinyInput$pstat))
+          dat$condition.select <- rep(shinyInput$pstat@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]], each = dim(taxdata)[1])
+          dat <- dat[order(dat$condition.select),]
+          new.id <- paste(shinyInput$pstat@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]][order(shinyInput$pstat@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]])], colnames(taxdata), sep = "-")
+          dat$condition.select.id <- rep(new.id, each = dim(taxdata)[1])
+        }else{
+          pstat.new <- tax_glom(shinyInput$pstat, input$taxl)
+          covariates.tmp <- colnames(sample_data(pstat.new))
+          dat$condition.select <- rep(pstat.new@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]], each = dim(taxdata)[1])
+          dat <- dat[order(dat$condition.select),]
+          new.id <- paste(pstat.new@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]][order(pstat.new@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]])], colnames(taxdata), sep = "-")
+          dat$condition.select.id <- rep(new.id, each = dim(taxdata)[1])
+        }
+        
+        # sort by selecting variables
+
+        
+        dat %>% ggvis(x = ~condition.select.id, y = ~value, fill = ~as.factor(ind)) %>%
         layer_bars(stack = TRUE) %>%
         add_tooltip(function(dat2) {
             paste0("Sample: ", dat2[2], "<br />", "Genome: ", dat2[1],
@@ -206,18 +231,55 @@ shinyServer(function(input, output, session) {
     scale_fill_discrete <- function(palname = pal, ...) {
         scale_fill_brewer(palette = palname, ...)
     }
-
-    output$Heatmap <- renderPlot({
-        physeq1 <- shinyInput$pstat
-        setGgplotTheme()
-        #plot_heatmap(physeq1, sample.label="condition")
-        if (input$taxl=="no rank")  {
-            plot_heatmap(physeq1)
-        } else  {
-            physeq2 <- tax_glom(physeq1, input$taxl)
-            plot_heatmap(physeq2, taxa.label=input$taxl)
+    
+    
+    # independent heatmap plotting function in the server using specific data from input
+    plotHeatmapColorServer <- function(){
+      physeq1 <- shinyInput$pstat
+      
+      if (input$taxl=="no rank")  {
+        if (input$checkbox_heatmap){
+          add.colorbar <- "auto"
+        } else{
+          add.colorbar <- NULL
         }
+        return(plotHeatmapColor(physeq1@otu_table@.Data, physeq1@sam_data[[input$select_heatmap_condition]], 
+                                annotationColors = add.colorbar,
+                                columnTitle = paste("Heatmap with colorbar representing", input$select_heatmap_condition, sep = " ")))
+      } else  {
+        physeq2 <- tax_glom(physeq1, input$taxl)
+        if (input$checkbox_heatmap){
+          add.colorbar <- "auto"
+        } else{
+          add.colorbar <- NULL
+        }
+        return(plotHeatmapColor(physeq2@otu_table@.Data, physeq2@sam_data[[input$select_heatmap_condition]], 
+                                annotationColors = add.colorbar,
+                                columnTitle = paste("Heatmap with colorbar representing", input$select_heatmap_condition, sep = " ")))
+      }
+    }
+    
+    # show heatmap in the shiny app by calling the plotting function
+    output$Heatmap <- renderPlot({
+      plotHeatmapColorServer()
+        
     })
+    # download heatmap by calling the plotting function.
+    # note: add "print()" function to the plotting function, and add dev.off()
+    output$download_heatmap_pdf <- downloadHandler(
+      filename = function() {
+        paste('heatmap', Sys.Date(), '.pdf', sep='')
+      },
+      content = function(file) {
+        pdf(file)
+        #### add "print()" to plotting function to work!!
+        print(plotHeatmapColorServer())
+        ####
+        dev.off()
+      }
+  
+    )
+
     output$AlphaDiversity <- renderPlot({
         physeq1 <- shinyInput$pstat
         cn <- colnames(physeq1@sam_data)

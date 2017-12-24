@@ -194,16 +194,3 @@ setShinyInputCombat <- function(x) {
 }
 
 
-
-#' Test function
-#' @param x input
-#' @return output
-#' @export
-#' @examples
-justATest <- function(x) {
-  print("hello world!")
-}
-
-
-
-
