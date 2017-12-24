@@ -192,3 +192,5 @@ getShinyInputCombat <- function() {
 setShinyInputCombat <- function(x) {
     options(pathostat.shinyInputCombat = x)
 }
+
+

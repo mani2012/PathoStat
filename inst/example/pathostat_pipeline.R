@@ -14,6 +14,14 @@ data_dir <- system.file("data", package = "PathoStat")
 pstat <- loadPstat(indir=data_dir, infileName="pstat_data_2_L1.rda")
 runPathoStat(pstat)
 
+plotHeatmapColor(df.input = pstat@otu_table@.Data, condition.vec = pstat@sam_data[,2]$Diet)
+
+
+
+
+
+
+
 ### Example 2: L2 set
 #example2_data_dir <- system.file("example/data2/L2", package = "PathoStat")
 #pstat <- createPathoStat(input_dir=example2_data_dir, 

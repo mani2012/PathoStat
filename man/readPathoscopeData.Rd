@@ -6,7 +6,7 @@
 final guess relative abundance and count data}
 \usage{
 readPathoscopeData(input_dir = ".",
-    pathoreport_file_suffix = "-sam-report.tsv")
+  pathoreport_file_suffix = "-sam-report.tsv")
 }
 \arguments{
 \item{input_dir}{Directory where the tsv files from PathoScope are located}
@@ -24,4 +24,3 @@ final guess relative abundance and count data
 example_data_dir <- system.file("example/data", package = "PathoStat")
 readPathoscopeData(input_dir=example_data_dir)
 }
-

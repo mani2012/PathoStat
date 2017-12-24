@@ -20,4 +20,3 @@ taxdata Taxonomy Level Data
 Find the taxonomy level data for the given taxon level
 }
 \keyword{internal}
-

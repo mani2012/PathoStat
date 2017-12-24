@@ -6,7 +6,7 @@
 analysis using the interactive shiny app}
 \usage{
 createPathoStat(input_dir = ".", sample_data_file = "sample_data.tsv",
-    pathoreport_file_suffix = "-sam-report.tsv")
+  pathoreport_file_suffix = "-sam-report.tsv")
 }
 \arguments{
 \item{input_dir}{Directory where the tsv files from PathoScope are located}
@@ -27,4 +27,3 @@ example_data_dir <- system.file("example/data", package = "PathoStat")
 pstat <- createPathoStat(input_dir=example_data_dir, 
     sample_data_file="sample_data.tsv")
 }
-

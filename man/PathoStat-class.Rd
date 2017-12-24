@@ -17,4 +17,3 @@ slots:
     \item{lowconf_count}{a single object of class otu_tableOrNULL}
 }
 }
-

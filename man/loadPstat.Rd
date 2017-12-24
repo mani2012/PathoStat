@@ -22,4 +22,3 @@ data_dir <- system.file("data", package = "PathoStat")
 infileName <- "pstat_data.rda"
 pstat <- loadPstat(data_dir, infileName)
 }
-

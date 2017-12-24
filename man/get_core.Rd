@@ -23,4 +23,3 @@ Subsetted PathoStat object
 Select rows of OTU matrix that meet given detection and prevalence 
 thresholds
 }
-

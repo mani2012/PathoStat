@@ -20,4 +20,3 @@ columns corresponding to detection thresholds. An additional column called
 Create core OTU matrix containing number of OTUs detected at varying 
 detection and prevalence thresholds.
 }
-
