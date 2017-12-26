@@ -218,7 +218,26 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 ), width=9
             )
         )
-    ), 
+    ),
+    tabPanel("PCA.new",
+         sidebarLayout(
+           sidebarPanel(
+             numericInput('xcol.new', 'Principal Component (x-axis)', 1,
+                          min = 1, max = 10),
+             numericInput('ycol.new', 'Principal Component (y-axis)', 2,
+                          min = 1, max = 10),
+             selectizeInput('taxl.new', 'Taxonomy Level', choices = tax.name, 
+                            selected='no rank'),
+             selectInput("select_pca_condition", "Add color based on:",
+                         covariates.colorbar),
+             width=3
+           ),
+           mainPanel(
+             tabsetPanel(
+               tabPanel("PCA.new", plotlyOutput("pca.plotly")))
+             )
+           )
+         ),
     tabPanel("PCoA",
         sidebarLayout(
             sidebarPanel(

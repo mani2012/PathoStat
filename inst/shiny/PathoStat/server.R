@@ -124,15 +124,21 @@ shinyServer(function(input, output, session) {
         
         if ((input$taxl == "no rank")){
           covariates.tmp <- colnames(sample_data(shinyInput$pstat))
-          dat$condition.select <- rep(shinyInput$pstat@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]], each = dim(taxdata)[1])
+          dat$condition.select <- rep(shinyInput$pstat@sam_data@.Data[[
+            which(covariates.tmp %in% input$select_condition)]], 
+            each = dim(taxdata)[1])
           dat <- dat[order(dat$condition.select),]
-          dat$condition.select.id <- paste(dat$condition.select,as.character(dat$variable), sep = "-")
+          dat$condition.select.id <- paste(dat$condition.select,
+                                           as.character(dat$variable), sep = "-")
         }else{
           pstat.new <- tax_glom(shinyInput$pstat, input$taxl)
           covariates.tmp <- colnames(sample_data(pstat.new))
-          dat$condition.select <- rep(pstat.new@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]], each = dim(taxdata)[1])
+          dat$condition.select <- rep(pstat.new@sam_data@.Data[[
+            which(covariates.tmp %in% input$select_condition)]], 
+                                      each = dim(taxdata)[1])
           dat <- dat[order(dat$condition.select),]
-          dat$condition.select.id <- paste(dat$condition.select,as.character(dat$variable), sep = "-")
+          dat$condition.select.id <- paste(dat$condition.select,
+                                           as.character(dat$variable), sep = "-")
         }
         
         # sort by selecting variables
@@ -241,9 +247,11 @@ shinyServer(function(input, output, session) {
         } else{
           add.colorbar <- NULL
         }
-        return(plotHeatmapColor(physeq1@otu_table@.Data, physeq1@sam_data[[input$select_heatmap_condition]], 
+        return(plotHeatmapColor(physeq1@otu_table@.Data, 
+                                physeq1@sam_data[[input$select_heatmap_condition]], 
                                 annotationColors = add.colorbar,
-                                columnTitle = paste("Heatmap with colorbar representing", input$select_heatmap_condition, sep = " ")))
+                                columnTitle = paste("Heatmap with colorbar representing", 
+                                                    input$select_heatmap_condition, sep = " ")))
       } else  {
         physeq2 <- tax_glom(physeq1, input$taxl)
         if (input$checkbox_heatmap){
@@ -251,9 +259,11 @@ shinyServer(function(input, output, session) {
         } else{
           add.colorbar <- NULL
         }
-        return(plotHeatmapColor(physeq2@otu_table@.Data, physeq2@sam_data[[input$select_heatmap_condition]], 
+        return(plotHeatmapColor(physeq2@otu_table@.Data, 
+                                physeq2@sam_data[[input$select_heatmap_condition]], 
                                 annotationColors = add.colorbar,
-                                columnTitle = paste("Heatmap with colorbar representing", input$select_heatmap_condition, sep = " ")))
+                                columnTitle = paste("Heatmap with colorbar representing", 
+                                                    input$select_heatmap_condition, sep = " ")))
       }
     }
     
@@ -405,6 +415,40 @@ shinyServer(function(input, output, session) {
     })
     # interactive PCA summary
     vis_pc %>% bind_shiny("PCAplot")
+    
+    #### new PCA start ####
+    
+    
+    
+    # independent heatmap plotting function in the server using specific data from input
+    plotPCAPlotlyServer <- function(){
+      physeq1 <- shinyInput$pstat
+      if (input$taxl.new=="no rank")  {
+        plotPCAPlotly(df.input = physeq1@otu_table@.Data, 
+                             condition.vec = physeq1@sam_data[[input$select_pca_condition]],
+                             pc.a = paste("PC", input$xcol.new, sep = ""),
+                             pc.b = paste("PC", input$ycol.new, sep = ""),
+                             columnTitle = paste("PCA with colorbar representing", 
+                                                 input$select_pca_condition, sep = " "))
+      } else  {
+        physeq2 <- tax_glom(physeq1, input$taxl.new)
+        plotPCAPlotly(df.input = physeq2@otu_table@.Data, 
+                             condition.vec = physeq2@sam_data[[input$select_pca_condition]],
+                             pc.a = paste("PC", input$xcol.new, sep = ""),
+                             pc.b = paste("PC", input$ycol.new, sep = ""),
+                             columnTitle = paste("PCA with colorbar representing", 
+                                                 input$select_pca_condition, sep = " "))}
+    }
+    
+    # show heatmap in the shiny app by calling the plotting function
+    output$pca.plotly <- renderPlotly({
+      plotPCAPlotlyServer()
+      
+    })
+
+    ##### new PCA ends ####
+    
+    
     output$PCAsummary <- renderPrint({
         summary(PCA())
     })

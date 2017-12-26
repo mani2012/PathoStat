@@ -54,4 +54,33 @@ plotHeatmapColor <- function(df.input, condition.vec,
 }
 
 
+#' Plot PCA
+#'
+#' @param df.input Input data object that contains the data to be plotted. Required
+#' @param condition.vec The condition used for plotting the PCA. Required
+#' @param columnTitle Title to be displayed at top of heatmap.
+#' @export
+plotPCAPlotly <- function(df.input, condition.vec, columnTitle = "Title", pc.a = "PC1", pc.b = "PC2"){
+  # conduct PCA
+  pca.tmp<- prcomp(t(df.input), scale = TRUE)
+  tmp.df <- data.frame(pca.tmp$x)
+  # add color variable
+  tmp.df$colorby <- condition.vec
+ 
+  plot_ly(tmp.df, 
+               x = as.formula(paste("~", pc.a, sep = "")), 
+               y = as.formula(paste("~", pc.b, sep = "")),
+               mode = "markers", color = ~colorby, type = "scatter",
+               text = rownames(tmp.df), 
+               marker = list(size = 10))
+}
+
+
+
+
+
+
+
+
+
 
