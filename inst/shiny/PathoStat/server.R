@@ -126,15 +126,13 @@ shinyServer(function(input, output, session) {
           covariates.tmp <- colnames(sample_data(shinyInput$pstat))
           dat$condition.select <- rep(shinyInput$pstat@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]], each = dim(taxdata)[1])
           dat <- dat[order(dat$condition.select),]
-          new.id <- paste(shinyInput$pstat@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]][order(shinyInput$pstat@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]])], colnames(taxdata), sep = "-")
-          dat$condition.select.id <- rep(new.id, each = dim(taxdata)[1])
+          dat$condition.select.id <- paste(dat$condition.select,as.character(dat$variable), sep = "-")
         }else{
           pstat.new <- tax_glom(shinyInput$pstat, input$taxl)
           covariates.tmp <- colnames(sample_data(pstat.new))
           dat$condition.select <- rep(pstat.new@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]], each = dim(taxdata)[1])
           dat <- dat[order(dat$condition.select),]
-          new.id <- paste(pstat.new@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]][order(pstat.new@sam_data@.Data[[which(covariates.tmp %in% input$select_condition)]])], colnames(taxdata), sep = "-")
-          dat$condition.select.id <- rep(new.id, each = dim(taxdata)[1])
+          dat$condition.select.id <- paste(dat$condition.select,as.character(dat$variable), sep = "-")
         }
         
         # sort by selecting variables
