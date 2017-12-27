@@ -3,6 +3,8 @@ library(ggvis)
 library(d3heatmap)
 library(phyloseq)
 library(ape)
+library(plotly)
+
 
 tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 'family', 
     'genus', 'species', 'no rank')
@@ -197,65 +199,38 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
             )
         )
     ),
-    tabPanel("PCA",
-        sidebarLayout(
-            sidebarPanel(
-                numericInput('xcol', 'Principal Component (x-axis)', 1,
-                    min = 1, max = 50),
-                numericInput('ycol', 'Principal Component (y-axis)', 2,
-                    min = 1, max = 50),
-                checkboxInput("colbybatchPCA", 
-                    "Color By Batch (Default: Color By Condition)", FALSE),
-                width=3
-            ),
-            mainPanel(
-                tabsetPanel(
-                    tabPanel("PCA", ggvisOutput("PCAplot")),
-                    tabPanel("Summary", verbatimTextOutput("PCAsummary")),
-                    tabPanel("Table",tableOutput("PCAtable")),
-                    tabPanel("Explained Variation",
-                        tableOutput("PCAExplainedVariation"))
-                ), width=9
-            )
-        )
-    ),
-    tabPanel("PCA.new",
+    tabPanel("Dimension Reduction",
          sidebarLayout(
            sidebarPanel(
              numericInput('xcol.new', 'Principal Component (x-axis)', 1,
-                          min = 1, max = 10),
+                          min = 1, max = 50),
              numericInput('ycol.new', 'Principal Component (y-axis)', 2,
-                          min = 1, max = 10),
+                          min = 1, max = 50),
              selectizeInput('taxl.new', 'Taxonomy Level', choices = tax.name, 
                             selected='no rank'),
              selectInput("select_pca_condition", "Add color based on:",
-                         covariates.colorbar),
+                         covariates),
              width=3
            ),
            mainPanel(
              tabsetPanel(
-               tabPanel("PCA.new", plotlyOutput("pca.plotly")))
+               tabPanel("PCA plot", 
+                        # This is a bit different pdf downloading method for plotly,
+                        # as we must buy lisence for that
+                        plotlyOutput("pca.plotly"),
+                        actionButton("download_pca", "Download PCA pdf"),
+                        helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")),
+               tabPanel("PCA variance", DT::dataTableOutput("PCAtable")),
+               tabPanel("PCoA plot", 
+                        plotlyOutput("pcoa.plotly"),
+                        selectInput("pcoa.method", "PCoA method:",
+                                    c("bray", "wUniFrac")),
+                        actionButton("download_pcoa", "Download PCoA pdf"),
+                        helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally."))
+               )
              )
            )
          ),
-    tabPanel("PCoA",
-        sidebarLayout(
-            sidebarPanel(
-                numericInput('xcolA', 'Principal Coordinate (x-axis)', 1,
-                    min = 1, max = 50),
-                numericInput('ycolA', 'Principal Coordinate (y-axis)', 2,
-                    min = 1, max = 50),
-                checkboxInput("colbybatchPCoA", 
-                    "Color By Batch (Default: Color By Condition)", FALSE),
-                checkboxInput("methodPCoA", 
-                    "Weigthed Unifrac (Default: Bray-Curtis)", FALSE),
-                width=3
-            ),
-            mainPanel(
-                plotOutput("PCoAplot", height = "550px"), width=9
-            )
-        )
-    ),
     tabPanel("Time Series",
         tabsetPanel(
             tabPanel("Visualization",

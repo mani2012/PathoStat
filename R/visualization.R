@@ -19,6 +19,13 @@
 #'
 #' @return ComplexHeatmap object
 #' @export
+#' @examples
+#' plotHeatmapColor(df.input, condition.vec,
+#' clusterRow=TRUE, clusterCol=TRUE, displayRowLabels=FALSE,
+#' displayColumnLabels=TRUE, displayRowDendrograms=TRUE,
+#' displayColumnDendrograms=TRUE, annotationColors = "auto",
+#' columnTitle="Title")
+
 plotHeatmapColor <- function(df.input, condition.vec,
                              clusterRow=TRUE, clusterCol=TRUE, displayRowLabels=FALSE,
                              displayColumnLabels=TRUE, displayRowDendrograms=TRUE,
@@ -60,23 +67,60 @@ plotHeatmapColor <- function(df.input, condition.vec,
 #' @param condition.vec The condition used for plotting the PCA. Required
 #' @param columnTitle Title to be displayed at top of heatmap.
 #' @export
-plotPCAPlotly <- function(df.input, condition.vec, columnTitle = "Title", pc.a = "PC1", pc.b = "PC2"){
+#' @examples
+#' plotPCAPlotly(df.input, condition.vec, condition.name = "condition", 
+#' columnTitle = "Title", pc.a = "PC1", pc.b = "PC2")
+plotPCAPlotly <- function(df.input, condition.vec, condition.name = "condition", columnTitle = "Title", pc.a = "PC1", pc.b = "PC2"){
   # conduct PCA
   pca.tmp<- prcomp(t(df.input), scale = TRUE)
   tmp.df <- data.frame(pca.tmp$x)
   # add color variable
-  tmp.df$colorby <- condition.vec
+  tmp.df[[paste(condition.name)]] <- condition.vec
  
   plot_ly(tmp.df, 
                x = as.formula(paste("~", pc.a, sep = "")), 
                y = as.formula(paste("~", pc.b, sep = "")),
-               mode = "markers", color = ~colorby, type = "scatter",
+               mode = "markers", color = as.formula(paste("~", condition.name, sep = "")), type = "scatter",
                text = rownames(tmp.df), 
                marker = list(size = 10))
 }
 
 
 
+
+#' Plot PCoA
+#'
+#' @param df.input Input data object that contains the data to be plotted. Required
+#' @param condition.vec The condition used for plotting the PCoA. Required
+#' @param columnTitle Title to be displayed at top of heatmap.
+#' @export
+#' @examples 
+#' plotPCoAPlotly(physeq.input, condition.vec, condition.name = "condition", method = "bray", 
+#' columnTitle = "Title", pc.a = "Axis.1", pc.b = "Axis.2")
+plotPCoAPlotly <- function(physeq.input, condition.vec, condition.name = "condition", method = "bray", columnTitle = "Title", pc.a = "Axis.1", pc.b = "Axis.2"){
+  # conduct PCoA
+  # wUniFrac or bray
+
+  if (method == "bray"){
+    DistBC = phyloseq::distance(physeq.input, method = method)
+    ordBC = ordinate(physeq.input, method = "PCoA", distance = DistBC)
+    tmp.df <- data.frame(ordBC$vectors)
+  } else {
+    DistUF = phyloseq::distance(physeq.input, method = method)
+    ordUF = ordinate(physeq.input, method = "PCoA", distance = DistUF)
+    tmp.df <- data.frame(ordUF$vectors)
+  }
+  
+  # add color variable
+  tmp.df[[paste(condition.name)]] <- condition.vec
+  
+  plot_ly(tmp.df, 
+          x = as.formula(paste("~", pc.a, sep = "")), 
+          y = as.formula(paste("~", pc.b, sep = "")),
+          mode = "markers", color = as.formula(paste("~", condition.name, sep = "")), type = "scatter",
+          text = rownames(tmp.df), 
+          marker = list(size = 10))
+}
 
 
 
