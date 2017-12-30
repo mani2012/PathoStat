@@ -57,6 +57,21 @@ createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
     sample_file_path <- file.path(input_dir, sample_data_file)
     tbl <- read.table(sample_file_path, header=TRUE, sep="\t", row.names=1,
         stringsAsFactors=FALSE)
+    
+    # change NA/NULL to 0
+    # remove variables with identical values
+    col.remove.index <- c()
+    for (i in 1:ncol(tbl)){
+      if(length(unique(tbl[,i])) < 2){
+        col.remove.index <- c(col.remove.index, i)
+      } 
+    }
+    if (!is.null(col.remove.index)){
+      tbl <- tbl[,-col.remove.index]  
+    }
+    
+    
+    
     sampledata = sample_data(data.frame(tbl))
     random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=
         taxa_names(physeq))
@@ -131,7 +146,16 @@ runPathoStat <- function(pstat=NULL, report_file="PathoStat_report.html",
   }
   
 
-  
+  # remove variables with identical values
+  col.remove.index <- c()
+  for (i in 1:ncol(pstat@sam_data)){
+    if(dim(unique(pstat@sam_data[,i]))[1] < 2){
+      col.remove.index <- c(col.remove.index, i)
+    } 
+  }
+  if (!is.null(col.remove.index)){
+    pstat@sam_data <- pstat@sam_data[,-col.remove.index]  
+  }
   
     shinyInput <- list(pstat = pstat, report_dir = report_dir)
     setShinyInput(shinyInput)

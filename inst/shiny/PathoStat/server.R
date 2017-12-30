@@ -13,6 +13,7 @@ library(alluvial)
 library(plotly)
 library(webshot)
 library(vegan)
+library(dplyr)
 
 # Converts decimal percentage to string with specified digits
 pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
