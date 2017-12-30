@@ -128,13 +128,16 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                        selectizeInput('taxl.beta', 'Taxonomy Level', choices = tax.name, 
                                       selected='no rank'),
                        selectInput("select_beta_div_method", "Choose method:",
-                                   beta.methods)
+                                   beta.methods),
+                       helpText("Only variables with 2 levels are supported for boxplot and stat test here." ),
+                       selectInput("select_beta_condition", "Select condition",
+                                   covariates.two.levels)
                      ),
                      mainPanel(
                        
                        tabsetPanel(
                          tabPanel("Heatmap", 
-                                  selectInput("select_beta_div_condition", "Add colorbar on:",
+                                  selectInput("select_beta_heatmap_condition", "Add colorbar on:",
                                               covariates.colorbar),
                                   checkboxInput("checkbox_beta_heatmap", "Add colorbar", value = TRUE),
                                   checkboxInput("checkbox_beta_heatmap_scale", "Row scaling", value = TRUE),
@@ -142,9 +145,6 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                                   downloadButton('download_beta_heatmap_pdf', 'Download heatmap PDF')
                          ),
                          tabPanel("Boxplot", 
-                                  helpText("Only variables with 2 levels are supported now." ),
-                                  selectInput("select_beta_boxplot_condition", "Select condition",
-                                              covariates.two.levels),
                                   plotlyOutput("BetaDiversityBoxplot"),
                                   actionButton("download_beta_boxplot", "Download pdf"),
                                   helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")
@@ -306,7 +306,8 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                         selectInput("pcoa.method", "PCoA method:",
                                     beta.methods),
                         actionButton("download_pcoa", "Download PCoA pdf"),
-                        helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally."))
+                        helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")),
+               tabPanel("PCoA variance", DT::dataTableOutput("PCoAtable"))
                )
              )
            )

@@ -417,10 +417,10 @@ shinyServer(function(input, output, session) {
       dist.mat <- as.matrix(dist.mat)
       return(plotHeatmapColor(dist.mat, 
                               do.scale = input$checkbox_beta_heatmap_scale,
-                              physeq1@sam_data[[input$select_beta_div_condition]], 
+                              physeq1@sam_data[[input$select_beta_heatmap_condition]], 
                               annotationColors = add.colorbar,
                               columnTitle = paste("Heatmap with colorbar representing", 
-                                                  input$select_beta_div_condition, sep = " ")))
+                                                  input$select_beta_heatmap_condition, sep = " ")))
     } else  {
       physeq2 <- tax_glom(physeq1, input$taxl.beta)
       if (input$checkbox_beta_heatmap){
@@ -432,10 +432,10 @@ shinyServer(function(input, output, session) {
       dist.mat <- as.matrix(dist.mat)
       return(plotHeatmapColor(dist.mat,
                               do.scale = input$checkbox_beta_heatmap_scale,
-                              physeq2@sam_data[[input$select_beta_div_condition]], 
+                              physeq2@sam_data[[input$select_beta_heatmap_condition]], 
                               annotationColors = add.colorbar,
                               columnTitle = paste("Heatmap with colorbar representing", 
-                                                  input$select_beta_div_condition, sep = " ")))
+                                                  input$select_beta_heatmap_condition, sep = " ")))
     }
   }
   
@@ -469,7 +469,7 @@ shinyServer(function(input, output, session) {
     
     meta.data <- physeq1@sam_data
     meta.data$sample.name <- rownames(meta.data)
-    colnames(meta.data)[which(colnames(meta.data) == input$select_beta_boxplot_condition)] <- "condition"
+    colnames(meta.data)[which(colnames(meta.data) == input$select_beta_condition)] <- "condition"
     
     dist.tmp = phyloseq::distance(physeq1, method = input$select_beta_div_method)
     dist.mat <- as.matrix(dist.tmp)
@@ -526,13 +526,14 @@ shinyServer(function(input, output, session) {
       }
       meta.data <- physeq1@sam_data
       meta.data$sample.name <- rownames(meta.data)
-      colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
+      colnames(meta.data)[which(colnames(meta.data) == input$select_beta_condition)] <- "condition"
       meta.data <- data.frame(meta.data)
       meta.data$condition <- as.factor(meta.data$condition)
       
       set.seed(99)
       dist.tmp = phyloseq::distance(physeq1, method = input$select_beta_div_method)
-      beta.div <- adonis2(dist.tmp~condition, data=meta.data, permutations = input$num.permutation.permanova, strata="PLOT")
+      beta.div <- adonis2(dist.tmp~condition, data=meta.data, 
+                          permutations = input$num.permutation.permanova, strata="PLOT")
       beta.div
       
     } else {
@@ -544,7 +545,7 @@ shinyServer(function(input, output, session) {
       
       meta.data <- physeq1@sam_data
       meta.data$sample.name <- rownames(meta.data)
-      colnames(meta.data)[which(colnames(meta.data) == input$select_beta_boxplot_condition)] <- "condition"
+      colnames(meta.data)[which(colnames(meta.data) == input$select_beta_condition)] <- "condition"
       
       dist.tmp = phyloseq::distance(physeq1, method = input$select_beta_div_method)
       dist.mat <- as.matrix(dist.tmp)
@@ -733,15 +734,17 @@ shinyServer(function(input, output, session) {
       if (sum(rowSums(as.matrix(physeq1@otu_table@.Data)) == 0) > 0){
         physeq1@otu_table@.Data <- data.frame(physeq1@otu_table@.Data[-which
                                                                       (rowSums(as.matrix(physeq1@otu_table@.Data)) == 0),])
-        pca.tmp <- prcomp(t(physeq1@otu_table@.Data), scale = TRUE)
-      }
+      }  
+      pca.tmp <- prcomp(t(physeq1@otu_table@.Data), scale = TRUE)
+      
     } else  {
       physeq2 <- tax_glom(physeq1, input$taxl.pca)
       if (sum(rowSums(as.matrix(physeq2@otu_table@.Data)) == 0) > 0){
         physeq2@otu_table@.Data <- data.frame(physeq2@otu_table@.Data[-which
                                                                       (rowSums(as.matrix(physeq2@otu_table@.Data)) == 0),])
-        pca.tmp <- prcomp(t(physeq2@otu_table@.Data), scale = TRUE)
-      }
+      }  
+      pca.tmp <- prcomp(t(physeq2@otu_table@.Data), scale = TRUE)
+      
     }
     
     table.output.pca <- t(summary(pca.tmp)$importance)
@@ -789,6 +792,46 @@ shinyServer(function(input, output, session) {
     browseURL(tmpFile)}
   )
   
+  
+  getOrdPCoA <- function(){
+    physeq1 <- shinyInput$pstat
+    if (input$taxl.pca=="no rank")  {
+      #test and fix the constant/zero row
+      if (sum(rowSums(as.matrix(physeq1@otu_table@.Data)) == 0) > 0){
+        physeq1@otu_table@.Data <- data.frame(physeq1@otu_table@.Data[-which
+                                                                      (rowSums(as.matrix(physeq1@otu_table@.Data)) == 0),])
+      }
+      Dist.tmp <- phyloseq::distance(physeq1, method = input$select_beta_div_method)
+      ord.tmp <- ordinate(physeq1, method = "PCoA", distance = Dist.tmp)
+      #cat(dim(physeq1@otu_table))
+      return(ord.tmp$values)
+
+    } else  {
+      physeq2 <- tax_glom(physeq1, input$taxl.pca)
+      if (sum(rowSums(as.matrix(physeq2@otu_table@.Data)) == 0) > 0){
+        physeq2@otu_table@.Data <- data.frame(physeq2@otu_table@.Data[-which
+                                                                      (rowSums(as.matrix(physeq2@otu_table@.Data)) == 0),])
+      }
+      Dist.tmp <- phyloseq::distance(physeq2, method = input$select_beta_div_method)
+      ord.tmp <- ordinate(physeq2, method = "PCoA", distance = Dist.tmp)
+      return(ord.tmp$values)
+        
+    }
+  }
+  
+  
+  # interactive PCA table
+  output$PCoAtable <- DT::renderDataTable({
+    physeq1 <- shinyInput$pstat
+    ord <- getOrdPCoA()
+    df.output <- ord[,c(1,3,5)]
+    colnames(df.output) <- c("eigenvalue", "variance explained", "cumulative variance")
+    rownames(df.output) <- paste("Axis", 1:nrow(df.output), sep = ".")
+    df.output[,2] <- scales::percent(as.numeric(df.output[,2]))
+    df.output[,3] <- scales::percent(as.numeric(df.output[,3]))
+    DT::datatable(df.output)
+    
+  })
   
   
   # interactive Differential Expression boxplot
