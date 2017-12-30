@@ -32,6 +32,12 @@ plotHeatmapColor <- function(df.input, condition.vec,
                              displayColumnLabels=TRUE, displayRowDendrograms=TRUE,
                              displayColumnDendrograms=TRUE, annotationColors = "auto",
                              columnTitle="Title"){
+  #test and fix the constant/zero row
+  if (sum(rowSums(as.matrix(df.input)) == 0) > 0){
+    df.input <- df.input[-which(rowSums(as.matrix(df.input)) == 0),]
+  }
+  
+  
   if (is.null(annotationColors)){
     topha <- NULL
   } else if (annotationColors == "auto") {
@@ -76,6 +82,12 @@ plotHeatmapColor <- function(df.input, condition.vec,
 #' plotPCAPlotly(df.input, condition.vec, condition.name = "condition", 
 #' columnTitle = "Title", pc.a = "PC1", pc.b = "PC2")
 plotPCAPlotly <- function(df.input, condition.vec, condition.name = "condition", columnTitle = "Title", pc.a = "PC1", pc.b = "PC2"){
+  
+  #test and fix the constant/zero row
+  if (sum(rowSums(as.matrix(df.input)) == 0) > 0){
+    df.input <- df.input[-which(rowSums(as.matrix(df.input)) == 0),]
+  }
+  
   # conduct PCA
   pca.tmp<- prcomp(t(df.input), scale = TRUE)
   tmp.df <- data.frame(pca.tmp$x)
@@ -106,6 +118,11 @@ plotPCoAPlotly <- function(physeq.input, condition.vec, condition.name = "condit
   # conduct PCoA
   # wUniFrac or bray
 
+  #test and fix the constant/zero row
+  if (sum(rowSums(as.matrix(physeq.input@otu_table@.Data)) == 0) > 0){
+    physeq.input@otu_table@.Data <- df.input[-which(rowSums(as.matrix(physeq.input@otu_table@.Data)) == 0),]
+  }
+  
   if (method == "bray"){
     DistBC = phyloseq::distance(physeq.input, method = method)
     ordBC = ordinate(physeq.input, method = "PCoA", distance = DistBC)

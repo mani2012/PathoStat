@@ -35,10 +35,22 @@ createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
     datlist <- readPathoscopeData(input_dir, pathoreport_file_suffix)
     dat <- datlist$data
     countdat <- datlist$countdata
+    
+    #test and fix the constant/zero row
+    row.remove.index <- c()
+    if (sum(rowSums(as.matrix(countdat)) == 0) > 0){
+      row.remove.index <- which(rowSums(as.matrix(countdat)) == 0)
+      countdat <- countdat[-row.remove.index,]
+    }
+    
     ids <- rownames(dat)
     tids <- unlist(lapply(ids, FUN = grepTid))
     taxonLevels <- findTaxonomy(tids)
     taxmat <- findTaxonMat(ids, taxonLevels)
+    
+    #test and fix the constant/zero row
+    taxmat <- taxmat[-row.remove.index,]
+    
     OTU <- otu_table(countdat, taxa_are_rows = TRUE)
     TAX <- tax_table(taxmat)
     physeq <- phyloseq(OTU, TAX)
@@ -109,6 +121,18 @@ runPathoStat <- function(pstat=NULL, report_file="PathoStat_report.html",
     if (report_dir == ".") {
         report_dir = getwd()
     }
+  
+  #test and fix the constant/zero row
+  row.remove.index <- c()
+  if (sum(rowSums(as.matrix(pstat@otu_table@.Data)) == 0) > 0){
+    row.remove.index <- which(rowSums(as.matrix(pstat@otu_table@.Data)) == 0)
+    pstat@otu_table@.Data <- pstat@otu_table@.Data[-row.remove.index,]
+    pstat@tax_table@.Data <- pstat@tax_table@.Data[-row.remove.index,]
+  }
+  
+
+  
+  
     shinyInput <- list(pstat = pstat, report_dir = report_dir)
     setShinyInput(shinyInput)
     rmdfile <- system.file("reports/pathostat_report.Rmd", package = 

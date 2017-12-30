@@ -729,11 +729,21 @@ shinyServer(function(input, output, session) {
   output$PCAtable <- DT::renderDataTable({
     physeq1 <- shinyInput$pstat
     if (input$taxl.pca=="no rank")  {
-      pca.tmp <- prcomp(t(physeq1@otu_table@.Data), scale = TRUE)
+      #test and fix the constant/zero row
+      if (sum(rowSums(as.matrix(physeq1@otu_table@.Data)) == 0) > 0){
+        physeq1@otu_table@.Data <- data.frame(physeq1@otu_table@.Data[-which
+                                                                      (rowSums(as.matrix(physeq1@otu_table@.Data)) == 0),])
+        pca.tmp <- prcomp(t(physeq1@otu_table@.Data), scale = TRUE)
+      }
     } else  {
       physeq2 <- tax_glom(physeq1, input$taxl.pca)
-      pca.tmp <- prcomp(t(physeq2@otu_table@.Data), scale = TRUE)
+      if (sum(rowSums(as.matrix(physeq2@otu_table@.Data)) == 0) > 0){
+        physeq2@otu_table@.Data <- data.frame(physeq2@otu_table@.Data[-which
+                                                                      (rowSums(as.matrix(physeq2@otu_table@.Data)) == 0),])
+        pca.tmp <- prcomp(t(physeq2@otu_table@.Data), scale = TRUE)
+      }
     }
+    
     table.output.pca <- t(summary(pca.tmp)$importance)
     table.output.pca[,2] <- scales::percent(as.numeric(table.output.pca[,2]))
     table.output.pca[,3] <- scales::percent(as.numeric(table.output.pca[,3]))
