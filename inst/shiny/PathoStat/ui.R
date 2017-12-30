@@ -5,6 +5,9 @@ library(phyloseq)
 library(ape)
 library(plotly)
 
+alpha.methods <- c("Shannon", "Simpson", "InvSimpson")
+# Weigthed Unifrac, Bray-Curtis
+beta.methods <- c("bray", "wUniFrac")
 
 tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 'family', 
     'genus', 'species', 'no rank')
@@ -29,6 +32,15 @@ for (i in 1:length(covariates)){
   num.levels <- length(unique(sample_data(pstat)[[covariates[i]]]))
   if (num.levels < 8){
     covariates.colorbar <- c(covariates.colorbar, covariates[i])
+  }
+}
+
+# choose the covariates that hasn 2 levels
+covariates.two.levels <- c()
+for (i in 1:length(covariates)){
+  num.levels <- length(unique(sample_data(pstat)[[covariates[i]]]))
+  if (num.levels == 2){
+    covariates.two.levels <- c(covariates.two.levels, covariates[i])
   }
 }
 
@@ -63,7 +75,8 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                              helpText("Note: Only variables with less than 8 levels could be mapped to color bar."),
                              selectInput("select_heatmap_condition", "Add colorbar based on:",
                                          covariates.colorbar),
-                             checkboxInput("checkbox_heatmap", "Add colorbar", value = FALSE),
+                             checkboxInput("checkbox_heatmap_scale", "Row scaling", value = TRUE),
+                             checkboxInput("checkbox_heatmap", "Add colorbar", value = TRUE),
                              downloadButton('download_heatmap_pdf', 'Download heatmap PDF'),
                              plotOutput("Heatmap", height="550px")),
                     tabPanel("Summary", verbatimTextOutput("TaxRAsummary")),
@@ -77,12 +90,79 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
     ),
     tabPanel("Diversity",
         tabsetPanel(
-            tabPanel("Alpha Diversity", plotOutput("AlphaDiversity",
-                height = "550px")),
-            tabPanel("Beta Diversity", 
-                checkboxInput("methodBeta", 
-                    "Weigthed Unifrac (Default: Bray-Curtis)", FALSE),
-                plotOutput("BetaDiversity", height = "500px")),
+            tabPanel("Alpha Diversity", 
+                     
+                sidebarLayout(
+                    sidebarPanel(
+                     selectizeInput('taxl.alpha', 'Taxonomy Level', choices = tax.name, 
+                                     selected='no rank'),
+                     selectInput("select_alpha_div_condition", "Compare between:",
+                                 covariates.colorbar),
+                     selectInput("select_alpha_div_method", "Choose method:",
+                                 alpha.methods)
+                    ),
+                    mainPanel(
+                     
+                     tabsetPanel(
+                       tabPanel("Boxplot", 
+                                plotlyOutput("AlphaDiversity"),
+                                actionButton("download_alpha", "Download Alpha diversity pdf"),
+                                helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")
+                       ),
+                       tabPanel("Statistical Test", 
+                                selectInput("select_alpha_stat_method","Non-parametric Test", c("Mann-Whitney","Kruskal-Wallis")),
+                                verbatimTextOutput("alpha.stat.test")
+                       ),
+                       tabPanel("Alpha Diversity Table", 
+                                downloadButton('download_table_alpha', 'Download this table'),
+                                DT::dataTableOutput("table.alpha")
+                       )
+                     )
+                    )
+                )
+          ),
+          tabPanel("Beta Diversity", 
+                   
+                   sidebarLayout(
+                     sidebarPanel(
+                       selectizeInput('taxl.beta', 'Taxonomy Level', choices = tax.name, 
+                                      selected='no rank'),
+                       selectInput("select_beta_div_method", "Choose method:",
+                                   beta.methods)
+                     ),
+                     mainPanel(
+                       
+                       tabsetPanel(
+                         tabPanel("Heatmap", 
+                                  selectInput("select_beta_div_condition", "Add colorbar on:",
+                                              covariates.colorbar),
+                                  checkboxInput("checkbox_beta_heatmap", "Add colorbar", value = TRUE),
+                                  checkboxInput("checkbox_beta_heatmap_scale", "Row scaling", value = TRUE),
+                                  plotOutput("BetaDiversityHeatmap"),
+                                  downloadButton('download_beta_heatmap_pdf', 'Download heatmap PDF')
+                         ),
+                         tabPanel("Boxplot", 
+                                  helpText("Only variables with 2 levels are supported now." ),
+                                  selectInput("select_beta_boxplot_condition", "Select condition",
+                                              covariates.two.levels),
+                                  plotlyOutput("BetaDiversityBoxplot"),
+                                  actionButton("download_beta_boxplot", "Download pdf"),
+                                  helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")
+                         ),
+                         tabPanel("Statistical Test", 
+                                  selectInput("select_beta_stat_method","Select Test", c("PERMANOVA", "Kruskal-Wallis", "Mann-Whitney")),
+                                  numericInput("num.permutation.permanova", "Number of permutations", value = 999, max = 2000),
+                                  verbatimTextOutput("beta.stat.test")
+                         ),
+                         tabPanel("Beta Diversity Table", 
+                                  downloadButton('download_table_beta', 'Download this table'),
+                                  DT::dataTableOutput("table.beta")
+                         )
+                       )
+                     )
+                   )
+          ),
+          
             tabPanel("Exploratory Tree", plotOutput("ExploratoryTree", 
                 height = "550px")),
             tabPanel("BiPlot", 
@@ -206,7 +286,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                           min = 1, max = 50),
              numericInput('ycol.new', 'Principal Component (y-axis)', 2,
                           min = 1, max = 50),
-             selectizeInput('taxl.new', 'Taxonomy Level', choices = tax.name, 
+             selectizeInput('taxl.pca', 'Taxonomy Level', choices = tax.name, 
                             selected='no rank'),
              selectInput("select_pca_condition", "Add color based on:",
                          covariates),
@@ -224,7 +304,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                tabPanel("PCoA plot", 
                         plotlyOutput("pcoa.plotly"),
                         selectInput("pcoa.method", "PCoA method:",
-                                    c("bray", "wUniFrac")),
+                                    beta.methods),
                         actionButton("download_pcoa", "Download PCoA pdf"),
                         helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally."))
                )

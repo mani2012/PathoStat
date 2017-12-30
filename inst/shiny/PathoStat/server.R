@@ -12,6 +12,7 @@ library(PathoStat)
 library(alluvial)
 library(plotly)
 library(webshot)
+library(vegan)
 
 # Converts decimal percentage to string with specified digits
 pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
@@ -250,6 +251,7 @@ shinyServer(function(input, output, session) {
         add.colorbar <- NULL
       }
       return(plotHeatmapColor(physeq1@otu_table@.Data, 
+                              do.scale = input$checkbox_heatmap_scale,
                               physeq1@sam_data[[input$select_heatmap_condition]], 
                               annotationColors = add.colorbar,
                               columnTitle = paste("Heatmap with colorbar representing", 
@@ -262,6 +264,7 @@ shinyServer(function(input, output, session) {
         add.colorbar <- NULL
       }
       return(plotHeatmapColor(physeq2@otu_table@.Data, 
+                              do.scale = input$checkbox_heatmap_scale,
                               physeq2@sam_data[[input$select_heatmap_condition]], 
                               annotationColors = add.colorbar,
                               columnTitle = paste("Heatmap with colorbar representing", 
@@ -290,38 +293,340 @@ shinyServer(function(input, output, session) {
     
   )
   
-  output$AlphaDiversity <- renderPlot({
+  plotAlphaServer <- function(){
     physeq1 <- shinyInput$pstat
-    cn <- colnames(physeq1@sam_data)
-    cn[1] <- "batch"
-    cn[2] <- "condition"
-    colnames(physeq1@sam_data) <- cn
-    #alpha_meas <- c("Observed", "Chao1", "ACE", "Shannon", "Simpson",
-    #    "InvSimpson")
-    #alpha_meas <- c("Observed", "Chao1", "Shannon", "Simpson",
-    #    "InvSimpson")
-    alpha_meas <- c("Shannon", "Simpson", "InvSimpson")
-    setGgplotTheme()
-    (p <- plot_richness(physeq1, "condition", "batch", measures=alpha_meas))
-    p + ggplot2::geom_boxplot(data=p$data, ggplot2::aes(x=condition,
-                                                        y=value, color=NULL), alpha=0.1)
-  })
-  output$BetaDiversity <- renderPlot({
-    physeq1 <- shinyInput$pstat
-    physeq1 <- phyloseq(otu_table(physeq1), phy_tree(physeq1),
-                        tax_table(physeq1), sample_data(physeq1))
-    setGgplotTheme()
-    if (input$methodBeta)  {
-      dist = phyloseq::distance(physeq1, method = "wUniFrac")
-      titleString="Beta Diversity Distance: Weigthed Unifrac"
-    } else  {
-      dist = phyloseq::distance(physeq1, method = "bray")
-      titleString="Beta Diversity Distance: Bray-Curtis"
+    
+    if (input$taxl.alpha !="no rank")  {
+      physeq1 <- tax_glom(physeq1, input$taxl.alpha)
     }
-    gplots::heatmap.2(as.matrix(dist), col=gplots::bluered(75), scale="row",
-                      key=TRUE, symkey=FALSE, density.info="none", trace="none",
-                      margins = c(6, 6))
+    
+    meta.data <- physeq1@sam_data
+    meta.data$sample.name <- rownames(meta.data)
+    meta.data$richness <- estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1]
+    colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
+    g <- ggplot(meta.data, aes(condition, richness, text=sample.name, color = condition)) + 
+      geom_point() + geom_boxplot() +
+      labs(title = paste("Alpha diversity between ", 
+                         input$select_alpha_div_condition, 
+                         " (", input$select_alpha_div_method, ")", sep = ""))
+      
+    ggplotly(g, tooltip="text")
+  }
+  
+  output$AlphaDiversity <- renderPlotly({
+    plotAlphaServer()
   })
+  
+  observeEvent(input$download_alpha,{
+    if (!require("webshot")) install.packages("webshot")
+    tmpFile <- tempfile(pattern = "Alpha_diversity_", fileext = ".pdf")
+    export(plotAlphaServer(), file = tmpFile)
+    browseURL(tmpFile)}
+  )
+  
+  output$table.alpha <- DT::renderDataTable({
+    physeq1 <- shinyInput$pstat
+    if (input$taxl.alpha !="no rank")  {
+      physeq1 <- tax_glom(physeq1, input$taxl.alpha)
+    }
+    meta.data <- physeq1@sam_data
+    meta.data$sample.name <- rownames(meta.data)
+    meta.data$richness <- estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1]
+    colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
+    rownames(meta.data) <- 1:nrow(meta.data)
+    meta.data <- as_tibble(meta.data)
+    meta.data <- meta.data %>% select(sample.name, condition, richness)
+    DT::datatable(meta.data)
+    
+  })
+  
+  output$download_table_alpha <- downloadHandler(
+    filename = function() { paste('Alpha_diversity_table', '.csv', sep='') },
+    content = function(file) {
+      physeq1 <- shinyInput$pstat
+      if (input$taxl.alpha !="no rank")  {
+        physeq1 <- tax_glom(physeq1, input$taxl.alpha)
+      }
+      meta.data <- physeq1@sam_data
+      meta.data$sample.name <- rownames(meta.data)
+      meta.data$richness <- estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1]
+      colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
+      rownames(meta.data) <- 1:nrow(meta.data)
+      meta.data <- as_tibble(meta.data)
+      meta.data <- meta.data %>% select(sample.name, condition, richness)
+      write.csv(data.frame(meta.data), file)
+    }
+  )
+  
+  output$alpha.stat.test <- renderPrint({ 
+    physeq1 <- pstat
+    if (input$taxl.alpha !="no rank")  {
+      physeq1 <- tax_glom(physeq1, input$taxl.alpha)
+    }
+    meta.data <- physeq1@sam_data
+    meta.data$sample.name <- rownames(meta.data)
+    meta.data$richness <- estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1]
+    colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
+    meta.data <- data.frame(meta.data)
+    meta.data$condition <- as.factor(meta.data$condition)
+    
+    if (length(unique(meta.data$condition)) == 2){
+      if (input$select_alpha_stat_method == "Mann-Whitney"){
+        wilcox.test(richness ~ condition, data = meta.data)
+      } else{
+        print("Condition level number is 2, please use Mann-Whitney test.")
+      }
+      
+    } else if (length(unique(meta.data$condition)) > 2){
+      if (input$select_alpha_stat_method == "Mann-Whitney"){
+        print("Condition level number is larger than 2, pairwise Mann-Whitney test is applied. You could also check Kruskal-Wallis test result.")
+        print("---------------------------------------")
+        result.list <- list()
+        for (i in 1:length(unique(meta.data$condition))){
+          meta.data.tmp <- meta.data[which(meta.data$condition != unique(meta.data$condition)[i]),]
+          print(paste(unique(meta.data.tmp$condition), collapse = " and "))
+          result.list[[i]] <- wilcox.test(richness ~ condition, data = meta.data.tmp)
+          print(result.list[[i]])
+          print("------------------------")
+        }
+        
+      } else{
+        kruskal.test(richness ~ condition, data = meta.data)
+      }
+      
+    } else{
+      "Condition level must be at least 2."
+    }
+    
+    
+  })
+  
+  
+  # independent heatmap plotting function in the server using specific data from input
+  plotBetaHeatmapColorServer <- function(){
+    physeq1 <- shinyInput$pstat
+    
+    if (input$taxl.beta=="no rank")  {
+      if (input$checkbox_beta_heatmap){
+        add.colorbar <- "auto"
+      } else{
+        add.colorbar <- NULL
+      }
+      
+      dist.mat = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+      dist.mat <- as.matrix(dist.mat)
+      return(plotHeatmapColor(dist.mat, 
+                              do.scale = input$checkbox_beta_heatmap_scale,
+                              physeq1@sam_data[[input$select_beta_div_condition]], 
+                              annotationColors = add.colorbar,
+                              columnTitle = paste("Heatmap with colorbar representing", 
+                                                  input$select_beta_div_condition, sep = " ")))
+    } else  {
+      physeq2 <- tax_glom(physeq1, input$taxl.beta)
+      if (input$checkbox_beta_heatmap){
+        add.colorbar <- "auto"
+      } else{
+        add.colorbar <- NULL
+      }
+      dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
+      dist.mat <- as.matrix(dist.mat)
+      return(plotHeatmapColor(dist.mat,
+                              do.scale = input$checkbox_beta_heatmap_scale,
+                              physeq2@sam_data[[input$select_beta_div_condition]], 
+                              annotationColors = add.colorbar,
+                              columnTitle = paste("Heatmap with colorbar representing", 
+                                                  input$select_beta_div_condition, sep = " ")))
+    }
+  }
+  
+
+  output$BetaDiversityHeatmap <- renderPlot({
+    plotBetaHeatmapColorServer()
+  })
+  
+  
+  output$download_beta_heatmap_pdf <- downloadHandler(
+    filename = function() {
+      paste('heatmap_beta', Sys.Date(), '.pdf', sep='')
+    },
+    content = function(file) {
+      pdf(file)
+      #### add "print()" to plotting function to work!!
+      print(plotBetaHeatmapColorServer())
+      ####
+      dev.off()
+    }
+    
+  )
+  
+  
+  plotBetaBoxplotServer <- function(){
+    physeq1 <- shinyInput$pstat
+    
+    if (input$taxl.beta !="no rank")  {
+      physeq1 <- tax_glom(physeq1, input$taxl.beta)
+    }
+    
+    meta.data <- physeq1@sam_data
+    meta.data$sample.name <- rownames(meta.data)
+    colnames(meta.data)[which(colnames(meta.data) == input$select_beta_boxplot_condition)] <- "condition"
+    
+    dist.tmp = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+    dist.mat <- as.matrix(dist.tmp)
+    dist.within.a <- c()
+    dist.within.b <- c()
+    dist.between <- c()
+    for (i in 1:nrow(dist.mat)){
+      for (j in 1:nrow(dist.mat)) {
+        if (meta.data$condition[i] == unique(meta.data$condition)[1] & 
+            meta.data$condition[j] == unique(meta.data$condition)[1]){
+          dist.within.a <- c(dist.within.a, dist.mat[i,j])
+        } else if (meta.data$condition[i] == unique(meta.data$condition)[2] & 
+                   meta.data$condition[j] == unique(meta.data$condition)[2]){
+          dist.within.b <- c(dist.within.b, dist.mat[i,j])
+        } else{
+          dist.between <- c(dist.between, dist.mat[i,j])
+        }
+        
+      }
+    }
+    
+    y.axis <- list(
+      title = paste(input$select_beta_div_method, "Distance", sep = " ")
+    )
+    
+    p <- plot_ly(y = ~dist.within.a, type = "box", name = paste("Within", unique(meta.data$condition)[1])) %>%
+      add_trace(y = ~dist.within.b, name = paste("Within", unique(meta.data$condition)[2])) %>%
+      add_trace(y = ~dist.between, name = "Between 2 conditions") %>%
+      layout(yaxis = y.axis)
+      
+    p
+  }
+  
+  output$BetaDiversityBoxplot <- renderPlotly({
+    plotBetaBoxplotServer()
+  })
+  
+  observeEvent(input$download_beta_boxplot,{
+    if (!require("webshot")) install.packages("webshot")
+    tmpFile <- tempfile(pattern = "Beta_diversity_boxplot", fileext = ".pdf")
+    export(plotBetaBoxplotServer(), file = tmpFile)
+    browseURL(tmpFile)}
+  )
+  
+  
+  
+  
+  output$beta.stat.test <- renderPrint({ 
+    
+    if (input$select_beta_stat_method == "PERMANOVA"){
+      physeq1 <- pstat
+      if (input$taxl.beta !="no rank")  {
+        physeq1 <- tax_glom(physeq1, input$taxl.beta)
+      }
+      meta.data <- physeq1@sam_data
+      meta.data$sample.name <- rownames(meta.data)
+      colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
+      meta.data <- data.frame(meta.data)
+      meta.data$condition <- as.factor(meta.data$condition)
+      
+      set.seed(99)
+      dist.tmp = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+      beta.div <- adonis2(dist.tmp~condition, data=meta.data, permutations = input$num.permutation.permanova, strata="PLOT")
+      beta.div
+      
+    } else {
+      physeq1 <- shinyInput$pstat
+      
+      if (input$taxl.beta !="no rank")  {
+        physeq1 <- tax_glom(physeq1, input$taxl.beta)
+      }
+      
+      meta.data <- physeq1@sam_data
+      meta.data$sample.name <- rownames(meta.data)
+      colnames(meta.data)[which(colnames(meta.data) == input$select_beta_boxplot_condition)] <- "condition"
+      
+      dist.tmp = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+      dist.mat <- as.matrix(dist.tmp)
+      dist.within.a <- c()
+      dist.within.b <- c()
+      dist.between <- c()
+      for (i in 1:nrow(dist.mat)){
+        for (j in 1:nrow(dist.mat)) {
+          if (meta.data$condition[i] == unique(meta.data$condition)[1] & 
+              meta.data$condition[j] == unique(meta.data$condition)[1]){
+            dist.within.a <- c(dist.within.a, dist.mat[i,j])
+          } else if (meta.data$condition[i] == unique(meta.data$condition)[2] & 
+                     meta.data$condition[j] == unique(meta.data$condition)[2]){
+            dist.within.b <- c(dist.within.b, dist.mat[i,j])
+          } else{
+            dist.between <- c(dist.between, dist.mat[i,j])
+          }
+          
+        }
+      }
+      dist.list <- list(dist.within.a, dist.within.b, dist.between)
+      names(dist.list) <- c(unique(meta.data$condition)[1], unique(meta.data$condition)[2], "between")
+      
+      if (input$select_beta_stat_method == "Mann-Whitney"){
+        print("Condition level number is larger than 2, pairwise Mann-Whitney test is applied. 
+              You could also check Kruskal-Wallis test result.")
+        print("---------------------------------------")
+        result.list <- list()
+        for (i in 1:length(dist.list)){
+          dist.list.tmp <- dist.list[which(names(tmp) != names(tmp)[i])]
+          print(paste(names(dist.list.tmp), collapse = " and "))
+          result.list[[i]] <- wilcox.test(dist.list.tmp[[1]], dist.list.tmp[[2]])
+          print(result.list[[i]])
+          print("------------------------")
+        }
+        
+      } else{
+        kruskal.test(list(dist.within.a, dist.within.b, dist.between))
+      }
+      
+    }
+
+    
+    
+
+    
+  })
+  
+  output$table.beta <- DT::renderDataTable({
+    physeq1 <- shinyInput$pstat
+    
+    if (input$taxl.beta=="no rank")  {
+      dist.mat = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+    } else{
+      physeq2 <- tax_glom(physeq1, input$taxl.beta)
+      dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
+    }
+    dist.mat <- as.matrix(dist.mat)
+    DT::datatable(dist.mat)
+    
+  })
+  
+  output$download_table_beta <- downloadHandler(
+    filename = function() { paste('Beta_diversity_table', '.csv', sep='') },
+    content = function(file) {
+      physeq1 <- shinyInput$pstat
+      
+      if (input$taxl.beta=="no rank")  {
+        dist.mat = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+      } else{
+        physeq2 <- tax_glom(physeq1, input$taxl.beta)
+        dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
+      }
+      dist.mat <- as.matrix(dist.mat)
+      write.csv(data.frame(dist.mat), file)
+    }
+  )
+  
+  
+  
+  
+  
   output$ExploratoryTree <- renderPlot({
     physeq1 <- shinyInput$pstat
     cn <- colnames(physeq1@sam_data)
@@ -387,7 +692,7 @@ shinyServer(function(input, output, session) {
   # independent heatmap plotting function in the server using specific data from input
   plotPCAPlotlyServer <- function(){
     physeq1 <- shinyInput$pstat
-    if (input$taxl.new=="no rank")  {
+    if (input$taxl.pca=="no rank")  {
       plotPCAPlotly(df.input = physeq1@otu_table@.Data, 
                     condition.vec = physeq1@sam_data[[input$select_pca_condition]],
                     condition.name = input$select_pca_condition,
@@ -396,7 +701,7 @@ shinyServer(function(input, output, session) {
                     columnTitle = paste("PCA with colorbar representing", 
                                         input$select_pca_condition, sep = " "))
     } else  {
-      physeq2 <- tax_glom(physeq1, input$taxl.new)
+      physeq2 <- tax_glom(physeq1, input$taxl.pca)
       plotPCAPlotly(df.input = physeq2@otu_table@.Data, 
                     condition.vec = physeq2@sam_data[[input$select_pca_condition]],
                     condition.name = input$select_pca_condition,
@@ -423,10 +728,10 @@ shinyServer(function(input, output, session) {
   # interactive PCA table
   output$PCAtable <- DT::renderDataTable({
     physeq1 <- shinyInput$pstat
-    if (input$taxl.new=="no rank")  {
+    if (input$taxl.pca=="no rank")  {
       pca.tmp <- prcomp(t(physeq1@otu_table@.Data), scale = TRUE)
     } else  {
-      physeq2 <- tax_glom(physeq1, input$taxl.new)
+      physeq2 <- tax_glom(physeq1, input$taxl.pca)
       pca.tmp <- prcomp(t(physeq2@otu_table@.Data), scale = TRUE)
     }
     table.output.pca <- t(summary(pca.tmp)$importance)
@@ -441,7 +746,7 @@ shinyServer(function(input, output, session) {
     physeq1 <- shinyInput$pstat
     physeq1 <- phyloseq(otu_table(physeq1), phy_tree(physeq1),
                         tax_table(physeq1), sample_data(physeq1))
-    if (input$taxl.new=="no rank")  {
+    if (input$taxl.pca=="no rank")  {
       plotPCoAPlotly(physeq.input = physeq1, 
                      condition.vec = physeq1@sam_data[[input$select_pca_condition]],
                      condition.name = input$select_pca_condition,
@@ -451,7 +756,7 @@ shinyServer(function(input, output, session) {
                      columnTitle = paste("PCoA with colorbar representing", 
                                          input$select_pca_condition, sep = " "))
     } else  {
-      physeq2 <- tax_glom(physeq1, input$taxl.new)
+      physeq2 <- tax_glom(physeq1, input$taxl.pca)
       plotPCoAPlotly(physeq.input = physeq2, 
                      condition.vec = physeq2@sam_data[[input$select_pca_condition]],
                      condition.name = input$select_pca_condition,

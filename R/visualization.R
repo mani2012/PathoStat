@@ -27,6 +27,7 @@
 #' columnTitle="Title")
 
 plotHeatmapColor <- function(df.input, condition.vec,
+                             do.scale = TRUE,
                              clusterRow=TRUE, clusterCol=TRUE, displayRowLabels=FALSE,
                              displayColumnLabels=TRUE, displayRowDendrograms=TRUE,
                              displayColumnDendrograms=TRUE, annotationColors = "auto",
@@ -47,7 +48,11 @@ plotHeatmapColor <- function(df.input, condition.vec,
                                                col = annotationColors)
   }
   
-  heatmap <- ComplexHeatmap::Heatmap(t(scale(t(df.input))),
+  # row scale
+  if (do.scale == TRUE){
+    df.input <- t(scale(t(df.input)))
+  }
+  heatmap <- ComplexHeatmap::Heatmap(df.input,
                                      name = "Expression",
                                      column_title = columnTitle,
                                      cluster_rows = clusterRow,
