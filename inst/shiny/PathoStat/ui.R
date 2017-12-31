@@ -35,7 +35,7 @@ for (i in 1:length(covariates)){
   }
 }
 
-# choose the covariates that hasn 2 levels
+# choose the covariates that has 2 levels
 covariates.two.levels <- c()
 for (i in 1:length(covariates)){
   num.levels <- length(unique(sample_data(pstat)[[covariates[i]]]))
@@ -210,7 +210,40 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
             )
         )
     ),
-    tabPanel("Differential Abundance",
+    tabPanel("Differential Analysis",
+        tabsetPanel(
+             tabPanel("Deseq2", 
+                      
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectizeInput('taxl.da', 'Taxonomy Level', choices = tax.name, 
+                                         selected='no rank'),
+                          selectizeInput('da.condition', 'Select condition', 
+                                         choices = covariates.two.levels),
+                          numericInput('da.count.cutoff', 'Minumum count cut-off', 500,
+                                       min = 1, max = 5000),
+                          numericInput('padj.cutoff', 'Choose padj cut-off', 0.05,
+                                       min = 1e-100, max = 1),
+                          width=3
+                        ),
+                        mainPanel(
+                            tabPanel("DeSeq2", 
+                                     tabsetPanel(
+                                       tabPanel("DE output",
+                                                DT::dataTableOutput("DeSeq2Table.new")
+                                       )
+                                     )
+                            ), width=9
+                        )
+                      )
+             ),
+             tabPanel("Presence-absence analysis"),
+             tabPanel("lfSe")
+        )
+             
+
+    ),
+    tabPanel("Differential Abundance ",
         sidebarLayout(
             sidebarPanel(
                 selectizeInput('taxlde', 'Taxonomy Level', choices = tax.name, 

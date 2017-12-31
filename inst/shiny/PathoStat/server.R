@@ -835,6 +835,34 @@ shinyServer(function(input, output, session) {
   })
   
   
+  ## New DA analysis section
+  output$DeSeq2Table.new <- DT::renderDataTable({
+    physeq1 <- shinyInput$pstat
+    if (input$taxl.da !="no rank"){
+      physeq1 <- tax_glom(physeq1, input$taxl.da)
+    }
+    physeq1 <- prune_samples(sample_sums(physeq1) > input$da.count.cutoff, physeq1)
+    diagdds = phyloseq_to_deseq2(physeq1, as.formula(paste("~",input$da.condition, sep = " ")))
+    # calculate geometric means prior to estimate size factors
+    gm_mean = function(x, na.rm=TRUE){
+      exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+    }
+    geoMeans = apply(counts(diagdds), 1, gm_mean)
+    diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans)
+    diagdds = DESeq(diagdds, fitType="local")
+    res = results(diagdds)
+    res = res[order(res$padj, na.last=NA), ]
+    sigtab = res[(res$padj < input$padj.cutoff), ]
+    sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(physeq1)[rownames(sigtab), ], "matrix"))
+    sigtab$padj <- as.numeric(formatC(sigtab$padj, format = "e", digits = 2))
+    sigtab$log2FoldChange <- as.numeric(formatC(sigtab$log2FoldChange, format = "e", digits = 2))
+    DT::datatable(sigtab[,-c(1,3,4,5)])
+    
+  })
+
+  
+  
+  
   # interactive Differential Expression boxplot
   BP <- reactive({
     findTaxCountDataDE()
