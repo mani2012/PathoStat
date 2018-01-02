@@ -2,7 +2,7 @@ Package: PathoStat
 Type: Package
 Title: PathoStat Statistical Microbiome Analysis Package
 Version: 1.5.5
-Date: 2017-12-29
+Date: 2018-01-01
 Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>, Matthew
         Bendall <bendall@gwmail.gwu.edu>, Sandro Valenzuela Diaz
         <sandrolvalenzuelad@gmail.com>, Eduardo Castro
@@ -26,7 +26,8 @@ Imports: MCMCpack, limma, corpcor, rmarkdown, knitr, pander,
         stats, methods, XML, graphics, utils, alluvial, BiocStyle, edgeR,
         preprocessCore, DESeq2, ComplexHeatmap, plotly, webshot, vegan
 Collate: 'pathoStat.R' 'utils.R' 'taxonomy.R' 'confRegion.R'
-        'allClasses.R' 'coreOTUModule.R' 'normalization.R' 'visualization.R'
+        'allClasses.R' 'coreOTUModule.R' 'normalization.R' 'visualization.R' 
+        'differentialAnalysis.R'
 Suggests: testthat
 biocViews: Microbiome, Metagenomics, GraphAndNetwork, Microarray,
         PatternLogic, PrincipalComponent, Sequencing, Software,

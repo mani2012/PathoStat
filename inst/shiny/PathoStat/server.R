@@ -215,6 +215,23 @@ shinyServer(function(input, output, session) {
     write.csv(shinyInput$taxcountdata, file)
   })
   
+  output$confRegion <- renderPlot({
+    p1 <- shinyInput$pstat@otu_table[input$taxon1, input$sample]
+    if (p1 <= 0) p1 <- 1
+    p2 <- shinyInput$pstat@otu_table[input$taxon2, input$sample]
+    if (p2 <= 0) p2 <- 1
+    size <- sum(shinyInput$pstat@otu_table[,input$sample])
+    plotConfRegion(p1, p2, size, uselogit=input$uselogit)
+  })
+  
+  #Time Series
+  output$Allustax <- renderUI({
+    checkboxGroupInput(inputId="Allustax", label="Taxa of interest ",
+                       choices = as.character(unique(unlist((
+                         shinyInput$pstat@tax_table)[,input$Alluglom]))))
+    
+  })
+  
   findPhyseqData <- function() {
     ids <- rownames(shinyInput$data)
     taxmat <- findTaxonMat(ids, shinyInput$taxonLevels)
@@ -842,7 +859,30 @@ shinyServer(function(input, output, session) {
       physeq1 <- tax_glom(physeq1, input$taxl.da)
     }
     physeq1 <- prune_samples(sample_sums(physeq1) > input$da.count.cutoff, physeq1)
-    diagdds = phyloseq_to_deseq2(physeq1, as.formula(paste("~",input$da.condition, sep = " ")))
+    
+    # deal with continuous covariates and multiple covariates
+    # target condition is the last one in formula. 
+    if (!is.null(input$da.condition.covariate)){
+      for (i in 1:length(input$da.condition.covariate)){
+        num.levels <- length(unique(sample_data(physeq1)[[input$da.condition.covariate[i]]]))
+        if (num.levels >= 8){
+          sam.index <- which(physeq1@sam_data@names %in% input$da.condition.covariate[i])
+          pstat@sam_data@.Data[[sam.index]] <- cut(pstat@sam_data@.Data[[sam.index]], breaks = 3)
+        }
+      }
+      
+      diagdds = phyloseq_to_deseq2(physeq1, 
+                                   as.formula(paste("~",
+                                                    paste(
+                                                      paste(input$da.condition.covariate, 
+                                                            collapse = " + "), 
+                                                      input$da.condition, 
+                                                      sep = " + "), 
+                                                    sep = " ")))
+    } else{
+      diagdds = phyloseq_to_deseq2(physeq1, as.formula(paste("~",input$da.condition, sep = " ")))
+    }
+    
     # calculate geometric means prior to estimate size factors
     gm_mean = function(x, na.rm=TRUE){
       exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
@@ -852,251 +892,94 @@ shinyServer(function(input, output, session) {
     diagdds = DESeq(diagdds, fitType="local")
     res = results(diagdds)
     res = res[order(res$padj, na.last=NA), ]
-    sigtab = res[(res$padj < input$padj.cutoff), ]
-    sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(physeq1)[rownames(sigtab), ], "matrix"))
-    sigtab$padj <- as.numeric(formatC(sigtab$padj, format = "e", digits = 2))
-    sigtab$log2FoldChange <- as.numeric(formatC(sigtab$log2FoldChange, format = "e", digits = 2))
-    DT::datatable(sigtab[,-c(1,3,4,5)])
+    
+    if (nrow(res) != 0){
+      sigtab = res[(res$padj < input$da.padj.cutoff), ]
+      if (nrow(sigtab) == 0){
+        DT::datatable(as.matrix("No differentially abundant items found!"))
+      } else{
+        sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(physeq1)[rownames(sigtab), ], "matrix"))
+        sigtab$padj <- as.numeric(formatC(sigtab$padj, format = "e", digits = 2))
+        sigtab$log2FoldChange <- as.numeric(formatC(sigtab$log2FoldChange, format = "e", digits = 2))
+        output$download_deseq_tb <- downloadHandler(
+          filename = function() { paste('download_deseq2_table', '.csv', sep='') },
+          content = function(file) {
+            dist.mat <- as.matrix(sigtab[,-c(1,3,4,5)])
+            write.csv(data.frame(dist.mat), file)
+          }
+        )
+        DT::datatable(sigtab[,-c(1,3,4,5)])
+  
+      }
+
+    }else{
+      DT::datatable(as.matrix("No differentially abundant items found!"))
+    }
+
+    
+  })
+
+  # Presence-Absence Variance analysis
+  output$pa.case <- renderPrint({
+    physeq1 <- shinyInput$pstat
+    paste("Case level is: ", physeq1@sam_data[[input$pa.condition]][1], sep = "")
+    
+  })
+  
+  output$pa.test <- DT::renderDataTable({
+    physeq1 <- shinyInput$pstat
+    if (input$taxl.pa !="no rank"){
+      physeq1 <- tax_glom(physeq1, input$taxl.pa)
+    }
+    physeq1 <- prune_samples(sample_sums(physeq1) > input$pa.count.cutoff, physeq1)
+    df.pam <- GET_PAM(physeq1@otu_table@.Data)
+    if (input$pa.method == "Fisher Exact Test"){
+      output.mat <- Fisher_Test_Pam(df.pam, 
+                                    physeq1@sam_data[[input$pa.condition]], 
+                                    input$pa.padj.cutoff)
+      output$download_pa_test <- downloadHandler(
+        filename = function() { paste(input$pa.method, '.csv', sep='') },
+        content = function(file) {
+          write.csv(output.mat, file)
+        }
+      )
+      
+      DT::datatable(output.mat)
+    } else if(input$pa.method == "Chi-squared Test"){
+      output.mat <- Chisq_Test_Pam(df.pam, 
+                                   physeq1@sam_data[[input$pa.condition]], 
+                                   input$pa.padj.cutoff)
+      output$download_pa_test <- downloadHandler(
+        filename = function() { paste(input$pa.method, '.csv', sep='') },
+        content = function(file) {
+          write.csv(output.mat, file)
+        }
+      )
+      DT::datatable(output.mat)
+    } else if (input$pa.method == "Mann-Whitney Test"){
+      output.mat <- Wilcox_Test_df(physeq1@otu_table@.Data, 
+                                   physeq1@sam_data[[input$pa.condition]], 
+                                   input$pa.padj.cutoff)
+      output$download_pa_test <- downloadHandler(
+        filename = function() { paste(input$pa.method, '.csv', sep='') },
+        content = function(file) {
+          write.csv(output.mat, file)
+        }
+      )
+      DT::datatable(output.mat)
+    }
+    
+
+    
     
   })
 
   
+
+
+
   
-  
-  # interactive Differential Expression boxplot
-  BP <- reactive({
-    findTaxCountDataDE()
-    physeq1 <- shinyInput$pstat
-    Inbatch <- sample_data(physeq1)[[input$secondary]]
-    shinyInput <- getShinyInput()
-    dat <- shinyInput$taxcountdata
-    dat <- findNormalizedCount()
-    dat <- apply(dat, 1:2, FUN = function(x) {
-      ifelse(is.null(x) || is.na(x) || is.nan(x), 0, x)
-    })
-    # lcpm <- log2CPM(shinyInput$taxcountdata)
-    lcpm <- log2CPM(dat)
-    lcounts <- lcpm$y
-    dat <- lcounts
-    batch1 <- as.factor(Inbatch)
-    batch2 <- split(which(Inbatch == batch1), batch1)
-    batch3 <- unlist(lapply(1:length(batch2),
-                            function(x) batch2[[x]][1:input$noSamples]))
-    dat1 <- dat[, batch3]
-    colnames(dat1) <- seq(1:ncol(dat))[batch3]
-    dat1
-  })
-  DE <- reactive({
-    physeq1 <- shinyInput$pstat
-    Incondition <- sample_data(physeq1)[[input$primary]]
-    findTaxCountDataDE()
-    shinyInput <- getShinyInput()
-    dat <- shinyInput$taxcountdata
-    dat <- findNormalizedCount()
-    dat <- apply(dat, 1:2, FUN = function(x) {
-      ifelse(is.null(x) || is.na(x) || is.nan(x), 0, x)
-    })
-    # lcpm <- log2CPM(shinyInput$taxcountdata)
-    lcpm <- log2CPM(dat)
-    lcounts <- lcpm$y
-    dat <- lcounts
-    cond1 <- as.factor(Incondition)
-    cond2 <- split(which(Incondition == cond1), cond1)
-    cond3 <- unlist(lapply(1:length(cond2),
-                           function(x) cond2[[x]][1:input$ncSamples]))
-    dat1 <- dat[, cond3]
-    colnames(dat1) <- seq(1:ncol(dat))[cond3]
-    dat1
-  })
-  diffex_bp <- reactive({
-    physeq1 <- shinyInput$pstat
-    Incondition <- sample_data(physeq1)[[input$primary]]
-    Inbatch <- sample_data(physeq1)[[input$secondary]]
-    if (input$sortbybatch) {
-      batch4 <- split(Inbatch, as.factor(Inbatch))
-      batch5 <- unlist(lapply(1:length(batch4),
-                              function(x) batch4[[x]][1:input$noSamples]))
-      dat1 <- BP()
-      dat2 <- melt(as.data.frame(dat1), measure.var = colnames(dat1))
-      dat2$batch <- as.factor(unlist(lapply(1:length(batch5),
-                                            function(x) rep(batch5[x], nrow(dat1)))))
-      dat2$condition <- as.factor(unlist(lapply(as.numeric(colnames(dat1))
-                                                , function(x) rep(Incondition[x], nrow(dat1)))))
-      dat2$samples <- unlist(lapply(seq(ncol(dat1)),
-                                    function(x) rep(seq(ncol(dat1))[x], nrow(dat1))))
-    } else {
-      cond4 <- split(Incondition,
-                     as.factor(Incondition))
-      cond5 <- unlist(lapply(1:length(cond4),
-                             function(x) cond4[[x]][1:input$ncSamples]))
-      dat1 <- DE()
-      dat2 <- melt(as.data.frame(dat1), measure.var = colnames(dat1))
-      dat2$condition <- as.factor(unlist(lapply(1:length(cond5),
-                                                function(x) rep(cond5[x], nrow(dat1)))))
-      dat2$batch <- as.factor(unlist(lapply(as.numeric(colnames(dat1)),
-                                            function(x) rep(Inbatch[x], nrow(dat1)))))
-      dat2$samples <- unlist(lapply(seq(ncol(dat1)),
-                                    function(x) rep(seq(ncol(dat1))[x], nrow(dat1))))
-    }
-    dat2 %>% group_by(batch) %>% ggvis(~samples, ~value, fill =
-                                         if (input$colbybatch) ~batch else ~condition) %>%
-      layer_boxplots() %>%
-      add_tooltip(function(dat2) { paste0("Sample: ",
-                                          colnames(shinyInput$pstat@otu_table)[dat2$samples],
-                                          "<br>", if (input$colbybatch) input$secondary
-                                          else input$primary, ": ",
-                                          if (input$colbybatch) dat2$batch else dat2$condition)
-      }, "hover") %>%
-      add_axis("x", title = if (input$sortbybatch)
-        paste(input$noSamples, "Sample(s) Per ", input$secondary,
-              sep = " ")
-        else
-          paste(input$ncSamples, "Sample(s) Per ", input$primary,
-                sep=" "),
-        properties = axis_props(title = list(fontSize = 15),
-                                labels = list(fontSize = 5, angle = 90))) %>%
-      add_axis("y", title = "Transformed Abundance", properties = axis_props(title =
-                                                                               list(fontSize = 15),labels = list(fontSize = 10))) %>%
-      add_legend("fill", title = if (input$colbybatch)
-        input$secondary else input$primary,
-        properties = legend_props(title =
-                                    list(fontSize = 15), labels = list(fontSize = 10))) %>%
-      set_options(width="auto", height="auto")
-  })
-  diffex_bp %>% bind_shiny("DiffExPlot")
-  output$DEsummary <- renderPrint({
-    if (input$sortbybatch) {
-      summary(BP())
-    } else {
-      summary(DE())
-    }
-  })
-  
-  output$DEtable <- renderTable({
-    if (input$sortbybatch) {
-      BP()
-    } else {
-      DE()
-    }
-  })
-  
-  DELimnorm <- reactiveValues()
-  observeEvent(c(input$taxlde, input$apply), {
-    findAllTaxData(input$taxlde)
-    dat <- findNormalizedCount()
-    lcpm <- log2CPM(dat)
-    lcounts <- lcpm$y
-    DELimnorm$data <- lcounts
-  })
-  output$LimmaTable <- renderTable({
-    shinyInput <- getShinyInput()
-    physeq1 <- shinyInput$pstat
-    Incondition <- sample_data(physeq1)[[input$primary]]
-    Inbatch <- sample_data(physeq1)[[input$secondary]]
-    pdata <- data.frame(Inbatch, Incondition)
-    mod <- model.matrix(if (input$primary == input$secondary)
-      ~as.factor(Incondition)
-      else ~as.factor(Incondition) + ~as.factor(Inbatch), data = pdata)
-    dat1 <- DELimnorm
-    fit <- lmFit(dat1$data, mod)
-    fit2 <- eBayes(fit)
-    ncond <- nlevels(as.factor(Incondition))
-    limmaTable <- topTable(fit2, coef = 2:ncond, number = input$noTaxons)
-    for (j in 2:ncond)  {
-      colnames(limmaTable)[j-1] <- paste("Primary Covariate: ",
-                                         levels(as.factor(Incondition))[j], " (logFC)", sep='')
-    }
-    limmaTable
-  }, rownames = TRUE)
-  
-  DEnorm <- reactiveValues()
-  observeEvent(c(input$taxlde, input$apply),  {
-    findAllTaxData(input$taxlde)
-    DEnorm$data <- findNormalizedCount()
-  })
-  output$EdgeRTable <- renderTable({
-    shinyInput <- getShinyInput()
-    physeq1 <- shinyInput$pstat
-    Incondition <- sample_data(physeq1)[[input$primary]]
-    Inbatch <- sample_data(physeq1)[[input$secondary]]
-    pdata <- data.frame(Inbatch, Incondition)
-    group <- factor(Incondition)
-    mod <- model.matrix(if (input$primary == input$secondary)
-      ~as.factor(Incondition)
-      else ~as.factor(Incondition) + ~as.factor(Inbatch), data = pdata)
-    dat1 <- DEnorm
-    y <- DGEList(counts=dat1$data,group=group)
-    #y <- calcNormFactors(y)
-    y <- estimateGLMCommonDisp(y,mod)
-    y <- estimateGLMTrendedDisp(y,mod)
-    y <- estimateGLMTagwiseDisp(y,mod)
-    fit <- glmFit(y,mod)
-    ncond <- nlevels(group)
-    lrt <- glmLRT(fit,coef=2:ncond)
-    edgeRTags <- topTags(lrt, n=input$noTaxons)
-    edgeRTable <- edgeRTags$table
-    for (j in 2:ncond)  {
-      colnames(edgeRTable)[j-1] <- paste("Primary Covariate: ",
-                                         levels(group)[j], " (logFC)", sep='')
-    }
-    edgeRTable
-  }, rownames = TRUE)
-  
-  output$DeSeq2Table <- renderTable({
-    shinyInput <- getShinyInput()
-    physeq1 <- shinyInput$pstat
-    Incondition <- sample_data(physeq1)[[input$primary]]
-    Inbatch <- sample_data(physeq1)[[input$secondary]]
-    pdata <- data.frame(Inbatch, Incondition)
-    group <- factor(Incondition)
-    design <- if (input$primary == input$secondary)
-      ~as.factor(Incondition)
-    else ~as.factor(Incondition) + ~as.factor(Inbatch)
-    fCondition <- factor(Incondition)
-    fBatch <- factor(Inbatch)
-    design <- ~fCondition + ~fBatch
-    mod <- model.matrix(design, data = pdata)
-    dat1 <- DEnorm
-    dat1$data <- apply(as.matrix(dat1$data),1:2, as.integer)
-    coldata <- data.frame(row.names=colnames(dat1$data), fCondition, fBatch)
-    dds <- DESeqDataSetFromMatrix(countData=dat1$data, colData=coldata,
-                                  design=design)
-    
-    #dds <- DESeq(dds)
-    sizeFactors(dds) <- rep(1, dim(dat1$data)[2])
-    dds <- estimateDispersions(dds)
-    dds <- nbinomWaldTest(dds)
-    
-    cvec <- rep(0, length(resultsNames(dds)))
-    cvec[2:ncond] <- 1
-    res <- results(dds, contrast=cvec)
-    ## Order by adjusted p-value
-    DeSeq2table <- res[order(res$padj), ]
-    DeSeq2table <- DeSeq2table[1:input$noTaxons,]
-    #DeSeq2table <- table(res$padj<0.05)
-    # for (j in 2:ncond)  {
-    #     colnames(DeSeq2table)[j-1] <- paste("Primary Covariate: ",
-    #         levels(group)[j], " (logFC)", sep='')
-    # }
-    DeSeq2table
-  }, rownames = TRUE)
-  
-  output$confRegion <- renderPlot({
-    p1 <- shinyInput$pstat@otu_table[input$taxon1, input$sample]
-    if (p1 <= 0) p1 <- 1
-    p2 <- shinyInput$pstat@otu_table[input$taxon2, input$sample]
-    if (p2 <= 0) p2 <- 1
-    size <- sum(shinyInput$pstat@otu_table[,input$sample])
-    plotConfRegion(p1, p2, size, uselogit=input$uselogit)
-  })
-  
-  #Time Series
-  output$Allustax <- renderUI({
-    checkboxGroupInput(inputId="Allustax", label="Taxa of interest ",
-                       choices = as.character(unique(unlist((
-                         shinyInput$pstat@tax_table)[,input$Alluglom]))))
-    
-  })
+
   
   Alluvialdata <- reactive({
     if(input$Allurar==T){

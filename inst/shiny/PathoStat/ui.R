@@ -79,11 +79,30 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                              checkboxInput("checkbox_heatmap", "Add colorbar", value = TRUE),
                              downloadButton('download_heatmap_pdf', 'Download heatmap PDF'),
                              plotOutput("Heatmap", height="550px")),
-                    tabPanel("Summary", verbatimTextOutput("TaxRAsummary")),
                     tabPanel("RA Table(%)", DT::dataTableOutput("TaxRAtable", 
                         width='95%')),
                     tabPanel("Count Table", DT::dataTableOutput("TaxCountTable",
-                        width='95%'))
+                        width='95%')),
+                    tabPanel("Confidence Region",
+                             sidebarLayout(
+                               sidebarPanel(
+                                 #selectizeInput('taxlcr', 'Taxonomy Level', choices = tax.name, 
+                                 #    selected='no rank'),
+                                 selectizeInput('taxon1', 'Taxon 1', choices=row.names(
+                                   shinyInput$pstat@otu_table)),
+                                 selectizeInput('taxon2', 'Taxon 2', choices=row.names(
+                                   shinyInput$pstat@otu_table)),
+                                 selectizeInput('sample', 'Sample', choices=colnames(
+                                   shinyInput$pstat@otu_table)),
+                                 checkboxInput("uselogit", 
+                                               "Use Logit Transformation", FALSE),
+                                 width=5
+                               ),
+                               mainPanel(
+                                 plotOutput("confRegion", height = "550px"), width=7
+                               )
+                             )
+                    )
                 ), width=9
             )
         )
@@ -220,9 +239,12 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                                          selected='no rank'),
                           selectizeInput('da.condition', 'Select condition', 
                                          choices = covariates.two.levels),
+                          selectizeInput('da.condition.covariate', 'Select (multiple) covariates', 
+                                         choices = covariates, multiple = TRUE),
+                          helpText("Continuous covariates would be automatically cut into factors with 3 levels."),
                           numericInput('da.count.cutoff', 'Minumum count cut-off', 500,
                                        min = 1, max = 5000),
-                          numericInput('padj.cutoff', 'Choose padj cut-off', 0.05,
+                          numericInput('da.padj.cutoff', 'Choose padj cut-off', 0.05,
                                        min = 1e-100, max = 1),
                           width=3
                         ),
@@ -230,87 +252,46 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                             tabPanel("DeSeq2", 
                                      tabsetPanel(
                                        tabPanel("DE output",
-                                                DT::dataTableOutput("DeSeq2Table.new")
+                                                DT::dataTableOutput("DeSeq2Table.new"),
+                                                downloadButton("download_deseq_tb", "Download this table")
                                        )
                                      )
                             ), width=9
                         )
                       )
              ),
-             tabPanel("Presence-absence analysis"),
-             tabPanel("lfSe")
+             tabPanel("Statistical Test (presence-absence or count based)",
+             sidebarLayout(
+               sidebarPanel(
+                 selectizeInput('taxl.pa', 'Taxonomy Level', choices = tax.name, 
+                                selected='no rank'),
+                 selectizeInput('pa.condition', 'Select condition', 
+                                choices = covariates.two.levels),
+                 numericInput('pa.count.cutoff', 'Minumum count cut-off', 500,
+                              min = 1, max = 5000),
+                 numericInput('pa.padj.cutoff', 'Choose padj cut-off', 0.05,
+                              min = 1e-100, max = 1),
+                 width=3
+               ),
+               mainPanel(
+                 tabPanel("Test output", 
+                          tabsetPanel(
+                            tabPanel("output",
+                                     selectizeInput('pa.method', 'Select test method', 
+                                                    choices = c("Fisher Exact Test", "Chi-squared Test", "Mann-Whitney Test")),
+                                     verbatimTextOutput("pa.case"),
+                                     DT::dataTableOutput("pa.test"),
+                                     downloadButton("download_pa_test", "Download this table")
+                            )
+                          )
+                 ), width=9
+               )
+             )
+        ),
+            tabPanel("more?")
         )
              
 
-    ),
-    tabPanel("Differential Abundance ",
-        sidebarLayout(
-            sidebarPanel(
-                selectizeInput('taxlde', 'Taxonomy Level', choices = tax.name, 
-                    selected='no rank'),
-                selectizeInput('primary', 'Primary Covariate', 
-                    choices = covariates, selected=covariates[2]),
-                selectizeInput('secondary', 'Secondary Covariate', 
-                    choices = covariates, selected=covariates[1]),
-                selectizeInput('norm', 'Normalization', choices=norm.methods, 
-                    selected='EBayes coreOTU Normalization'),
-                actionButton("apply", "Apply"),
-                sliderInput("otuthreshold", "OTU cutoff threshold:", 
-                    min = 0, max = 1, value = 0.05, step= 0.01),
-                sliderInput("prevalence", "OTU cutoff prevalence:", 
-                    min = 0, max = 1, value = 0.4, step= 0.01),
-                sliderInput("ebweight", "Empirical Bayes Weight:", 
-                    min = 0, max = 1, value = 0.25, step= 0.01),
-                numericInput('ncSamples', 
-                    'No. of Sample(s) Per Primary Covariate', 
-                    if (maxcondElems>defaultDisp) defaultDisp 
-                    else maxcondElems, min = 1, max = maxcondElems),
-                numericInput('noSamples', 
-                    'No. of Sample(s) Per Secondary Covariate',  
-                    if (maxbatchElems>defaultDisp) defaultDisp 
-                    else maxbatchElems, min = 1, max = maxbatchElems),
-                checkboxInput("sortbybatch", 
-"Sort By Secondary Covariate First (Default: Sort By Primary Covariate First)", 
-                    FALSE),
-                checkboxInput("colbybatch", 
-"Color By Secondary Covariate (Default: Color By Primary Covariate)", FALSE),
-                numericInput('noTaxons', 
-                    'No. of top Differentially Abundant Taxons to display', 
-                    if (maxGenes>defaultGenesDisp) defaultGenesDisp 
-                    else maxGenes, min = 1, max = maxGenes),
-                width=3
-            ),
-            mainPanel(
-                tabsetPanel(
-                    tabPanel("Differential Abundance",ggvisOutput("DiffExPlot")), 
-                    tabPanel("Summary", verbatimTextOutput("DEsummary")),
-                    tabPanel("Table", tableOutput("DEtable")), 
-                    tabPanel("LIMMA",tableOutput("LimmaTable")),
-                    tabPanel("EdgeR",tableOutput("EdgeRTable")),
-                    tabPanel("DeSeq2",tableOutput("DeSeq2Table"))
-                ), width=9
-            )
-            )
-    ),
-    tabPanel("Confidence Region",
-        sidebarLayout(
-            sidebarPanel(
-                #selectizeInput('taxlcr', 'Taxonomy Level', choices = tax.name, 
-                #    selected='no rank'),
-                selectizeInput('taxon1', 'Taxon 1', choices=row.names(
-                    shinyInput$pstat@otu_table)),
-                selectizeInput('taxon2', 'Taxon 2', choices=row.names(
-                    shinyInput$pstat@otu_table)),
-                selectizeInput('sample', 'Sample', choices=colnames(
-                    shinyInput$pstat@otu_table)),
-                checkboxInput("uselogit", 
-                    "Use Logit Transformation", FALSE),
-                width=5
-            ),
-            mainPanel(
-                plotOutput("confRegion", height = "550px"), width=7
-            )
-        )
     ),
     tabPanel("Dimension Reduction",
          sidebarLayout(
