@@ -3,6 +3,11 @@ library(ggvis)
 library(d3heatmap)
 library(phyloseq)
 library(ape)
+library(plotly)
+
+alpha.methods <- c("Shannon", "Simpson", "InvSimpson")
+# Weigthed Unifrac, Bray-Curtis
+beta.methods <- c("bray", "wUniFrac")
 
 tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 'family', 
     'genus', 'species', 'no rank')
@@ -27,6 +32,15 @@ for (i in 1:length(covariates)){
   num.levels <- length(unique(sample_data(pstat)[[covariates[i]]]))
   if (num.levels < 8){
     covariates.colorbar <- c(covariates.colorbar, covariates[i])
+  }
+}
+
+# choose the covariates that has 2 levels
+covariates.two.levels <- c()
+for (i in 1:length(covariates)){
+  num.levels <- length(unique(sample_data(pstat)[[covariates[i]]]))
+  if (num.levels == 2){
+    covariates.two.levels <- c(covariates.two.levels, covariates[i])
   }
 }
 
@@ -61,26 +75,113 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                              helpText("Note: Only variables with less than 8 levels could be mapped to color bar."),
                              selectInput("select_heatmap_condition", "Add colorbar based on:",
                                          covariates.colorbar),
-                             checkboxInput("checkbox_heatmap", "Add colorbar", value = FALSE),
+                             checkboxInput("checkbox_heatmap_scale", "Row scaling", value = TRUE),
+                             checkboxInput("checkbox_heatmap", "Add colorbar", value = TRUE),
                              downloadButton('download_heatmap_pdf', 'Download heatmap PDF'),
                              plotOutput("Heatmap", height="550px")),
-                    tabPanel("Summary", verbatimTextOutput("TaxRAsummary")),
                     tabPanel("RA Table(%)", DT::dataTableOutput("TaxRAtable", 
                         width='95%')),
                     tabPanel("Count Table", DT::dataTableOutput("TaxCountTable",
-                        width='95%'))
+                        width='95%')),
+                    tabPanel("Confidence Region",
+                             sidebarLayout(
+                               sidebarPanel(
+                                 #selectizeInput('taxlcr', 'Taxonomy Level', choices = tax.name, 
+                                 #    selected='no rank'),
+                                 selectizeInput('taxon1', 'Taxon 1', choices=row.names(
+                                   shinyInput$pstat@otu_table)),
+                                 selectizeInput('taxon2', 'Taxon 2', choices=row.names(
+                                   shinyInput$pstat@otu_table)),
+                                 selectizeInput('sample', 'Sample', choices=colnames(
+                                   shinyInput$pstat@otu_table)),
+                                 checkboxInput("uselogit", 
+                                               "Use Logit Transformation", FALSE),
+                                 width=5
+                               ),
+                               mainPanel(
+                                 plotOutput("confRegion", height = "550px"), width=7
+                               )
+                             )
+                    )
                 ), width=9
             )
         )
     ),
     tabPanel("Diversity",
         tabsetPanel(
-            tabPanel("Alpha Diversity", plotOutput("AlphaDiversity",
-                height = "550px")),
-            tabPanel("Beta Diversity", 
-                checkboxInput("methodBeta", 
-                    "Weigthed Unifrac (Default: Bray-Curtis)", FALSE),
-                plotOutput("BetaDiversity", height = "500px")),
+            tabPanel("Alpha Diversity", 
+                     
+                sidebarLayout(
+                    sidebarPanel(
+                     selectizeInput('taxl.alpha', 'Taxonomy Level', choices = tax.name, 
+                                     selected='no rank'),
+                     selectInput("select_alpha_div_condition", "Compare between:",
+                                 covariates.colorbar),
+                     selectInput("select_alpha_div_method", "Choose method:",
+                                 alpha.methods)
+                    ),
+                    mainPanel(
+                     
+                     tabsetPanel(
+                       tabPanel("Boxplot", 
+                                plotlyOutput("AlphaDiversity"),
+                                actionButton("download_alpha", "Download Alpha diversity pdf"),
+                                helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")
+                       ),
+                       tabPanel("Statistical Test", 
+                                selectInput("select_alpha_stat_method","Non-parametric Test", c("Mann-Whitney","Kruskal-Wallis")),
+                                verbatimTextOutput("alpha.stat.test")
+                       ),
+                       tabPanel("Alpha Diversity Table", 
+                                downloadButton('download_table_alpha', 'Download this table'),
+                                DT::dataTableOutput("table.alpha")
+                       )
+                     )
+                    )
+                )
+          ),
+          tabPanel("Beta Diversity", 
+                   
+                   sidebarLayout(
+                     sidebarPanel(
+                       selectizeInput('taxl.beta', 'Taxonomy Level', choices = tax.name, 
+                                      selected='no rank'),
+                       selectInput("select_beta_div_method", "Choose method:",
+                                   beta.methods),
+                       helpText("Only variables with 2 levels are supported for boxplot and stat test here." ),
+                       selectInput("select_beta_condition", "Select condition",
+                                   covariates.two.levels)
+                     ),
+                     mainPanel(
+                       
+                       tabsetPanel(
+                         tabPanel("Heatmap", 
+                                  selectInput("select_beta_heatmap_condition", "Add colorbar on:",
+                                              covariates.colorbar),
+                                  checkboxInput("checkbox_beta_heatmap", "Add colorbar", value = TRUE),
+                                  checkboxInput("checkbox_beta_heatmap_scale", "Row scaling", value = TRUE),
+                                  plotOutput("BetaDiversityHeatmap"),
+                                  downloadButton('download_beta_heatmap_pdf', 'Download heatmap PDF')
+                         ),
+                         tabPanel("Boxplot", 
+                                  plotlyOutput("BetaDiversityBoxplot"),
+                                  actionButton("download_beta_boxplot", "Download pdf"),
+                                  helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")
+                         ),
+                         tabPanel("Statistical Test", 
+                                  selectInput("select_beta_stat_method","Select Test", c("PERMANOVA", "Kruskal-Wallis", "Mann-Whitney")),
+                                  numericInput("num.permutation.permanova", "Number of permutations", value = 999, max = 2000),
+                                  verbatimTextOutput("beta.stat.test")
+                         ),
+                         tabPanel("Beta Diversity Table", 
+                                  downloadButton('download_table_beta', 'Download this table'),
+                                  DT::dataTableOutput("table.beta")
+                         )
+                       )
+                     )
+                   )
+          ),
+          
             tabPanel("Exploratory Tree", plotOutput("ExploratoryTree", 
                 height = "550px")),
             tabPanel("BiPlot", 
@@ -128,115 +229,103 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
             )
         )
     ),
-    tabPanel("Differential Abundance",
-        sidebarLayout(
-            sidebarPanel(
-                selectizeInput('taxlde', 'Taxonomy Level', choices = tax.name, 
-                    selected='no rank'),
-                selectizeInput('primary', 'Primary Covariate', 
-                    choices = covariates, selected=covariates[2]),
-                selectizeInput('secondary', 'Secondary Covariate', 
-                    choices = covariates, selected=covariates[1]),
-                selectizeInput('norm', 'Normalization', choices=norm.methods, 
-                    selected='EBayes coreOTU Normalization'),
-                actionButton("apply", "Apply"),
-                sliderInput("otuthreshold", "OTU cutoff threshold:", 
-                    min = 0, max = 1, value = 0.05, step= 0.01),
-                sliderInput("prevalence", "OTU cutoff prevalence:", 
-                    min = 0, max = 1, value = 0.4, step= 0.01),
-                sliderInput("ebweight", "Empirical Bayes Weight:", 
-                    min = 0, max = 1, value = 0.25, step= 0.01),
-                numericInput('ncSamples', 
-                    'No. of Sample(s) Per Primary Covariate', 
-                    if (maxcondElems>defaultDisp) defaultDisp 
-                    else maxcondElems, min = 1, max = maxcondElems),
-                numericInput('noSamples', 
-                    'No. of Sample(s) Per Secondary Covariate',  
-                    if (maxbatchElems>defaultDisp) defaultDisp 
-                    else maxbatchElems, min = 1, max = maxbatchElems),
-                checkboxInput("sortbybatch", 
-"Sort By Secondary Covariate First (Default: Sort By Primary Covariate First)", 
-                    FALSE),
-                checkboxInput("colbybatch", 
-"Color By Secondary Covariate (Default: Color By Primary Covariate)", FALSE),
-                numericInput('noTaxons', 
-                    'No. of top Differentially Abundant Taxons to display', 
-                    if (maxGenes>defaultGenesDisp) defaultGenesDisp 
-                    else maxGenes, min = 1, max = maxGenes),
-                width=3
-            ),
-            mainPanel(
-                tabsetPanel(
-                    tabPanel("Differential Abundance",ggvisOutput("DiffExPlot")), 
-                    tabPanel("Summary", verbatimTextOutput("DEsummary")),
-                    tabPanel("Table", tableOutput("DEtable")), 
-                    tabPanel("LIMMA",tableOutput("LimmaTable")),
-                    tabPanel("EdgeR",tableOutput("EdgeRTable")),
-                    tabPanel("DeSeq2",tableOutput("DeSeq2Table"))
-                ), width=9
-            )
-            )
-    ),
-    tabPanel("Confidence Region",
-        sidebarLayout(
-            sidebarPanel(
-                #selectizeInput('taxlcr', 'Taxonomy Level', choices = tax.name, 
-                #    selected='no rank'),
-                selectizeInput('taxon1', 'Taxon 1', choices=row.names(
-                    shinyInput$pstat@otu_table)),
-                selectizeInput('taxon2', 'Taxon 2', choices=row.names(
-                    shinyInput$pstat@otu_table)),
-                selectizeInput('sample', 'Sample', choices=colnames(
-                    shinyInput$pstat@otu_table)),
-                checkboxInput("uselogit", 
-                    "Use Logit Transformation", FALSE),
-                width=5
-            ),
-            mainPanel(
-                plotOutput("confRegion", height = "550px"), width=7
-            )
+    tabPanel("Differential Analysis",
+        tabsetPanel(
+             tabPanel("Deseq2", 
+                      
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectizeInput('taxl.da', 'Taxonomy Level', choices = tax.name, 
+                                         selected='no rank'),
+                          selectizeInput('da.condition', 'Select condition', 
+                                         choices = covariates.two.levels),
+                          selectizeInput('da.condition.covariate', 'Select (multiple) covariates', 
+                                         choices = covariates, multiple = TRUE),
+                          helpText("Continuous covariates would be automatically cut into factors with 3 levels."),
+                          numericInput('da.count.cutoff', 'Minumum count cut-off', 500,
+                                       min = 1, max = 5000),
+                          numericInput('da.padj.cutoff', 'Choose padj cut-off', 0.05,
+                                       min = 1e-100, max = 1),
+                          width=3
+                        ),
+                        mainPanel(
+                            tabPanel("DeSeq2", 
+                                     tabsetPanel(
+                                       tabPanel("DE output",
+                                                DT::dataTableOutput("DeSeq2Table.new"),
+                                                downloadButton("download_deseq_tb", "Download this table")
+                                       )
+                                     )
+                            ), width=9
+                        )
+                      )
+             ),
+             tabPanel("Statistical Test (presence-absence or count based)",
+             sidebarLayout(
+               sidebarPanel(
+                 selectizeInput('taxl.pa', 'Taxonomy Level', choices = tax.name, 
+                                selected='no rank'),
+                 selectizeInput('pa.condition', 'Select condition', 
+                                choices = covariates.two.levels),
+                 numericInput('pa.count.cutoff', 'Minumum count cut-off', 500,
+                              min = 1, max = 5000),
+                 numericInput('pa.padj.cutoff', 'Choose padj cut-off', 0.05,
+                              min = 1e-100, max = 1),
+                 width=3
+               ),
+               mainPanel(
+                 tabPanel("Test output", 
+                          tabsetPanel(
+                            tabPanel("output",
+                                     selectizeInput('pa.method', 'Select test method', 
+                                                    choices = c("Fisher Exact Test", "Chi-squared Test", "Mann-Whitney Test")),
+                                     verbatimTextOutput("pa.case"),
+                                     DT::dataTableOutput("pa.test"),
+                                     downloadButton("download_pa_test", "Download this table")
+                            )
+                          )
+                 ), width=9
+               )
+             )
+        ),
+            tabPanel("more?")
         )
+             
+
     ),
-    tabPanel("PCA",
-        sidebarLayout(
-            sidebarPanel(
-                numericInput('xcol', 'Principal Component (x-axis)', 1,
-                    min = 1, max = 50),
-                numericInput('ycol', 'Principal Component (y-axis)', 2,
-                    min = 1, max = 50),
-                checkboxInput("colbybatchPCA", 
-                    "Color By Batch (Default: Color By Condition)", FALSE),
-                width=3
-            ),
-            mainPanel(
-                tabsetPanel(
-                    tabPanel("PCA", ggvisOutput("PCAplot")),
-                    tabPanel("Summary", verbatimTextOutput("PCAsummary")),
-                    tabPanel("Table",tableOutput("PCAtable")),
-                    tabPanel("Explained Variation",
-                        tableOutput("PCAExplainedVariation"))
-                ), width=9
-            )
-        )
-    ), 
-    tabPanel("PCoA",
-        sidebarLayout(
-            sidebarPanel(
-                numericInput('xcolA', 'Principal Coordinate (x-axis)', 1,
-                    min = 1, max = 50),
-                numericInput('ycolA', 'Principal Coordinate (y-axis)', 2,
-                    min = 1, max = 50),
-                checkboxInput("colbybatchPCoA", 
-                    "Color By Batch (Default: Color By Condition)", FALSE),
-                checkboxInput("methodPCoA", 
-                    "Weigthed Unifrac (Default: Bray-Curtis)", FALSE),
-                width=3
-            ),
-            mainPanel(
-                plotOutput("PCoAplot", height = "550px"), width=9
-            )
-        )
-    ),
+    tabPanel("Dimension Reduction",
+         sidebarLayout(
+           sidebarPanel(
+             numericInput('xcol.new', 'Principal Component (x-axis)', 1,
+                          min = 1, max = 50),
+             numericInput('ycol.new', 'Principal Component (y-axis)', 2,
+                          min = 1, max = 50),
+             selectizeInput('taxl.pca', 'Taxonomy Level', choices = tax.name, 
+                            selected='no rank'),
+             selectInput("select_pca_condition", "Add color based on:",
+                         covariates),
+             width=3
+           ),
+           mainPanel(
+             tabsetPanel(
+               tabPanel("PCA plot", 
+                        # This is a bit different pdf downloading method for plotly,
+                        # as we must buy lisence for that
+                        plotlyOutput("pca.plotly"),
+                        actionButton("download_pca", "Download PCA pdf"),
+                        helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")),
+               tabPanel("PCA variance", DT::dataTableOutput("PCAtable")),
+               tabPanel("PCoA plot", 
+                        plotlyOutput("pcoa.plotly"),
+                        selectInput("pcoa.method", "PCoA method:",
+                                    beta.methods),
+                        actionButton("download_pcoa", "Download PCoA pdf"),
+                        helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")),
+               tabPanel("PCoA variance", DT::dataTableOutput("PCoAtable"))
+               )
+             )
+           )
+         ),
     tabPanel("Time Series",
         tabsetPanel(
             tabPanel("Visualization",
