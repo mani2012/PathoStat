@@ -51,6 +51,97 @@ defaultDisp <- 30
 defaultGenesDisp <- 10
 maxGenes <- dim(pstat@otu_table)[1]
 shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE, 
+    tabPanel("Upload",
+        sidebarLayout(
+            sidebarPanel(
+                radioButtons("uploadChoice", "Upload:",
+                             c("Count File" = "files",
+                               "PathoScope Files" = "patho.files",
+                               "Example data" = "example")),
+                 br(),
+                 p(" "),
+                conditionalPanel(condition = sprintf("input['%s'] == 'files'", "uploadChoice"),
+                                 h5("Upload data in tab separated text format:"),
+                                 fileInput("countsfile", "Counts (required):",
+                                           accept = c(
+                                               "text/csv",
+                                               "text/comma-separated-values",
+                                               "text/tab-separated-values",
+                                               "text/plain",
+                                               ".csv",
+                                               ".tsv"
+                                           )
+                                 ),
+                                 fileInput("annotfile", "Annotations (required):",
+                                           accept = c(
+                                               "text/csv",
+                                               "text/comma-separated-values",
+                                               "text/tab-separated-values",
+                                               "text/plain",
+                                               ".csv",
+                                               ".tsv"
+                                           )
+                                 ),
+                                 actionButton("uploadData", "Upload")
+                ),
+                conditionalPanel(condition = sprintf("input['%s'] == 'patho.files'", "uploadChoice"),
+                                 h5("Upload PathoScope generated .tsv files:"),
+                                 fileInput("countsfile", "PathoScope outputs (required):",
+                                           multiple = TRUE,
+                                           accept = c(
+                                               "text/csv",
+                                               "text/comma-separated-values",
+                                               "text/tab-separated-values",
+                                               "text/plain",
+                                               ".csv",
+                                               ".tsv"
+                                           )
+                                 ),
+                                 fileInput("annotfile", "Annotations (required):",
+                                           accept = c(
+                                               "text/csv",
+                                               "text/comma-separated-values",
+                                               "text/tab-separated-values",
+                                               "text/plain",
+                                               ".csv",
+                                               ".tsv"
+                                           )
+                                 ),
+                                 actionButton("uploadData", "Upload")
+                )
+                 ),
+            mainPanel(
+                tags$div(
+                    class = "jumbotron",
+                    tags$div(
+                        class = "container",
+                        h1("PathoStat"),
+                        p("Statistical Microbiome Analysis on metagenomics")
+                    )
+                )
+            )
+        )
+    ),
+    tabPanel("Data Summary/Filtering",
+             sidebarLayout(
+                 sidebarPanel(
+                     selectInput("select_condition.dsf", "Select Condition:",
+                                 covariates),
+                     width=3
+                 ),
+                 mainPanel(
+                     tabsetPanel(
+                         tabPanel("Data summary",
+                                  helpText("We have nothing here now! :'( ")
+                         ),
+                         tabPanel("Annotation",
+                                  helpText("We have nothing here now! :'( ")
+                         ),
+                         coreOTUModuleUI("coreOTUModule")
+                     ), width=9
+                 )
+             )
+    ),
     tabPanel("Relative Abundance",
         sidebarLayout(
             sidebarPanel(
@@ -82,27 +173,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                     tabPanel("RA Table(%)", DT::dataTableOutput("TaxRAtable", 
                         width='95%')),
                     tabPanel("Count Table", DT::dataTableOutput("TaxCountTable",
-                        width='95%')),
-                    tabPanel("Confidence Region",
-                             sidebarLayout(
-                               sidebarPanel(
-                                 #selectizeInput('taxlcr', 'Taxonomy Level', choices = tax.name, 
-                                 #    selected='no rank'),
-                                 selectizeInput('taxon1', 'Taxon 1', choices=row.names(
-                                   shinyInput$pstat@otu_table)),
-                                 selectizeInput('taxon2', 'Taxon 2', choices=row.names(
-                                   shinyInput$pstat@otu_table)),
-                                 selectizeInput('sample', 'Sample', choices=colnames(
-                                   shinyInput$pstat@otu_table)),
-                                 checkboxInput("uselogit", 
-                                               "Use Logit Transformation", FALSE),
-                                 width=5
-                               ),
-                               mainPanel(
-                                 plotOutput("confRegion", height = "550px"), width=7
-                               )
-                             )
-                    )
+                        width='95%'))
                 ), width=9
             )
         )
@@ -229,6 +300,42 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
             )
         )
     ),
+    
+    tabPanel("Dimension Reduction",
+             sidebarLayout(
+                 sidebarPanel(
+                     numericInput('xcol.new', 'Principal Component (x-axis)', 1,
+                                  min = 1, max = 50),
+                     numericInput('ycol.new', 'Principal Component (y-axis)', 2,
+                                  min = 1, max = 50),
+                     selectizeInput('taxl.pca', 'Taxonomy Level', choices = tax.name, 
+                                    selected='no rank'),
+                     selectInput("select_pca_condition", "Color points by:",
+                                 covariates),
+                     selectInput("select_pca_shape", "Shape points by:",
+                                 covariates),
+                     width=3
+                 ),
+                 mainPanel(
+                     tabsetPanel(
+                         tabPanel("PCA plot", 
+                                  # This is a bit different pdf downloading method for plotly,
+                                  # as we must buy lisence for that
+                                  plotlyOutput("pca.plotly"),
+                                  actionButton("download_pca", "Download PCA pdf"),
+                                  helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")),
+                         tabPanel("PCA variance", DT::dataTableOutput("PCAtable")),
+                         tabPanel("PCoA plot", 
+                                  plotlyOutput("pcoa.plotly"),
+                                  selectInput("pcoa.method", "PCoA method:",
+                                              beta.methods),
+                                  actionButton("download_pcoa", "Download PCoA pdf"),
+                                  helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")),
+                         tabPanel("PCoA variance", DT::dataTableOutput("PCoAtable"))
+                     )
+                 )
+             )
+    ),
     tabPanel("Differential Analysis",
         tabsetPanel(
              tabPanel("Deseq2", 
@@ -288,44 +395,30 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                )
              )
         ),
-            tabPanel("more?")
+        tabPanel("Confidence Region",
+                 sidebarLayout(
+                   sidebarPanel(
+                     #selectizeInput('taxlcr', 'Taxonomy Level', choices = tax.name, 
+                     #    selected='no rank'),
+                     selectizeInput('taxon1', 'Taxon 1', choices=row.names(
+                       shinyInput$pstat@otu_table)),
+                     selectizeInput('taxon2', 'Taxon 2', choices=row.names(
+                       shinyInput$pstat@otu_table)),
+                     selectizeInput('sample', 'Sample', choices=colnames(
+                       shinyInput$pstat@otu_table)),
+                     checkboxInput("uselogit", 
+                                   "Use Logit Transformation", FALSE),
+                     width=5
+                   ),
+                   mainPanel(
+                     plotOutput("confRegion", height = "550px"), width=7
+                   )
+                 )
+        )
         )
              
 
     ),
-    tabPanel("Dimension Reduction",
-         sidebarLayout(
-           sidebarPanel(
-             numericInput('xcol.new', 'Principal Component (x-axis)', 1,
-                          min = 1, max = 50),
-             numericInput('ycol.new', 'Principal Component (y-axis)', 2,
-                          min = 1, max = 50),
-             selectizeInput('taxl.pca', 'Taxonomy Level', choices = tax.name, 
-                            selected='no rank'),
-             selectInput("select_pca_condition", "Add color based on:",
-                         covariates),
-             width=3
-           ),
-           mainPanel(
-             tabsetPanel(
-               tabPanel("PCA plot", 
-                        # This is a bit different pdf downloading method for plotly,
-                        # as we must buy lisence for that
-                        plotlyOutput("pca.plotly"),
-                        actionButton("download_pca", "Download PCA pdf"),
-                        helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")),
-               tabPanel("PCA variance", DT::dataTableOutput("PCAtable")),
-               tabPanel("PCoA plot", 
-                        plotlyOutput("pcoa.plotly"),
-                        selectInput("pcoa.method", "PCoA method:",
-                                    beta.methods),
-                        actionButton("download_pcoa", "Download PCoA pdf"),
-                        helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")),
-               tabPanel("PCoA variance", DT::dataTableOutput("PCoAtable"))
-               )
-             )
-           )
-         ),
     tabPanel("Time Series",
         tabsetPanel(
             tabPanel("Visualization",
@@ -349,7 +442,6 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 )
             )
         )
-    ),
-    coreOTUModuleUI("coreOTUModule")
+    )
 )
 )

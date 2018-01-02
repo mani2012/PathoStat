@@ -593,7 +593,7 @@ shinyServer(function(input, output, session) {
         print("---------------------------------------")
         result.list <- list()
         for (i in 1:length(dist.list)){
-          dist.list.tmp <- dist.list[which(names(tmp) != names(tmp)[i])]
+          dist.list.tmp <- dist.list[which(names(dist.list) != names(dist.list)[i])]
           print(paste(names(dist.list.tmp), collapse = " and "))
           result.list[[i]] <- wilcox.test(dist.list.tmp[[1]], dist.list.tmp[[2]])
           print(result.list[[i]])
