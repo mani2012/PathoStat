@@ -28,9 +28,10 @@ shinyServer(function(input, output, session) {
         taxdata = NULL,
         taxcountdata = NULL
     )
-    
-    observeEvent(input$uploadData.count,{
-        
+
+    observeEvent(input$uploadDataCount,{
+        withBusyIndicatorServer("uploadDataCount", {
+            
         
         df.input <- read.csv(input$countsfile$datapath,
                              header = input$header.count,
@@ -77,10 +78,12 @@ shinyServer(function(input, output, session) {
         pstat <- pathostat1(physeq1)
         shinyInput <- list(pstat = pstat)
         vals$shiny.input <- shinyInput
+        })
         
     })
     
-    observeEvent(input$uploadData.ps, {
+    observeEvent(input$uploadDataPs, {
+        withBusyIndicatorServer("uploadDataPs", {
  
                 df.path.vec <- c()
                 df.name.vec <- c()
@@ -149,6 +152,8 @@ shinyServer(function(input, output, session) {
                 shinyInput <- list(pstat = pstat)
                 #setShinyInput(shinyInput)
                 vals$shiny.input <- shinyInput
+                
+        })
 })
 
     
@@ -293,7 +298,7 @@ shinyServer(function(input, output, session) {
     if (is.null(input$taxl)) {
       return()
     }
-    if (input$uploadData.ps == TRUE | input$uploadData.count == TRUE){
+    if (input$uploadDataPs == TRUE | input$uploadDataCount == TRUE){
         cat("barplot update with new data!")
     }
      
