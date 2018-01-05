@@ -153,7 +153,14 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 tableOutput("contents.count"),
                 helpText("Annotation table"),
                 tableOutput("contents.meta")
+                ),
+                conditionalPanel(condition = sprintf("input['%s'] == 'patho.files'", "uploadChoice"),
+                  h4("Please open this app in Chrome for multiple files upload."),
+                  h5("Also, example pathoscope report files and annotation files 
+                     could be found at pathToPathoStat/inst/example/data/")
                 )
+                
+                
                 
 
 
