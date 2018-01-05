@@ -389,18 +389,19 @@ shinyServer(function(input, output, session) {
   output$downloadData <- downloadHandler(filename = function() {
     paste0("sample_data_", input$taxl, ".csv", sep = "")
   }, content = function(file) {
-    shinyInput <- getShinyInput()
+    shinyInput <- vals$shiny.input
     write.csv(shinyInput$taxdata, file)
   })
   
   output$downloadCountData <- downloadHandler(filename = function() {
     paste0("sample_data_count_", input$taxl, ".csv", sep = "")
   }, content = function(file) {
-    shinyInput <- getShinyInput()
+     shinyInput <- vals$shiny.input
     write.csv(shinyInput$taxcountdata, file)
   })
   
   output$confRegion <- renderPlot({
+    shinyInput <- vals$shiny.input
     p1 <- shinyInput$pstat@otu_table[input$taxon1, input$sample]
     if (p1 <= 0) p1 <- 1
     p2 <- shinyInput$pstat@otu_table[input$taxon2, input$sample]
@@ -411,6 +412,7 @@ shinyServer(function(input, output, session) {
   
   #Time Series
   output$Allustax <- renderUI({
+      shinyInput <- vals$shiny.input
     checkboxGroupInput(inputId="Allustax", label="Taxa of interest ",
                        choices = as.character(unique(unlist((
                          shinyInput$pstat@tax_table)[,input$Alluglom]))))
@@ -418,6 +420,7 @@ shinyServer(function(input, output, session) {
   })
   
   findPhyseqData <- function() {
+      shinyInput <- vals$shiny.input
     ids <- rownames(shinyInput$data)
     taxmat <- findTaxonMat(ids, shinyInput$taxonLevels)
     OTU <- otu_table(shinyInput$countdata, taxa_are_rows = TRUE)
@@ -499,6 +502,7 @@ shinyServer(function(input, output, session) {
   )
   
   plotAlphaServer <- function(){
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     
     if (input$taxl.alpha !="no rank")  {
@@ -530,6 +534,7 @@ shinyServer(function(input, output, session) {
   )
   
   output$table.alpha <- DT::renderDataTable({
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     if (input$taxl.alpha !="no rank")  {
       physeq1 <- tax_glom(physeq1, input$taxl.alpha)
@@ -548,6 +553,7 @@ shinyServer(function(input, output, session) {
   output$download_table_alpha <- downloadHandler(
     filename = function() { paste('Alpha_diversity_table', '.csv', sep='') },
     content = function(file) {
+        shinyInput <- vals$shiny.input
       physeq1 <- shinyInput$pstat
       if (input$taxl.alpha !="no rank")  {
         physeq1 <- tax_glom(physeq1, input$taxl.alpha)
@@ -609,6 +615,7 @@ shinyServer(function(input, output, session) {
   
   # independent heatmap plotting function in the server using specific data from input
   plotBetaHeatmapColorServer <- function(){
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     
     if (input$taxl.beta=="no rank")  {
@@ -666,6 +673,7 @@ shinyServer(function(input, output, session) {
   
   
   plotBetaBoxplotServer <- function(){
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     
     if (input$taxl.beta !="no rank")  {
@@ -723,7 +731,7 @@ shinyServer(function(input, output, session) {
   
   
   output$beta.stat.test <- renderPrint({ 
-    
+      shinyInput <- vals$shiny.input
     if (input$select_beta_stat_method == "PERMANOVA"){
       physeq1 <- pstat
       if (input$taxl.beta !="no rank")  {
@@ -800,6 +808,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$table.beta <- DT::renderDataTable({
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     
     if (input$taxl.beta=="no rank")  {
@@ -816,6 +825,7 @@ shinyServer(function(input, output, session) {
   output$download_table_beta <- downloadHandler(
     filename = function() { paste('Beta_diversity_table', '.csv', sep='') },
     content = function(file) {
+        shinyInput <- vals$shiny.input
       physeq1 <- shinyInput$pstat
       
       if (input$taxl.beta=="no rank")  {
@@ -834,6 +844,7 @@ shinyServer(function(input, output, session) {
   
   
   output$ExploratoryTree <- renderPlot({
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     cn <- colnames(physeq1@sam_data)
     cn[1] <- "batch"
@@ -844,6 +855,7 @@ shinyServer(function(input, output, session) {
               size="Abundance")
   })
   output$BiPlot <- renderPlot({
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     physeq1 <- phyloseq(otu_table(physeq1), phy_tree(physeq1),
                         tax_table(physeq1), sample_data(physeq1))
@@ -867,6 +879,7 @@ shinyServer(function(input, output, session) {
     p
   })
   output$CoOccurrence <- renderPlot({
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     cn <- colnames(physeq1@sam_data)
     cn[1] <- "batch"
@@ -888,15 +901,10 @@ shinyServer(function(input, output, session) {
     p
   })
   
-  # interactive PCA
-  PCA <- reactive({
-    shinyInput <- getShinyInput()
-    pc <- shinyInput$pc
-    data.frame(pc[, c(input$xcol.new, input$ycol.new)])
-  })
 
   # independent heatmap plotting function in the server using specific data from input
   plotPCAPlotlyServer <- function(){
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     if (input$taxl.pca=="no rank")  {
       plotPCAPlotly(df.input = physeq1@otu_table@.Data, 
@@ -933,6 +941,7 @@ shinyServer(function(input, output, session) {
 
   # interactive PCA table
   output$PCAtable <- DT::renderDataTable({
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     if (input$taxl.pca=="no rank")  {
       #test and fix the constant/zero row
@@ -961,6 +970,7 @@ shinyServer(function(input, output, session) {
 
   ### PCoA
   plotPCoAPlotlyServer <- function(){
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     physeq1 <- phyloseq(otu_table(physeq1), phy_tree(physeq1),
                         tax_table(physeq1), sample_data(physeq1))
@@ -999,6 +1009,7 @@ shinyServer(function(input, output, session) {
   
   
   getOrdPCoA <- function(){
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     if (input$taxl.pca=="no rank")  {
       #test and fix the constant/zero row
@@ -1027,6 +1038,7 @@ shinyServer(function(input, output, session) {
   
   # interactive PCA table
   output$PCoAtable <- DT::renderDataTable({
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     ord <- getOrdPCoA()
     df.output <- ord[,c(1,3,5)]
@@ -1041,6 +1053,7 @@ shinyServer(function(input, output, session) {
   
   ## New DA analysis section
   output$DeSeq2Table.new <- DT::renderDataTable({
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     if (input$taxl.da !="no rank"){
       physeq1 <- tax_glom(physeq1, input$taxl.da)
@@ -1108,12 +1121,14 @@ shinyServer(function(input, output, session) {
 
   # Presence-Absence Variance analysis
   output$pa.case <- renderPrint({
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     paste("Case level is: ", physeq1@sam_data[[input$pa.condition]][1], sep = "")
     
   })
   
   output$pa.test <- DT::renderDataTable({
+      shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     if (input$taxl.pa !="no rank"){
       physeq1 <- tax_glom(physeq1, input$taxl.pa)
