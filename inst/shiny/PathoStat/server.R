@@ -21,34 +21,141 @@ pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
 
 
 
-
-
 shinyServer(function(input, output, session) {
-  # needed information from PathoStat
-  shinyInput <- getShinyInput()
-  pstat <- shinyInput$pstat
-  sample_data <- pstat@sam_data
-  #pdata <- data.frame(shinyInput$batch, shinyInput$condition)
-  #modmatrix = model.matrix(~as.factor(shinyInput$condition), data=pdata)
-  pdata <- data.frame(c(sample_data[,1])[[1]], c(sample_data[,2])[[1]])
-  modmatrix = model.matrix(~as.factor(c(sample_data[,2])[[1]]), data=pdata)
-  pca <- BatchQC::batchqc_pca(pstat@otu_table, batch=c(sample_data[,1])[[1]],
-                              mod=modmatrix)
-  shinyInput <- c(shinyInput, list("pc"=data.frame(pca$x), "vars"=pca$sdev^2))
-  setShinyInput(shinyInput)
-  
-  setInputs <- function(combatFlag) {
-    if (combatFlag) {
-      setShinyInput(getShinyInputCombat())
-    } else {
-      setShinyInput(getShinyInputOrig())
-    }
-  }
+    
+    vals <- reactiveValues(
+        shiny.input = getShinyOption("pathostat.shinyInput"),
+        taxdata = NULL,
+        taxcountdata = NULL
+    )
+    
+    observeEvent(input$uploadData.count,{
+        
+        
+        df.input <- read.csv(input$countsfile$datapath,
+                             header = input$header.count,
+                             sep = input$sep.count)
+        df.meta.input <- read.csv(input$annotfile.count$datapath,
+                                  header = input$header.count,
+                                  sep = input$sep.count,
+                                  row.names=1,
+                                  stringsAsFactors=FALSE)
+        #test and fix the constant/zero row
+        row.remove.index <- c()
+        if (sum(rowSums(as.matrix(df.input)) == 0) > 0){
+            row.remove.index <- which(rowSums(as.matrix(df.input)) == 0)
+            df.input <- df.input[-row.remove.index,]
+        }
+        ids <- rownames(df.input)
+        tids <- unlist(lapply(ids, FUN = grepTid))
+        taxonLevels <- findTaxonomy(tids)
+        taxmat <- findTaxonMat(ids, taxonLevels)
+        
+        OTU <- otu_table(df.input, taxa_are_rows = TRUE)
+        TAX <- tax_table(taxmat)
+        physeq <- phyloseq(OTU, TAX)
+        
+        # change NA/NULL to 0
+        # remove variables with identical values
+        col.remove.index <- c()
+        for (i in 1:ncol(df.meta.input)){
+            if(length(unique(df.meta.input[,i])) < 2){
+                col.remove.index <- c(col.remove.index, i)
+            } 
+        }
+        if (!is.null(col.remove.index)){
+            df.meta.input <- df.meta.input[,-col.remove.index]  
+        }
+        
+        sampledata = sample_data(data.frame(df.meta.input))
+        random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=
+                                taxa_names(physeq))
+        physeq1 <- merge_phyloseq(physeq, sampledata, random_tree)
+        pstat <- pathostat1(physeq1)
+        shinyInput <- list(pstat = pstat)
+        setShinyInput(shinyInput)
+        
+    })
+    
+    observeEvent(input$uploadData.ps, {
+ 
+                df.path.vec <- c()
+                df.name.vec <- c()
+                for(i in 1:length(input$countsfile.pathoscope[,1])){
+                    df.path.vec[i] <- input$countsfile.pathoscope[[i, 'datapath']]
+                    df.name.vec[i] <- input$countsfile.pathoscope[[i, 'name']]
+                }
+                
+                cat(df.name.vec)
+                datlist <- readPathoscopeData(input_dir, pathoreport_file_suffix, 
+                                              use.input.files = TRUE,
+                                              input.files.path.vec = df.path.vec,
+                                              input.files.name.vec = df.name.vec)
+                countdat <- datlist$countdata
+
+                df.meta.input <- read.csv(input$annotfile.ps$datapath,
+                                          header = input$header.ps,
+                                          sep = input$sep.ps,
+                                          row.names=1,
+                                          stringsAsFactors=FALSE)
+                #cat(dim(df.meta.input))
+                #test and fix the constant/zero row
+                row.remove.index <- c()
+                if (sum(rowSums(as.matrix(countdat)) == 0) > 0){
+                    row.remove.index <- which(rowSums(as.matrix(countdat)) == 0)
+                    countdat <- countdat[-row.remove.index,]
+                }
+                
+                ids <- rownames(countdat)
+                tids <- unlist(lapply(ids, FUN = grepTid))
+                taxonLevels <- findTaxonomy(tids)
+                taxmat <- findTaxonMat(ids, taxonLevels)
+                
+                #test and fix the constant/zero row
+                if (!is.null(row.remove.index)){
+                    taxmat <- taxmat[-row.remove.index,]
+                }
+                
+                
+                #cat(rownames(df.meta.input))
+                
+                OTU <- otu_table(countdat, taxa_are_rows = TRUE)
+                TAX <- tax_table(taxmat)
+                physeq <- phyloseq(OTU, TAX)
+
+                
+                # change NA/NULL to 0
+                # remove variables with identical values
+                col.remove.index <- c()
+                for (i in 1:ncol(df.meta.input)){
+                    if(length(unique(df.meta.input[,i])) < 2){
+                        col.remove.index <- c(col.remove.index, i)
+                    } 
+                }
+                if (!is.null(col.remove.index)){
+                    df.meta.input <- df.meta.input[,-col.remove.index]  
+                }
+                
+                
+                
+                sampledata = sample_data(data.frame(df.meta.input))
+                random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=
+                                        taxa_names(physeq))
+                physeq1 <- merge_phyloseq(physeq, sampledata, random_tree)
+                pstat <- pathostat1(physeq1)
+                shinyInput <- list(pstat = pstat)
+                #setShinyInput(shinyInput)
+                vals$shiny.input <- shinyInput
+})
+
+    
   # setInputs(FALSE)
   findAllTaxData <- function(taxonLevel) {
     #taxcountdata <- findTaxonLevelData(pstat@otu_table,
     #    shinyInput$taxonLevels, taxonLevel)
-    shinyInput <- getShinyInput()
+    
+    #shinyInput <- getShinyInput()
+    shinyInput <- vals$shiny.input
     pstat <- shinyInput$pstat
     if ((taxonLevel == "no rank"))  {
       taxcountdata <- pstat@otu_table
@@ -73,69 +180,139 @@ shinyServer(function(input, output, session) {
       rownames(taxcountdata) <- labvec
       rownames(taxdata) <- labvec
     }
-    if (is.null(shinyInput$taxcountdata)) {
-      shinyInput <- c(shinyInput, list(taxcountdata = taxcountdata))
-    } else {
-      shinyInput$taxcountdata <- taxcountdata
-    }
-    if (is.null(shinyInput$taxdata)) {
-      shinyInput <- c(shinyInput, list(taxdata = taxdata))
-    } else {
-      shinyInput$taxdata <- taxdata
-    }
-    setShinyInput(shinyInput)
+
+      vals$taxcountdata <- taxcountdata
+      vals$taxdata <- taxdata
+
   }
-  findTaxData <- eventReactive(input$taxl, {
+  findTaxData <- reactive({
     findAllTaxData(input$taxl)
-    shinyInput <- getShinyInput()
-    shinyInput$taxdata
+    vals$taxdata
   })
   
   
-  findTaxCountData <- eventReactive(input$taxl, {
+  findTaxCountData <- reactive({
     findAllTaxData(input$taxl)
-    shinyInput <- getShinyInput()
-    shinyInput$taxcountdata
+    vals$taxcountdata
   })
   
-  findTaxCountDataDE <- eventReactive(input$taxlde, {
+  findTaxCountDataDE <- reactive({
     findAllTaxData(input$taxlde)
-    shinyInput <- getShinyInput()
-    shinyInput$taxcountdata
+    vals$taxcountdata
   })
   
   findNormalizedCount <- function() {
-    shinyInput <- getShinyInput()
     if(input$norm == 'Quantile coreOTU Normalization')  {
-      dat <- coreOTUQuantile(shinyInput$taxcountdata, input$otuthreshold,
+      dat <- coreOTUQuantile(vals$taxcountdata, input$otuthreshold,
                              input$prevalence)
     } else if(input$norm == 'Library Size Scaling')  {
-      dat <- sizeNormalize(shinyInput$taxcountdata)
+      dat <- sizeNormalize(vals$taxcountdata)
     } else  {
-      dat <- coreOTUNormalize(shinyInput$taxcountdata, input$ebweight,
+      dat <- coreOTUNormalize(vals$taxcountdata, input$ebweight,
                               input$otuthreshold, input$prevalence)
     }
     dat
   }
   
+  ### data input summary
+  
+  output$contents.count <- renderTable({
+      
+      # input$file1 will be NULL initially. After the user selects
+      # and uploads a file, head of that data file by default,
+      # or all rows if selected, will be shown.
+      
+      if (!is.null(input$countsfile)){
+          req(input$countsfile)
+          df <- read.csv(input$countsfile$datapath,
+                         header = input$header.count,
+                         sep = input$sep.count)
+          if (ncol(df) < 4){
+              return(head(df)) 
+          } else{
+              return(head(df[,1:3]))
+          }
+      } else if (!is.null(input$countsfile.pathoscope)){
+          req(input$countsfile.pathoscope)
+          df <- read.csv(input$countsfile.pathoscope[[1, 'datapath']],
+                         skip = 1,
+                         header = TRUE,
+                         sep = input$sep.ps)
+          if (ncol(df) < 4){
+              return(head(df)) 
+          } else{
+              return(head(df[,1:3]))
+          }
+      }
+
+  })
+  
+  output$contents.meta <- renderTable({
+      
+      # input$file1 will be NULL initially. After the user selects
+      # and uploads a file, head of that data file by default,
+      # or all rows if selected, will be shown.
+      
+      if (!is.null(input$annotfile.count)){
+          req(input$annotfile.count)
+          df <- read.csv(input$annotfile.count$datapath,
+                         header = input$header.count,
+                         sep = input$sep.count)
+          if (ncol(df) < 5){
+              return(head(df)) 
+          } else{
+              return(head(df[,1:4]))
+          }
+      } else if (!is.null(input$annotfile.ps)){
+          req(input$countsfile.pathoscope)
+         
+          df <- read.csv(input$annotfile.ps$datapath,
+                         header = input$header.ps,
+                         sep = input$sep.ps)
+          if (ncol(df) < 5){
+              return(head(df)) 
+          } else{
+              return(head(df[,1:4]))
+          }
+      }
+  })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   tax_ra_bp <- reactive({
     if (is.null(input$taxl)) {
       return()
     }
+    if (input$uploadData.ps == TRUE | input$uploadData.count == TRUE){
+        cat("barplot update with new data!")
+    }
+     
+    
+    shinyInput <- vals$shiny.input 
+    pstat <- shinyInput$pstat
+    cat(dim(pstat@otu_table@.Data))
     taxdata <- findTaxData()
+    #cat(dim(taxdata))
     dat <- melt(cbind(taxdata, ind = as.character(rownames(taxdata))),
                 id.vars = c("ind"))
     
     if ((input$taxl == "no rank")){
-      covariates.tmp <- colnames(sample_data(shinyInput$pstat))
-      dat$condition.select <- rep(shinyInput$pstat@sam_data@.Data[[
+      covariates.tmp <- colnames(sample_data(pstat))
+      dat$condition.select <- rep(pstat@sam_data@.Data[[
         which(covariates.tmp %in% input$select_condition)]], 
         each = dim(taxdata)[1])
       dat <- dat[order(dat$condition.select),]
       dat$condition.select.id <- paste(dat$condition.select,
                                        as.character(dat$variable), sep = "-")
     }else{
-      pstat.new <- tax_glom(shinyInput$pstat, input$taxl)
+      pstat.new <- tax_glom(pstat, input$taxl)
       covariates.tmp <- colnames(sample_data(pstat.new))
       dat$condition.select <- rep(pstat.new@sam_data@.Data[[
         which(covariates.tmp %in% input$select_condition)]], 
@@ -260,6 +437,7 @@ shinyServer(function(input, output, session) {
   
   # independent heatmap plotting function in the server using specific data from input
   plotHeatmapColorServer <- function(){
+    shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     
     if (input$taxl=="no rank")  {
@@ -292,6 +470,7 @@ shinyServer(function(input, output, session) {
   
   # show heatmap in the shiny app by calling the plotting function
   output$Heatmap <- renderPlot({
+      
     plotHeatmapColorServer()
     
   })

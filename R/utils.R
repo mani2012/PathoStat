@@ -33,6 +33,9 @@ log2CPM <- function(qcounts, lib.size = NULL) {
 #' 
 #' @param input_dir Directory where the tsv files from PathoScope are located
 #' @param pathoreport_file_suffix PathoScope report files suffix
+#' @param use.input.files whether input dir to pathoscope files or directly pathoscope files
+#' @param input.files.path.vec vector of pathoscope file paths
+#' @param input.files.name.vec vector of pathoscope file names
 #' @return List of final guess relative abundance and count data
 #' @importFrom utils read.table
 #' @export
@@ -40,15 +43,23 @@ log2CPM <- function(qcounts, lib.size = NULL) {
 #' example_data_dir <- system.file("example/data", package = "PathoStat")
 #' readPathoscopeData(input_dir=example_data_dir)
 readPathoscopeData <- 
-    function(input_dir=".", pathoreport_file_suffix="-sam-report.tsv") {
-    if (input_dir == ".") {
-        input_dir <- getwd()
-    }
-    pattern <- paste("*", pathoreport_file_suffix, sep="")
-    filenames <- list.files(input_dir, pattern = pattern, full.names = TRUE)
+    function(input_dir=".", pathoreport_file_suffix="-sam-report.tsv", 
+             use.input.files = FALSE, input.files.path.vec = NULL,
+             input.files.name.vec = NULL) {
+    if (use.input.files == FALSE){
+        if (input_dir == ".") {
+            input_dir <- getwd()
+        }
+        pattern <- paste("*", pathoreport_file_suffix, sep="")
+        filenames <- list.files(input_dir, pattern = pattern, full.names = TRUE)
+        
+        
+    } else{
+        filenames <- input.files.path.vec
+    }   
 
     ltbl <- lapply(filenames, read.table, skip=1, header=TRUE, sep="\t", 
-        nrows=10)
+                       nrows=10)
     lgenomes <- lapply(ltbl, function(tbl) {return(levels(tbl[,1]))})
     genomes <- unique(unlist(lgenomes))
     genomes <- c(genomes, "others")
@@ -63,8 +74,9 @@ readPathoscopeData <-
     
     do.call(cbind, lprop)
     do.call(cbind, lcprop)
-    samplenames <- unlist(lapply(filenames, function(x) {
-        return(strsplit(basename(x), pathoreport_file_suffix)[[1]])
+    pathoreport_file_suffix="-sam-report.tsv"
+    samplenames <- unlist(lapply(input.files.name.vec, function(x) {
+        return(strsplit(x, pathoreport_file_suffix)[[1]])
     }))
     dat <- data.frame(lprop)
     rownames(dat) <- genomes

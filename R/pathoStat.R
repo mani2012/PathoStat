@@ -190,7 +190,7 @@ runPathoStat <- function(pstat=NULL, report_file="PathoStat_report.html",
 #' @examples
 #' getShinyInput()
 getShinyInput <- function() {
-    shinyInput <- getOption("pathostat.shinyInput")
+    shinyInput <- getShinyOption("pathostat.shinyInput")
     return(shinyInput)
 }
 #' Setter function to set the shinyInput option
@@ -200,7 +200,7 @@ getShinyInput <- function() {
 #' @examples
 #' setShinyInput(NULL)
 setShinyInput <- function(x) {
-    options(pathostat.shinyInput = x)
+    shinyOptions(pathostat.shinyInput = x)
 }
 
 #' Getter function to get the shinyInputOrig option
@@ -209,7 +209,7 @@ setShinyInput <- function(x) {
 #' @examples
 #' getShinyInputOrig()
 getShinyInputOrig <- function() {
-    shinyInputOrig <- getOption("pathostat.shinyInputOrig")
+    shinyInputOrig <- getShinyOption("pathostat.shinyInputOrig")
     return(shinyInputOrig)
 }
 #' Setter function to set the shinyInputOrig option
@@ -219,7 +219,7 @@ getShinyInputOrig <- function() {
 #' @examples
 #' setShinyInputOrig(NULL)
 setShinyInputOrig <- function(x) {
-    options(pathostat.shinyInputOrig = x)
+    shinyOptions(pathostat.shinyInputOrig = x)
 }
 
 #' Getter function to get the shinyInputCombat option
@@ -228,7 +228,7 @@ setShinyInputOrig <- function(x) {
 #' @examples
 #' getShinyInputCombat()
 getShinyInputCombat <- function() {
-    shinyInputCombat <- getOption("pathostat.shinyInputCombat")
+    shinyInputCombat <- getShinyOption("pathostat.shinyInputCombat")
     return(shinyInputCombat)
 }
 #' Setter function to set the shinyInputCombat option
@@ -238,7 +238,7 @@ getShinyInputCombat <- function() {
 #' @examples
 #' setShinyInputCombat(NULL)
 setShinyInputCombat <- function(x) {
-    options(pathostat.shinyInputCombat = x)
+    shinyOptions(pathostat.shinyInputCombat = x)
 }
 
 

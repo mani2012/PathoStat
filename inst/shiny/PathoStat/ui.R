@@ -52,16 +52,32 @@ defaultGenesDisp <- 10
 maxGenes <- dim(pstat@otu_table)[1]
 shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE, 
     tabPanel("Upload",
+             tags$div(
+                 class = "jumbotron",
+                 tags$div(
+                     class = "container",
+                     fluidRow(
+                         column(7, h1("PathoStat")),
+                         column(2, img(src = "bu_logo.png", height = 60, width = 100)),
+                         column(2, img(src = "cbm_logo.jpeg", height = 60, width = 100)),
+                         column(1, img(src = "bu_bioinfo_logo.png", height = 60, width = 60))
+                         
+                     ),
+                     
+                     p("Statistical Microbiome Analysis on metagenomics")
+                 )
+             ),
         sidebarLayout(
             sidebarPanel(
                 radioButtons("uploadChoice", "Upload:",
-                             c("Count File" = "files",
-                               "PathoScope Files" = "patho.files",
-                               "Example data" = "example")),
+                             c("Example data" = "example",
+                               "Count File" = "files",
+                               "PathoScope Files" = "patho.files"
+                               )),
                  br(),
                  p(" "),
                 conditionalPanel(condition = sprintf("input['%s'] == 'files'", "uploadChoice"),
-                                 h5("Upload data in tab separated text format:"),
+                                 h5("Upload CSV file:"),
                                  fileInput("countsfile", "Counts (required):",
                                            accept = c(
                                                "text/csv",
@@ -72,7 +88,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                                                ".tsv"
                                            )
                                  ),
-                                 fileInput("annotfile", "Annotations (required):",
+                                 fileInput("annotfile.count", "Annotations (required):",
                                            accept = c(
                                                "text/csv",
                                                "text/comma-separated-values",
@@ -82,11 +98,21 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                                                ".tsv"
                                            )
                                  ),
-                                 actionButton("uploadData", "Upload")
+                                 # Input: Checkbox if file has header ----
+                                 checkboxInput("header.count", "Header", TRUE),
+                                 
+                                 # Input: Select separator ----
+                                 radioButtons("sep.count", "Separator",
+                                              choices = c(Tab = "\t",
+                                                          Comma = ",",
+                                                          Semicolon = ";"
+                                                          ),
+                                              selected = "\t"),
+                                 actionButton("uploadData.count", "Upload")
                 ),
                 conditionalPanel(condition = sprintf("input['%s'] == 'patho.files'", "uploadChoice"),
                                  h5("Upload PathoScope generated .tsv files:"),
-                                 fileInput("countsfile", "PathoScope outputs (required):",
+                                 fileInput("countsfile.pathoscope", "PathoScope outputs (required):",
                                            multiple = TRUE,
                                            accept = c(
                                                "text/csv",
@@ -97,7 +123,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                                                ".tsv"
                                            )
                                  ),
-                                 fileInput("annotfile", "Annotations (required):",
+                                 fileInput("annotfile.ps", "Annotations (required):",
                                            accept = c(
                                                "text/csv",
                                                "text/comma-separated-values",
@@ -107,18 +133,30 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                                                ".tsv"
                                            )
                                  ),
-                                 actionButton("uploadData", "Upload")
+                                 # Input: Checkbox if file has header ----
+                                 checkboxInput("header.ps", "Header", TRUE),
+                                 
+                                 # Input: Select separator ----
+                                 radioButtons("sep.ps", "Separator",
+                                              choices = c(Tab = "\t",
+                                                          Comma = ",",
+                                                          Semicolon = ";"
+                                                          ),
+                                              selected = "\t"),
+                                 actionButton("uploadData.ps", "Upload")
+
                 )
                  ),
             mainPanel(
-                tags$div(
-                    class = "jumbotron",
-                    tags$div(
-                        class = "container",
-                        h1("PathoStat"),
-                        p("Statistical Microbiome Analysis on metagenomics")
-                    )
+                conditionalPanel(condition = sprintf("input['%s'] != 'example'", "uploadChoice"),
+                helpText("Counts Table"),
+                tableOutput("contents.count"),
+                helpText("Annotation table"),
+                tableOutput("contents.meta")
                 )
+                
+
+
             )
         )
     ),
