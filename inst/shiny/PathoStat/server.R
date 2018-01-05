@@ -34,7 +34,10 @@ shinyServer(function(input, output, session) {
         
         df.input <- read.csv(input$countsfile$datapath,
                              header = input$header.count,
+                             row.names = 1,
+                             stringsAsFactors = FALSE,
                              sep = input$sep.count)
+        cat(dim(df.input))
         df.meta.input <- read.csv(input$annotfile.count$datapath,
                                   header = input$header.count,
                                   sep = input$sep.count,
@@ -73,7 +76,7 @@ shinyServer(function(input, output, session) {
         physeq1 <- merge_phyloseq(physeq, sampledata, random_tree)
         pstat <- pathostat1(physeq1)
         shinyInput <- list(pstat = pstat)
-        setShinyInput(shinyInput)
+        vals$shiny.input <- shinyInput
         
     })
     

@@ -77,8 +77,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                  br(),
                  p(" "),
                 conditionalPanel(condition = sprintf("input['%s'] == 'files'", "uploadChoice"),
-                                 h5("Upload CSV file:"),
-                                 fileInput("countsfile", "Counts (required):",
+                                 fileInput("countsfile", "Counts .csv file (required):",
                                            accept = c(
                                                "text/csv",
                                                "text/comma-separated-values",
@@ -88,7 +87,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                                                ".tsv"
                                            )
                                  ),
-                                 fileInput("annotfile.count", "Annotations (required):",
+                                 fileInput("annotfile.count", "Annotation .csv file (required):",
                                            accept = c(
                                                "text/csv",
                                                "text/comma-separated-values",
@@ -107,7 +106,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                                                           Comma = ",",
                                                           Semicolon = ";"
                                                           ),
-                                              selected = "\t"),
+                                              selected = ","),
                                  actionButton("uploadData.count", "Upload")
                 ),
                 conditionalPanel(condition = sprintf("input['%s'] == 'patho.files'", "uploadChoice"),
@@ -123,7 +122,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                                                ".tsv"
                                            )
                                  ),
-                                 fileInput("annotfile.ps", "Annotations (required):",
+                                 fileInput("annotfile.ps", "Annotation .tsv file (required):",
                                            accept = c(
                                                "text/csv",
                                                "text/comma-separated-values",
@@ -157,8 +156,12 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 conditionalPanel(condition = sprintf("input['%s'] == 'patho.files'", "uploadChoice"),
                   h4("Please open this app in Chrome for multiple files upload."),
                   h5("Also, example pathoscope report files and annotation files 
-                     could be found at pathToPathoStat/inst/example/data/")
-                )
+                     could be found at pathToPathoStat/inst/example/data/pathoscope_example/")
+                ),
+                conditionalPanel(condition = sprintf("input['%s'] == 'files'", "uploadChoice"),
+                                 h5("Example count file and annotation file 
+                                    could be found at pathToPathoStat/inst/example/data/count_example/")
+                                 )
                 
                 
                 
