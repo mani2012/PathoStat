@@ -9,9 +9,9 @@ shiny_panel_upload <- fluidPage(
                  class = "container",
                  fluidRow(
                      column(7, h1("PathoStat")),
-                     column(2, img(src = "bu_logo.png", height = 60, width = 100)),
-                     column(2, img(src = "cbm_logo.jpeg", height = 60, width = 100)),
-                     column(1, img(src = "bu_bioinfo_logo.png", height = 60, width = 60))
+                     column(2, img(src = "bu_logo.png", height = 80, width = 140)),
+                     column(2, img(src = "cbm_logo.jpeg", height = 80, width = 140)),
+                     column(1, img(src = "bu_bioinfo_logo.png", height = 80, width = 80))
                      
                  ),
                  
