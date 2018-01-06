@@ -170,7 +170,6 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                                   selectInput("select_beta_heatmap_condition", "Add colorbar on:",
                                               covariates.colorbar),
                                   checkboxInput("checkbox_beta_heatmap", "Add colorbar", value = TRUE),
-                                  checkboxInput("checkbox_beta_heatmap_scale", "Row scaling", value = TRUE),
                                   plotOutput("BetaDiversityHeatmap"),
                                   downloadButton('download_beta_heatmap_pdf', 'Download heatmap PDF')
                          ),
@@ -253,7 +252,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                      selectInput("select_pca_color", "Color points by:",
                                  covariates),
                      selectInput("select_pca_shape", "Shape points by:",
-                                 covariates),
+                                 covariates.colorbar),
                      width=3
                  ),
                  mainPanel(

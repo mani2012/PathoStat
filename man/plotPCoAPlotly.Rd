@@ -4,12 +4,19 @@
 \alias{plotPCoAPlotly}
 \title{Plot PCoA}
 \usage{
-plotPCoAPlotly(physeq.input, condition.vec, condition.name = "condition",
-  method = "bray", columnTitle = "Title", pc.a = "Axis.1",
-  pc.b = "Axis.2")
+plotPCoAPlotly(physeq.input, condition.color.vec,
+  condition.color.name = "condition", condition.shape.vec,
+  condition.shape.name = "condition", method = "bray",
+  columnTitle = "Title", pc.a = "Axis.1", pc.b = "Axis.2")
 }
 \arguments{
-\item{condition.vec}{The condition used for plotting the PCoA. Required}
+\item{condition.color.vec}{color vector. Required}
+
+\item{condition.color.name}{color variable name. Required}
+
+\item{condition.shape.vec}{shape vector. Required}
+
+\item{condition.shape.name}{shape variable name. Required}
 
 \item{columnTitle}{Title to be displayed at top of heatmap.}
 

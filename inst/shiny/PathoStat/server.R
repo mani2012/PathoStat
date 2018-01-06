@@ -20,7 +20,6 @@ pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
 
 
 
-
 shinyServer(function(input, output, session) {
     
     vals <- reactiveValues(
@@ -28,10 +27,55 @@ shinyServer(function(input, output, session) {
         taxdata = NULL,
         taxcountdata = NULL
     )
+    
+    
+    #Update covariate names
+    updateCovariate <- function(){
+        shinyInput <- vals$shiny.input
+        pstat <- shinyInput$pstat
+        covariates <- colnames(sample_data(pstat))
+        # choose the covariates that has less than 8 levels
+        covariates.colorbar <- c()
+        for (i in 1:length(covariates)){
+            num.levels <- length(unique(sample_data(pstat)[[covariates[i]]]))
+            if (num.levels < 8){
+                covariates.colorbar <- c(covariates.colorbar, covariates[i])
+            }
+        }
+        # choose the covariates that has 2 levels
+        covariates.two.levels <- c()
+        for (i in 1:length(covariates)){
+            num.levels <- length(unique(sample_data(pstat)[[covariates[i]]]))
+            if (num.levels == 2){
+                covariates.two.levels <- c(covariates.two.levels, covariates[i])
+            }
+        }
+        updateSelectInput(session, "select_condition.dsf",
+                          choices = covariates)
+        updateSelectInput(session, "select_condition",
+                          choices = covariates)
+        updateSelectInput(session, "select_heatmap_condition",
+                          choices = covariates.colorbar)
+        updateSelectInput(session, "select_alpha_div_condition",
+                          choices = covariates.colorbar)
+        updateSelectInput(session, "select_beta_condition",
+                          choices = covariates.two.levels)
+        updateSelectInput(session, "select_beta_heatmap_condition",
+                          choices = covariates.colorbar)
+        updateSelectInput(session, "select_pca_color",
+                          choices = covariates)
+        updateSelectInput(session, "select_pca_shape",
+                          choices = covariates.colorbar)
+        updateSelectInput(session, "da.condition",
+                          choices = covariates.two.levels)
+        updateSelectInput(session, "da.condition.covariate",
+                          choices = covariates)
+        updateSelectInput(session, "pa.condition",
+                          choices = covariates.two.levels)
+    }
 
     observeEvent(input$uploadDataCount,{
         withBusyIndicatorServer("uploadDataCount", {
-            
         
         df.input <- read.csv(input$countsfile$datapath,
                              header = input$header.count,
@@ -78,13 +122,16 @@ shinyServer(function(input, output, session) {
         pstat <- pathostat1(physeq1)
         shinyInput <- list(pstat = pstat)
         vals$shiny.input <- shinyInput
+        # update ui 
+        updateCovariate()
         })
         
     })
     
+    
     observeEvent(input$uploadDataPs, {
         withBusyIndicatorServer("uploadDataPs", {
- 
+
                 df.path.vec <- c()
                 df.name.vec <- c()
                 for(i in 1:length(input$countsfile.pathoscope[,1])){
@@ -152,9 +199,12 @@ shinyServer(function(input, output, session) {
                 shinyInput <- list(pstat = pstat)
                 #setShinyInput(shinyInput)
                 vals$shiny.input <- shinyInput
+                # update ui        
+                updateCovariate()
                 
         })
 })
+
 
     
   # setInputs(FALSE)
@@ -628,7 +678,7 @@ shinyServer(function(input, output, session) {
       dist.mat = phyloseq::distance(physeq1, method = input$select_beta_div_method)
       dist.mat <- as.matrix(dist.mat)
       return(plotHeatmapColor(dist.mat, 
-                              do.scale = input$checkbox_beta_heatmap_scale,
+                              do.scale = FALSE,
                               physeq1@sam_data[[input$select_beta_heatmap_condition]], 
                               annotationColors = add.colorbar,
                               columnTitle = paste("Heatmap with colorbar representing", 
@@ -643,7 +693,7 @@ shinyServer(function(input, output, session) {
       dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
       dist.mat <- as.matrix(dist.mat)
       return(plotHeatmapColor(dist.mat,
-                              do.scale = input$checkbox_beta_heatmap_scale,
+                              do.scale = FALSE,
                               physeq2@sam_data[[input$select_beta_heatmap_condition]], 
                               annotationColors = add.colorbar,
                               columnTitle = paste("Heatmap with colorbar representing", 

@@ -4,13 +4,21 @@
 \alias{plotPCAPlotly}
 \title{Plot PCA}
 \usage{
-plotPCAPlotly(df.input, condition.vec, condition.name = "condition",
-  columnTitle = "Title", pc.a = "PC1", pc.b = "PC2")
+plotPCAPlotly(df.input, condition.color.vec,
+  condition.color.name = "condition", condition.shape.vec,
+  condition.shape.name = "condition", columnTitle = "Title", pc.a = "PC1",
+  pc.b = "PC2")
 }
 \arguments{
 \item{df.input}{Input data object that contains the data to be plotted. Required}
 
-\item{condition.vec}{The condition used for plotting the PCA. Required}
+\item{condition.color.vec}{color vector. Required}
+
+\item{condition.color.name}{color variable name. Required}
+
+\item{condition.shape.vec}{shape vector. Required}
+
+\item{condition.shape.name}{shape variable name. Required}
 
 \item{columnTitle}{Title to be displayed at top of heatmap.}
 }
