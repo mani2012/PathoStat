@@ -50,8 +50,6 @@ shinyServer(function(input, output, session) {
                 covariates.two.levels <- c(covariates.two.levels, covariates[i])
             }
         }
-        updateSelectInput(session, "select_condition.dsf",
-                          choices = covariates)
         updateSelectInput(session, "select_condition",
                           choices = covariates)
         updateSelectInput(session, "select_heatmap_condition_1",
@@ -288,6 +286,21 @@ shinyServer(function(input, output, session) {
     }
     dat
   }
+  
+  
+  output$sampleCountSum <- renderPlotly({
+      shinyInput <- vals$shiny.input 
+      pstat <- shinyInput$pstat
+      Sample_Name <- colnames(pstat@otu_table@.Data)
+      Reads_Number <- colSums(pstat@otu_table@.Data)
+      data <- data.frame(Sample_Name, Reads_Number, stringsAsFactors = FALSE)
+      data$Sample_Name <- factor(data$Sample_Name, levels = unique(data$Sample_Name)[order(data$Reads_Number, decreasing = FALSE)])
+      p <- plot_ly(data, x = ~Sample_Name, y = ~Reads_Number, type = "bar", name = 'Sample reads count') %>% 
+          layout(margin = list(b = 160))
+      p
+  })
+  
+  
   
   ### data input summary
   

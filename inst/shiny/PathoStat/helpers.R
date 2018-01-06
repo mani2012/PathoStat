@@ -52,7 +52,7 @@ withBusyIndicatorServer <- function(buttonId, expr) {
     value <- expr
     shinyjs::show(selector = doneEl)
     shinyjs::delay(2000, shinyjs::hide(selector = doneEl, anim = TRUE, animType = "fade",
-                                       time = 0.5))
+                                       time = 30))
     value
   }, error = function(err){
     errorFunc(err, buttonId)

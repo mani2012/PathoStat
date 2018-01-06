@@ -27,6 +27,9 @@ shiny_panel_upload <- fluidPage(
                               )),
                  br(),
                  p(" "),
+                 conditionalPanel(condition = sprintf("input['%s'] == 'example'", "uploadChoice"),
+                                  helpText("Example data is loaded and ready to go!")
+                 ),
                  conditionalPanel(condition = sprintf("input['%s'] == 'files'", "uploadChoice"),
                                   fileInput("countsfile", "Counts .csv file (required):",
                                             accept = c(
@@ -62,7 +65,8 @@ shiny_panel_upload <- fluidPage(
                                       actionButton("uploadDataCount", 
                                                    "Upload",
                                                    class = "btn-primary")
-                                  )
+                                  ),
+                                  helpText("After click, please wait for 30s until seeing a green check.")
                  ),
                  conditionalPanel(condition = sprintf("input['%s'] == 'patho.files'", "uploadChoice"),
                                   h5("Upload PathoScope generated .tsv files:"),
@@ -101,14 +105,13 @@ shiny_panel_upload <- fluidPage(
                                       actionButton("uploadDataPs", 
                                                    "Upload",
                                                    class = "btn-primary")
-                                  )
+                                  ),
+                                  helpText("After click, please wait for 30s until seeing a green check.")
                                   
                  )
              ),
              mainPanel(
-                 conditionalPanel(condition = sprintf("input['%s'] == 'example'", "uploadChoice"),
-                                  h4("Example data is loaded and ready to go!")
-                 ),
+                 h4("Please click \"open in browser\" for enabling functions like multiple files upload."),
                  conditionalPanel(condition = sprintf("input['%s'] != 'example'", "uploadChoice"),
                                   helpText("Counts Table"),
                                   DT::dataTableOutput("contents.count"),
@@ -116,8 +119,8 @@ shiny_panel_upload <- fluidPage(
                                   DT::dataTableOutput("contents.meta")
                  ),
                  conditionalPanel(condition = sprintf("input['%s'] == 'patho.files'", "uploadChoice"),
-                                  h4("Please open this app in Chrome for multiple files upload."),
-                                  h5("Also, example pathoscope report files and annotation files 
+                                  
+                                  h5("Example pathoscope report files and annotation files 
                                      could be found at pathToPathoStat/inst/example/data/pathoscope_example/")
                                   ),
                  conditionalPanel(condition = sprintf("input['%s'] == 'files'", "uploadChoice"),
