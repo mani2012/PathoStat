@@ -10,8 +10,11 @@
 
 Wilcox_Test_df <- function(df, label.vec.num, pvalue.cutoff = 0.05) {
   df.output <- NULL
+  #save raw values
+  label.vec.save <- unique(label.vec.num)
+  
   # transform label into 1 and 0
-  label.vec.num[label.vec.num == label.vec.num[1]] <- 1
+  label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
   label.vec.num[label.vec.num != 1] <- 0
   
   for (i in 1:nrow(df)){
@@ -21,14 +24,15 @@ Wilcox_Test_df <- function(df, label.vec.num, pvalue.cutoff = 0.05) {
     }
     tmp.result <- wilcox.test(df[i,which(label.vec.num == 1)], df[i,which(label.vec.num == 0)], correct=FALSE)
     if (tmp.result$p.value <= pvalue.cutoff){
-      more.in.case <- sum(df[i,which(label.vec.num == 1)]) > sum(df[i,which(label.vec.num == 0)])
-      df.output <- rbind(df.output, c(rownames(df)[i], round(as.numeric(tmp.result$p.value), 4), more.in.case))
+      num.1 <- sum(df[i,which(label.vec.num == 1)])
+      num.2 <- sum(df[i,which(label.vec.num == 0)])
+      df.output <- rbind(df.output, c(rownames(df)[i], round(as.numeric(tmp.result$p.value), 4), num.1, num.2))
     }
   }
   if (is.null(df.output)){
     return(0)
   }
-  colnames(df.output) <- c("Name", "P-value", "More.in.case")
+  colnames(df.output) <- c("Name", "P-value", label.vec.save[1],label.vec.save[2])
   return(df.output)
 }
 
@@ -67,8 +71,11 @@ GET_PAM <- function(df) {
 Chisq_Test_Pam <- function(pam, label.vec.num, pvalue.cutoff = 0.05) {
   df.output <- NULL
   
+  #save raw values
+  label.vec.save <- unique(label.vec.num)
+  
   # transform label into 1 and 0
-  label.vec.num[label.vec.num == label.vec.num[1]] <- 1
+  label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
   label.vec.num[label.vec.num != 1] <- 0
   
   
@@ -79,14 +86,15 @@ Chisq_Test_Pam <- function(pam, label.vec.num, pvalue.cutoff = 0.05) {
     }
     tmp.result <- chisq.test(pam[i,], label.vec.num, correct=FALSE)
     if (tmp.result$p.value <= pvalue.cutoff){
-      more.in.case <- sum(pam[i,] == 1 & label.vec.num == 1) > sum(pam[i,] == 1 & label.vec.num == 0)
-      df.output <- rbind(df.output, c(rownames(pam)[i], round(as.numeric(tmp.result$p.value), 4), more.in.case))
+      num.1 <- sum(pam[i,] == 1 & label.vec.num == 1)
+      num.2 <- sum(pam[i,] == 1 & label.vec.num == 0)
+      df.output <- rbind(df.output, c(rownames(pam)[i], round(as.numeric(tmp.result$p.value), 4), num.1, num.2))
     }
   }
   if (is.null(df.output)){
     return(0)
   }
-  colnames(df.output) <- c("Name", "P-value", "More.in.case")
+  colnames(df.output) <- c("Name", "P-value", label.vec.save[1], label.vec.save[2])
   return(df.output)
 }
 
@@ -105,8 +113,11 @@ Chisq_Test_Pam <- function(pam, label.vec.num, pvalue.cutoff = 0.05) {
 Fisher_Test_Pam <- function(pam, label.vec.num, pvalue.cutoff = 0.05) {
   df.output <- NULL
   
+  #save raw values
+  label.vec.save <- unique(label.vec.num)
+  
   # transform label into 1 and 0
-  label.vec.num[label.vec.num == label.vec.num[1]] <- 1
+  label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
   label.vec.num[label.vec.num != 1] <- 0
   
   for (i in 1:nrow(pam)){
@@ -118,13 +129,15 @@ Fisher_Test_Pam <- function(pam, label.vec.num, pvalue.cutoff = 0.05) {
     #print(tmp.result$p.value)
     if (tmp.result$p.value <= pvalue.cutoff){
       more.in.case <- sum(pam[i,] == 1 & label.vec.num == 1) > sum(pam[i,] == 1 & label.vec.num == 0)
-      df.output <- rbind(df.output, c(rownames(pam)[i], round(as.numeric(tmp.result$p.value), 4), more.in.case))
+      num.1 <- sum(pam[i,] == 1 & label.vec.num == 1)
+      num.2 <- sum(pam[i,] == 1 & label.vec.num == 0)
+      df.output <- rbind(df.output, c(rownames(pam)[i], round(as.numeric(tmp.result$p.value), 4), num.1, num.2))
     }
   }
   #return(df.output)
   if (is.null(df.output)){
     return(0)
   }
-  colnames(df.output) <- c("Name", "P-value", "More.in.case")
+  colnames(df.output) <- c("Name", "P-value", label.vec.save[1], label.vec.save[2])
   return(df.output)
 }

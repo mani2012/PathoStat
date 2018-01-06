@@ -310,7 +310,6 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                             tabPanel("output",
                                      selectizeInput('pa.method', 'Select test method', 
                                                     choices = c("Fisher Exact Test", "Chi-squared Test", "Mann-Whitney Test")),
-                                     verbatimTextOutput("pa.case"),
                                      DT::dataTableOutput("pa.test"),
                                      downloadButton("download_pa_test", "Download this table")
                             )

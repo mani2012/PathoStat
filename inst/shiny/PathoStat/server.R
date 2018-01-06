@@ -630,9 +630,8 @@ shinyServer(function(input, output, session) {
     meta.data$richness <- estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1]
     colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
     rownames(meta.data) <- 1:nrow(meta.data)
-    meta.data <- as_tibble(meta.data)
-    meta.data <- meta.data %>% select(sample.name, condition, richness)
-    DT::datatable(meta.data)
+    
+    DT::datatable(meta.data %>% dplyr::select(sample.name, condition, richness))
     
   })
   
@@ -1160,6 +1159,8 @@ shinyServer(function(input, output, session) {
       physeq1 <- tax_glom(physeq1, input$taxl.da)
     }
     physeq1 <- prune_samples(sample_sums(physeq1) > input$da.count.cutoff, physeq1)
+
+    
     
     # deal with continuous covariates and multiple covariates
     # target condition is the last one in formula. 
@@ -1197,36 +1198,37 @@ shinyServer(function(input, output, session) {
     if (nrow(res) != 0){
       sigtab = res[(res$padj < input$da.padj.cutoff), ]
       if (nrow(sigtab) == 0){
-        DT::datatable(as.matrix("No differentially abundant items found!"))
+        return(as.matrix("No differentially abundant items found!"))
       } else{
         sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(physeq1)[rownames(sigtab), ], "matrix"))
         sigtab$padj <- as.numeric(formatC(sigtab$padj, format = "e", digits = 2))
         sigtab$log2FoldChange <- as.numeric(formatC(sigtab$log2FoldChange, format = "e", digits = 2))
+        
+        rownames(sigtab) <- 1:nrow(sigtab)
+        sigtab <- sigtab[,c(which(colnames(sigtab) == input$taxl.da), 
+                            which(colnames(sigtab) == "padj"),
+                            which(colnames(sigtab) == "log2FoldChange"))]
         output$download_deseq_tb <- downloadHandler(
           filename = function() { paste('download_deseq2_table', '.csv', sep='') },
           content = function(file) {
-            dist.mat <- as.matrix(sigtab[,-c(1,3,4,5)])
+            dist.mat <- as.matrix(sigtab)
             write.csv(data.frame(dist.mat), file)
           }
         )
-        DT::datatable(sigtab[,-c(1,3,4,5)])
+        return(sigtab)
   
       }
 
     }else{
-      DT::datatable(as.matrix("No differentially abundant items found!"))
+      return(as.matrix("No differentially abundant items found!"))
     }
 
-    
-  })
+  },
+  options = list( 
+      paging = TRUE
+  ))
 
   # Presence-Absence Variance analysis
-  output$pa.case <- renderPrint({
-      shinyInput <- vals$shiny.input
-    physeq1 <- shinyInput$pstat
-    paste("Case level is: ", physeq1@sam_data[[input$pa.condition]][1], sep = "")
-    
-  })
   
   output$pa.test <- DT::renderDataTable({
       shinyInput <- vals$shiny.input
@@ -1236,6 +1238,11 @@ shinyServer(function(input, output, session) {
     }
     physeq1 <- prune_samples(sample_sums(physeq1) > input$pa.count.cutoff, physeq1)
     df.pam <- GET_PAM(physeq1@otu_table@.Data)
+    
+    
+    # change microbe names to selected taxon level
+    rownames(df.pam) <- TranslateIdToTaxLevel(physeq1, rownames(df.pam), input$taxl.pa)
+    
     if (input$pa.method == "Fisher Exact Test"){
       output.mat <- Fisher_Test_Pam(df.pam, 
                                     physeq1@sam_data[[input$pa.condition]], 

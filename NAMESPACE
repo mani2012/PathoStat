@@ -3,6 +3,7 @@
 export(Chisq_Test_Pam)
 export(Fisher_Test_Pam)
 export(GET_PAM)
+export(TranslateIdToTaxLevel)
 export(Wilcox_Test_df)
 export(coreOTU)
 export(coreOTUModule)
