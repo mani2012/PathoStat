@@ -12,7 +12,7 @@ source("helpers.R")
 
 alpha.methods <- c("Shannon", "Simpson", "InvSimpson")
 # Weigthed Unifrac, Bray-Curtis
-beta.methods <- c("bray", "wUniFrac")
+beta.methods <- c("wUniFrac", "bray")
 
 tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 'family', 
     'genus', 'species', 'no rank')
@@ -76,8 +76,6 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                 #   tax.abb, tax.name)),
                 selectizeInput('taxl', 'Taxonomy Level', choices = tax.name, 
                     selected='no rank'),
-                br(),
-                p(" "),
                 selectInput("select_condition", "Select Condition:",
                             covariates),
                 width=3
@@ -89,14 +87,16 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                     # new heatmap
                     tabPanel("Heatmap", 
                              helpText("Note: Only variables with less than 8 levels could be mapped to color bar."),
-                             selectInput("select_heatmap_condition_1", "Add colorbar based on:",
-                                         covariates.colorbar),
-                             selectInput("select_heatmap_condition_2", "Add second colorbar based on:",
-                                         covariates.colorbar),
-                             checkboxInput("checkbox_heatmap_scale", "Row scaling", value = TRUE),
-                             checkboxInput("checkbox_heatmap", "Add colorbar", value = TRUE),
-                             downloadButton('download_heatmap_pdf', 'Download heatmap PDF'),
-                             plotOutput("Heatmap", height="550px"))
+                             fluidRow(            
+                                 column(3, selectInput("select_heatmap_condition_1", "Add colorbar based on:",
+                                                       covariates.colorbar)),
+                                 column(3, selectInput("select_heatmap_condition_2", "Add second colorbar based on:",
+                                                                                        covariates.colorbar)),
+                                 column(3, checkboxInput("checkbox_heatmap_scale", "Row scaling", value = TRUE)),
+                                 column(3, checkboxInput("checkbox_heatmap", "Add colorbar", value = TRUE))       
+                             ),
+                             plotOutput("Heatmap", height="550px"),
+                             downloadButton('download_heatmap_pdf', 'Download heatmap PDF'))
                 ), width=9
             )
         )
@@ -107,6 +107,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                      
                 sidebarLayout(
                     sidebarPanel(
+                        br(),
                      selectizeInput('taxl.alpha', 'Taxonomy Level', choices = tax.name, 
                                      selected='no rank'),
                      selectInput("select_alpha_div_condition", "Compare between:",
@@ -115,7 +116,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                                  alpha.methods)
                     ),
                     mainPanel(
-                     
+                     br(),
                      tabsetPanel(
                        tabPanel("Boxplot", 
                                 plotlyOutput("AlphaDiversity"),
@@ -127,6 +128,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                                 verbatimTextOutput("alpha.stat.test")
                        ),
                        tabPanel("Alpha Diversity Table", 
+                                br(),
                                 downloadButton('download_table_alpha', 'Download this table'),
                                 DT::dataTableOutput("table.alpha")
                        )
@@ -147,13 +149,16 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                                    covariates.two.levels)
                      ),
                      mainPanel(
-                       
+                       br(),
                        tabsetPanel(
                          tabPanel("Heatmap", 
-                                  selectInput("select_beta_heatmap_condition_1", "Add colorbar on:",
-                                              covariates.colorbar),
-                                  selectInput("select_beta_heatmap_condition_2", "Add second colorbar on:",
-                                              covariates.colorbar),
+                                  br(),
+                                  fluidRow(
+                                      column(3, selectInput("select_beta_heatmap_condition_1", "Add colorbar on:",
+                                                            covariates.colorbar)),
+                                      column(3, selectInput("select_beta_heatmap_condition_2", "Add second colorbar on:",
+                                                            covariates.colorbar))
+                                  ),
                                   checkboxInput("checkbox_beta_heatmap", "Add colorbar", value = TRUE),
                                   plotOutput("BetaDiversityHeatmap"),
                                   downloadButton('download_beta_heatmap_pdf', 'Download heatmap PDF')
@@ -169,6 +174,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                                   verbatimTextOutput("beta.stat.test")
                          ),
                          tabPanel("Beta Diversity Table", 
+                                  br(),
                                   downloadButton('download_table_beta', 'Download this table'),
                                   DT::dataTableOutput("table.beta")
                          )
@@ -275,7 +281,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                           helpText("Continuous covariates would be automatically cut into factors with 3 levels."),
                           numericInput('da.count.cutoff', 'Minumum count cut-off', 500,
                                        min = 1, max = 5000),
-                          numericInput('da.padj.cutoff', 'Choose padj cut-off', 0.05,
+                          numericInput('da.padj.cutoff', 'Choose padj cut-off', 0.5,
                                        min = 1e-100, max = 1),
                           width=3
                         ),
@@ -300,7 +306,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                                 choices = covariates.two.levels),
                  numericInput('pa.count.cutoff', 'Minumum count cut-off', 500,
                               min = 1, max = 5000),
-                 numericInput('pa.padj.cutoff', 'Choose padj cut-off', 0.05,
+                 numericInput('pa.padj.cutoff', 'Choose padj cut-off', 0.5,
                               min = 1e-100, max = 1),
                  width=3
                ),
