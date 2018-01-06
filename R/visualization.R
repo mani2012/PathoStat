@@ -75,31 +75,41 @@ plotHeatmapColor <- function(df.input, condition.vec,
 #' Plot PCA
 #'
 #' @param df.input Input data object that contains the data to be plotted. Required
-#' @param condition.vec The condition used for plotting the PCA. Required
+#' @param condition.color.vec color vector. Required
+#' @param condition.color.name color variable name. Required
+#' @param condition.shape.vec shape vector. Required
+#' @param condition.shape.name shape variable name. Required
 #' @param columnTitle Title to be displayed at top of heatmap.
 #' @export
 #' @examples
 #' plotPCAPlotly(df.input, condition.vec, condition.name = "condition", 
 #' columnTitle = "Title", pc.a = "PC1", pc.b = "PC2")
-plotPCAPlotly <- function(df.input, condition.vec, condition.name = "condition", columnTitle = "Title", pc.a = "PC1", pc.b = "PC2"){
-  
-  #test and fix the constant/zero row
-  if (sum(rowSums(as.matrix(df.input)) == 0) > 0){
-    df.input <- df.input[-which(rowSums(as.matrix(df.input)) == 0),]
-  }
-  
-  # conduct PCA
-  pca.tmp<- prcomp(t(df.input), scale = TRUE)
-  tmp.df <- data.frame(pca.tmp$x)
-  # add color variable
-  tmp.df[[paste(condition.name)]] <- condition.vec
- 
-  plot_ly(tmp.df, 
-               x = as.formula(paste("~", pc.a, sep = "")), 
-               y = as.formula(paste("~", pc.b, sep = "")),
-               mode = "markers", color = as.formula(paste("~", condition.name, sep = "")), type = "scatter",
-               text = rownames(tmp.df), 
-               marker = list(size = 10))
+plotPCAPlotly <- function(df.input, 
+                          condition.color.vec, condition.color.name = "condition", 
+                          condition.shape.vec, condition.shape.name = "condition",
+                          columnTitle = "Title", pc.a = "PC1", pc.b = "PC2"){
+    
+    #test and fix the constant/zero row
+    if (sum(rowSums(as.matrix(df.input)) == 0) > 0){
+        df.input <- df.input[-which(rowSums(as.matrix(df.input)) == 0),]
+    }
+    
+    # conduct PCA
+    pca.tmp<- prcomp(t(df.input), scale = TRUE)
+    tmp.df <- data.frame(pca.tmp$x)
+    # add color variable
+    tmp.df[[paste(condition.color.name)]] <- condition.color.vec
+    # add shape variable
+    tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
+    plot_ly(tmp.df, 
+            x = as.formula(paste("~", pc.a, sep = "")), 
+            y = as.formula(paste("~", pc.b, sep = "")),
+            mode = "markers", 
+            color = as.formula(paste("~", condition.color.name, sep = "")), 
+            symbol = as.formula(paste("~", condition.shape.name, sep = "")), 
+            type = "scatter",
+            text = rownames(tmp.df), 
+            marker = list(size = 10))
 }
 
 
@@ -108,13 +118,19 @@ plotPCAPlotly <- function(df.input, condition.vec, condition.name = "condition",
 #' Plot PCoA
 #'
 #' @param df.input Input data object that contains the data to be plotted. Required
-#' @param condition.vec The condition used for plotting the PCoA. Required
+#' @param condition.color.vec color vector. Required
+#' @param condition.color.name color variable name. Required
+#' @param condition.shape.vec shape vector. Required
+#' @param condition.shape.name shape variable name. Required
 #' @param columnTitle Title to be displayed at top of heatmap.
 #' @export
 #' @examples 
 #' plotPCoAPlotly(physeq.input, condition.vec, condition.name = "condition", method = "bray", 
 #' columnTitle = "Title", pc.a = "Axis.1", pc.b = "Axis.2")
-plotPCoAPlotly <- function(physeq.input, condition.vec, condition.name = "condition", method = "bray", columnTitle = "Title", pc.a = "Axis.1", pc.b = "Axis.2"){
+plotPCoAPlotly <- function(physeq.input, 
+                           condition.color.vec, condition.color.name = "condition", 
+                           condition.shape.vec, condition.shape.name = "condition", 
+                           method = "bray", columnTitle = "Title", pc.a = "Axis.1", pc.b = "Axis.2"){
   # conduct PCoA
   # wUniFrac or bray
 
@@ -133,13 +149,18 @@ plotPCoAPlotly <- function(physeq.input, condition.vec, condition.name = "condit
     tmp.df <- data.frame(ordUF$vectors)
   }
   
-  # add color variable
-  tmp.df[[paste(condition.name)]] <- condition.vec
+    # add color variable
+    tmp.df[[paste(condition.color.name)]] <- condition.color.vec
+    # add shape variable
+    tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
   
   plot_ly(tmp.df, 
           x = as.formula(paste("~", pc.a, sep = "")), 
           y = as.formula(paste("~", pc.b, sep = "")),
-          mode = "markers", color = as.formula(paste("~", condition.name, sep = "")), type = "scatter",
+          mode = "markers", 
+          color = as.formula(paste("~", condition.color.name, sep = "")), 
+          symbol = as.formula(paste("~", condition.shape.name, sep = "")), 
+          type = "scatter",
           text = rownames(tmp.df), 
           marker = list(size = 10))
 }

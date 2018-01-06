@@ -908,21 +908,26 @@ shinyServer(function(input, output, session) {
     physeq1 <- shinyInput$pstat
     if (input$taxl.pca=="no rank")  {
       plotPCAPlotly(df.input = physeq1@otu_table@.Data, 
-                    condition.vec = physeq1@sam_data[[input$select_pca_condition]],
-                    condition.name = input$select_pca_condition,
+                    condition.color.vec = physeq1@sam_data[[input$select_pca_color]],
+                    condition.color.name = input$select_pca_color,
+                    condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]],
+                    condition.shape.name = input$select_pca_shape,                    
+                    
                     pc.a = paste("PC", input$xcol.new, sep = ""),
                     pc.b = paste("PC", input$ycol.new, sep = ""),
                     columnTitle = paste("PCA with colorbar representing", 
-                                        input$select_pca_condition, sep = " "))
+                                        input$select_pca_color, sep = " "))
     } else  {
       physeq2 <- tax_glom(physeq1, input$taxl.pca)
       plotPCAPlotly(df.input = physeq2@otu_table@.Data, 
-                    condition.vec = physeq2@sam_data[[input$select_pca_condition]],
-                    condition.name = input$select_pca_condition,
+                    condition.color.vec = physeq2@sam_data[[input$select_pca_color]],
+                    condition.color.name = input$select_pca_color,
+                    condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]],
+                    condition.shape.name = input$select_pca_shape, 
                     pc.a = paste("PC", input$xcol.new, sep = ""),
                     pc.b = paste("PC", input$ycol.new, sep = ""),
                     columnTitle = paste("PCA with colorbar representing", 
-                                        input$select_pca_condition, sep = " "))}
+                                        input$select_pca_color, sep = " "))}
   }
   
   # show heatmap in the shiny app by calling the plotting function
@@ -976,23 +981,27 @@ shinyServer(function(input, output, session) {
                         tax_table(physeq1), sample_data(physeq1))
     if (input$taxl.pca=="no rank")  {
       plotPCoAPlotly(physeq.input = physeq1, 
-                     condition.vec = physeq1@sam_data[[input$select_pca_condition]],
-                     condition.name = input$select_pca_condition,
+                     condition.color.vec = physeq1@sam_data[[input$select_pca_color]],
+                     condition.color.name = input$select_pca_color,
+                     condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]],
+                     condition.shape.name = input$select_pca_shape,                      
                      method = input$pcoa.method,
                      pc.a = paste("Axis", input$xcol.new, sep = "."),
                      pc.b = paste("Axis", input$ycol.new, sep = "."),
                      columnTitle = paste("PCoA with colorbar representing", 
-                                         input$select_pca_condition, sep = " "))
+                                         input$select_pca_color, sep = " "))
     } else  {
       physeq2 <- tax_glom(physeq1, input$taxl.pca)
       plotPCoAPlotly(physeq.input = physeq2, 
-                     condition.vec = physeq2@sam_data[[input$select_pca_condition]],
-                     condition.name = input$select_pca_condition,
+                     condition.color.vec = physeq2@sam_data[[input$select_pca_color]],
+                     condition.color.name = input$select_pca_color,
+                     condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]],
+                     condition.shape.name = input$select_pca_shape,                      
                      method = input$pcoa.method,
                      pc.a = paste("Axis", input$xcol.new, sep = "."),
                      pc.b = paste("Axis", input$ycol.new, sep = "."),
                      columnTitle = paste("PCoA with colorbar representing", 
-                                         input$select_pca_condition, sep = " "))}
+                                         input$select_pca_color, sep = " "))}
   }
   
   
