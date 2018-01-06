@@ -15,7 +15,7 @@ shiny_panel_upload <- fluidPage(
                      
                  ),
                  
-                 p("Statistical Microbiome Analysis on metagenomics")
+                 p("Statistical Microbiome Analysis Toolkit")
              )
          ),
          sidebarLayout(
@@ -106,11 +106,14 @@ shiny_panel_upload <- fluidPage(
                  )
              ),
              mainPanel(
+                 conditionalPanel(condition = sprintf("input['%s'] == 'example'", "uploadChoice"),
+                                  h4("Example data is loaded and ready to go!")
+                 ),
                  conditionalPanel(condition = sprintf("input['%s'] != 'example'", "uploadChoice"),
                                   helpText("Counts Table"),
-                                  tableOutput("contents.count"),
+                                  DT::dataTableOutput("contents.count"),
                                   helpText("Annotation table"),
-                                  tableOutput("contents.meta")
+                                  DT::dataTableOutput("contents.meta")
                  ),
                  conditionalPanel(condition = sprintf("input['%s'] == 'patho.files'", "uploadChoice"),
                                   h4("Please open this app in Chrome for multiple files upload."),

@@ -7,9 +7,6 @@ library(ape)
 library(plotly)
 source("helpers.R")
 
-source("ui_01_upload.R", local = TRUE) #creates shiny_panel_upload variable
-
-
 
 
 
@@ -58,30 +55,20 @@ maxcondElems <- minbatch(c(pstat@sam_data[,2])[[1]])
 defaultDisp <- 30
 defaultGenesDisp <- 10
 maxGenes <- dim(pstat@otu_table)[1]
-shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE, 
+
+
+# load ui tabs right before calling shinyUI()
+source("ui_01_upload.R", local = TRUE) #creates shiny_panel_upload variable
+source("ui_02_filter.R", local = TRUE) #creates shiny_panel_upload variable
+
+
+
+
+shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), id="PathoStat", fluid=TRUE, 
     
     theme = "bootstrap.min.css",
     tabPanel("Upload", shiny_panel_upload),
-    tabPanel("Data Summary/Filtering",
-             sidebarLayout(
-                 sidebarPanel(
-                     selectInput("select_condition.dsf", "Select Condition:",
-                                 covariates),
-                     width=3
-                 ),
-                 mainPanel(
-                     tabsetPanel(
-                         tabPanel("Data summary",
-                                  helpText("We have nothing here now! :'( ")
-                         ),
-                         tabPanel("Annotation",
-                                  helpText("We have nothing here now! :'( ")
-                         ),
-                         coreOTUModuleUI("coreOTUModule")
-                     ), width=9
-                 )
-             )
-    ),
+    tabPanel("Data Summary/Filtering", shiny_panel_filter),
     tabPanel("Relative Abundance",
         sidebarLayout(
             sidebarPanel(
@@ -89,8 +76,6 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                 #   tax.abb, tax.name)),
                 selectizeInput('taxl', 'Taxonomy Level', choices = tax.name, 
                     selected='no rank'),
-                downloadButton('downloadData', 'Download RA CSV'),
-                downloadButton('downloadCountData', 'Download Count CSV'),
                 br(),
                 p(" "),
                 selectInput("select_condition", "Select Condition:",
@@ -111,11 +96,7 @@ shinyUI(navbarPage("PathoStat", id="PathoStat", fluid=TRUE,
                              checkboxInput("checkbox_heatmap_scale", "Row scaling", value = TRUE),
                              checkboxInput("checkbox_heatmap", "Add colorbar", value = TRUE),
                              downloadButton('download_heatmap_pdf', 'Download heatmap PDF'),
-                             plotOutput("Heatmap", height="550px")),
-                    tabPanel("RA Table(%)", DT::dataTableOutput("TaxRAtable", 
-                        width='95%')),
-                    tabPanel("Count Table", DT::dataTableOutput("TaxCountTable",
-                        width='95%'))
+                             plotOutput("Heatmap", height="550px"))
                 ), width=9
             )
         )

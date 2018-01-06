@@ -128,6 +128,8 @@ shinyServer(function(input, output, session) {
         vals$shiny.input <- shinyInput
         # update ui 
         updateCovariate()
+        
+        
         })
         
     })
@@ -258,6 +260,17 @@ shinyServer(function(input, output, session) {
     vals$taxcountdata
   })
   
+  findTaxDataTable <- reactive({
+      findAllTaxData(input$taxlTable)
+      vals$taxdata
+  })
+  
+  
+  findTaxCountDataTable <- reactive({
+      findAllTaxData(input$taxlTable)
+      vals$taxcountdata
+  })
+  
   findTaxCountDataDE <- reactive({
     findAllTaxData(input$taxlde)
     vals$taxcountdata
@@ -278,66 +291,66 @@ shinyServer(function(input, output, session) {
   
   ### data input summary
   
-  output$contents.count <- renderTable({
+  output$contents.count <- DT::renderDataTable({
       
       # input$file1 will be NULL initially. After the user selects
       # and uploads a file, head of that data file by default,
       # or all rows if selected, will be shown.
       
       if (!is.null(input$countsfile)){
-          req(input$countsfile)
-          df <- read.csv(input$countsfile$datapath,
-                         header = input$header.count,
-                         sep = input$sep.count)
-          if (ncol(df) < 4){
-              return(head(df)) 
-          } else{
-              return(head(df[,1:3]))
+          if (input$uploadChoice == "files"){
+              req(input$countsfile)
+              df <- read.csv(input$countsfile$datapath,
+                             header = input$header.count,
+                             sep = input$sep.count)
+              return(df)
           }
-      } else if (!is.null(input$countsfile.pathoscope)){
+
+      }
+      if (!is.null(input$countsfile.pathoscope)){
+          if (input$uploadChoice == "patho.files"){
           req(input$countsfile.pathoscope)
           df <- read.csv(input$countsfile.pathoscope[[1, 'datapath']],
                          skip = 1,
                          header = TRUE,
                          sep = input$sep.ps)
-          if (ncol(df) < 4){
-              return(head(df)) 
-          } else{
-              return(head(df[,1:3]))
+          return(df)
           }
       }
-
-  })
+  },
+  options = list( 
+      paging = TRUE, scrollX = TRUE, pageLength = 5 
+  ))
   
-  output$contents.meta <- renderTable({
+  output$contents.meta <- DT::renderDataTable({
       
       # input$file1 will be NULL initially. After the user selects
       # and uploads a file, head of that data file by default,
       # or all rows if selected, will be shown.
       
       if (!is.null(input$annotfile.count)){
+          if (input$uploadChoice == "files"){
           req(input$annotfile.count)
           df <- read.csv(input$annotfile.count$datapath,
                          header = input$header.count,
                          sep = input$sep.count)
-          if (ncol(df) < 5){
-              return(head(df)) 
-          } else{
-              return(head(df[,1:4]))
+          return(df)
           }
-      } else if (!is.null(input$annotfile.ps)){
+      }
+      if (!is.null(input$annotfile.ps)){
+          if (input$uploadChoice == "patho.files"){
           req(input$countsfile.pathoscope)
          
           df <- read.csv(input$annotfile.ps$datapath,
                          header = input$header.ps,
                          sep = input$sep.ps)
-          if (ncol(df) < 5){
-              return(head(df)) 
-          } else{
-              return(head(df[,1:4]))
+          return(df)
           }
       }
-  })
+  },
+  options = list( 
+      paging = TRUE, scrollX = TRUE, pageLength = 5 
+  ))
   
   
   
@@ -419,39 +432,39 @@ shinyServer(function(input, output, session) {
   format_RA_table <- function(tmp) {
     tmp %>% dplyr::add_rownames("fullname") %>%
       dplyr::mutate_each(dplyr::funs(pct2str), -fullname) %>%
-      tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl),
+      tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxlTable),
                       sep='\\|') %>%
-      dplyr::select_(.dots=c(as.name(input$taxl), 'taxid', colnames(tmp)))
+      dplyr::select_(.dots=c(as.name(input$taxlTable), 'taxid', colnames(tmp)))
   }
   
   # Render relative abundance table
-  output$TaxRAtable <- DT::renderDataTable(format_RA_table(findTaxData()),
+  output$TaxRAtable <- DT::renderDataTable(format_RA_table(findTaxDataTable()),
                                            options=dtopts, rownames=F)
   
   # Format count table:
   # Just expands taxa name
   format_Count_table <- function(tmp) {
     tmp %>% dplyr::add_rownames("fullname") %>%
-      tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxl),
+      tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxlTable),
                       sep='\\|') %>%
-      dplyr::select_(.dots=c(as.name(input$taxl), 'taxid', colnames(tmp)))
+      dplyr::select_(.dots=c(as.name(input$taxlTable), 'taxid', colnames(tmp)))
   }
   # Render count table
   output$TaxCountTable <- DT::renderDataTable(format_Count_table(
-    findTaxCountData()), options=dtopts, rownames=F)
+    findTaxCountDataTable()), options=dtopts, rownames=F)
   
   output$downloadData <- downloadHandler(filename = function() {
-    paste0("sample_data_", input$taxl, ".csv", sep = "")
+    paste0("sample_data_", input$taxlTable, ".csv", sep = "")
   }, content = function(file) {
-    shinyInput <- vals$shiny.input
-    write.csv(shinyInput$taxdata, file)
+    df.out <- format_RA_table(findTaxDataTable())
+    write.csv(df.out, file)
   })
   
   output$downloadCountData <- downloadHandler(filename = function() {
-    paste0("sample_data_count_", input$taxl, ".csv", sep = "")
+    paste0("sample_data_count_", input$taxlTable, ".csv", sep = "")
   }, content = function(file) {
-     shinyInput <- vals$shiny.input
-    write.csv(shinyInput$taxcountdata, file)
+      df.out <- format_Count_table(findTaxCountDataTable())
+    write.csv(df.out, file)
   })
   
   output$confRegion <- renderPlot({
