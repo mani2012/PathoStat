@@ -1,7 +1,10 @@
 #' Plot heatmap with color bar
 #'
 #' @param df.input Input data object that contains the data to be plotted. Required
-#' @param condition.vec The condition used for plotting the heatmap. Required
+#' @param condition.vec.1 color vector. Required
+#' @param condition.vec.2 color vector 2. Required
+#' @param condition.1.name color vector 1 name. Required
+#' @param condition.2.name color vector 2 name. Required
 #' @param clusterRow Cluster the rows. The default is TRUE
 #' @param clusterCol Cluster the columns. The default is TRUE
 #' @param displayRowLabels Display the row labels on the heatmap. The default
@@ -26,49 +29,57 @@
 #' displayColumnDendrograms=TRUE, annotationColors = "auto",
 #' columnTitle="Title")
 
-plotHeatmapColor <- function(df.input, condition.vec,
+plotHeatmapColor <- function(df.input, 
+                             condition.vec.1,
+                             condition.vec.2,
+                             condition.1.name,
+                             condition.2.name,
                              do.scale = TRUE,
                              clusterRow=TRUE, clusterCol=TRUE, displayRowLabels=FALSE,
                              displayColumnLabels=TRUE, displayRowDendrograms=TRUE,
                              displayColumnDendrograms=TRUE, annotationColors = "auto",
                              columnTitle="Title"){
-  #test and fix the constant/zero row
-  if (sum(rowSums(as.matrix(df.input)) == 0) > 0){
-    df.input <- df.input[-which(rowSums(as.matrix(df.input)) == 0),]
-  }
-  
-  
-  if (is.null(annotationColors)){
-    topha <- NULL
-  } else if (annotationColors == "auto") {
-    colors <- RColorBrewer::brewer.pal(8, "Set1")
-    cond_levels <- unique(condition.vec)
-    if (length(cond_levels) > 8){
-      stop("Too many levels in condition for auto coloring")
+    #test and fix the constant/zero row
+    if (sum(rowSums(as.matrix(df.input)) == 0) > 0){
+        df.input <- df.input[-which(rowSums(as.matrix(df.input)) == 0),]
     }
-    col <- list(type = setNames(colors[1:length(cond_levels)], cond_levels))
-    topha <- ComplexHeatmap::HeatmapAnnotation(df = data.frame(type = condition.vec),
-                                               col = col)
-  } else {
-    topha <- ComplexHeatmap::HeatmapAnnotation(df = data.frame(type = condition.vec),
-                                               col = annotationColors)
-  }
-  
-  # row scale
-  if (do.scale == TRUE){
-    df.input <- t(scale(t(df.input)))
-  }
-  heatmap <- ComplexHeatmap::Heatmap(df.input,
-                                     name = "Expression",
-                                     column_title = columnTitle,
-                                     cluster_rows = clusterRow,
-                                     cluster_columns = clusterCol,
-                                     top_annotation = topha,
-                                     show_row_names = displayRowLabels,
-                                     show_column_names = displayColumnLabels,
-                                     show_row_dend = displayRowDendrograms,
-                                     show_column_dend = displayColumnDendrograms)
-  return(heatmap)
+    
+    
+    if (is.null(annotationColors)){
+        topha <- NULL
+    } else if (annotationColors == "auto") {
+        colors <- RColorBrewer::brewer.pal(8, "Set1")
+        cond_levels.1 <- unique(condition.vec.1)
+        cond_levels.2 <- unique(condition.vec.2)
+        if (length(cond_levels.1) > 8 | length(cond_levels.2) > 8){
+            stop("Too many levels in condition for auto coloring")
+        }
+        col <- list()
+        col[[paste(condition.1.name)]] <- setNames(colors[1:length(cond_levels.1)], cond_levels.1)
+        col[[paste(condition.2.name)]] <- setNames(colors[1:length(cond_levels.2)], cond_levels.2)
+        
+        df.plot <- list()
+        df.plot[[paste(condition.1.name)]] <- condition.vec.1
+        df.plot[[paste(condition.2.name)]] <- condition.vec.2
+        topha <- ComplexHeatmap::HeatmapAnnotation(df = data.frame(df.plot),
+                                                   col = col)
+    } 
+    
+    # row scale
+    if (do.scale == TRUE){
+        df.input <- t(scale(t(df.input)))
+    }
+    heatmap <- ComplexHeatmap::Heatmap(df.input,
+                                       name = "Expression",
+                                       column_title = columnTitle,
+                                       cluster_rows = clusterRow,
+                                       cluster_columns = clusterCol,
+                                       top_annotation = topha,
+                                       show_row_names = displayRowLabels,
+                                       show_column_names = displayColumnLabels,
+                                       show_row_dend = displayRowDendrograms,
+                                       show_column_dend = displayColumnDendrograms)
+    return(heatmap)
 }
 
 

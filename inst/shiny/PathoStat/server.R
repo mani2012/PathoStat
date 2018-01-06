@@ -54,13 +54,17 @@ shinyServer(function(input, output, session) {
                           choices = covariates)
         updateSelectInput(session, "select_condition",
                           choices = covariates)
-        updateSelectInput(session, "select_heatmap_condition",
+        updateSelectInput(session, "select_heatmap_condition_1",
+                          choices = covariates.colorbar)
+        updateSelectInput(session, "select_heatmap_condition_2",
                           choices = covariates.colorbar)
         updateSelectInput(session, "select_alpha_div_condition",
                           choices = covariates.colorbar)
         updateSelectInput(session, "select_beta_condition",
                           choices = covariates.two.levels)
-        updateSelectInput(session, "select_beta_heatmap_condition",
+        updateSelectInput(session, "select_beta_heatmap_condition_1",
+                          choices = covariates.colorbar)
+        updateSelectInput(session, "select_beta_heatmap_condition_2",
                           choices = covariates.colorbar)
         updateSelectInput(session, "select_pca_color",
                           choices = covariates)
@@ -509,7 +513,10 @@ shinyServer(function(input, output, session) {
       }
       return(plotHeatmapColor(physeq1@otu_table@.Data, 
                               do.scale = input$checkbox_heatmap_scale,
-                              physeq1@sam_data[[input$select_heatmap_condition]], 
+                              condition.vec.1 = physeq1@sam_data[[input$select_heatmap_condition_1]],
+                              condition.vec.2 = physeq1@sam_data[[input$select_heatmap_condition_2]],
+                              condition.1.name = input$select_heatmap_condition_1,
+                              condition.2.name = input$select_heatmap_condition_2,
                               annotationColors = add.colorbar,
                               columnTitle = paste("Heatmap with colorbar representing", 
                                                   input$select_heatmap_condition, sep = " ")))
@@ -522,7 +529,10 @@ shinyServer(function(input, output, session) {
       }
       return(plotHeatmapColor(physeq2@otu_table@.Data, 
                               do.scale = input$checkbox_heatmap_scale,
-                              physeq2@sam_data[[input$select_heatmap_condition]], 
+                              condition.vec.1 = physeq2@sam_data[[input$select_heatmap_condition_1]],
+                              condition.vec.2 = physeq2@sam_data[[input$select_heatmap_condition_2]],
+                              condition.1.name = input$select_heatmap_condition_1,
+                              condition.2.name = input$select_heatmap_condition_2,
                               annotationColors = add.colorbar,
                               columnTitle = paste("Heatmap with colorbar representing", 
                                                   input$select_heatmap_condition, sep = " ")))
@@ -679,7 +689,10 @@ shinyServer(function(input, output, session) {
       dist.mat <- as.matrix(dist.mat)
       return(plotHeatmapColor(dist.mat, 
                               do.scale = FALSE,
-                              physeq1@sam_data[[input$select_beta_heatmap_condition]], 
+                              condition.vec.1 = physeq1@sam_data[[input$select_beta_heatmap_condition_1]],
+                              condition.vec.2 = physeq1@sam_data[[input$select_beta_heatmap_condition_2]],
+                              condition.1.name = input$select_beta_heatmap_condition_1,
+                              condition.2.name = input$select_beta_heatmap_condition_2,
                               annotationColors = add.colorbar,
                               columnTitle = paste("Heatmap with colorbar representing", 
                                                   input$select_beta_heatmap_condition, sep = " ")))
@@ -694,7 +707,10 @@ shinyServer(function(input, output, session) {
       dist.mat <- as.matrix(dist.mat)
       return(plotHeatmapColor(dist.mat,
                               do.scale = FALSE,
-                              physeq2@sam_data[[input$select_beta_heatmap_condition]], 
+                              condition.vec.1 = physeq2@sam_data[[input$select_beta_heatmap_condition_1]],
+                              condition.vec.2 = physeq2@sam_data[[input$select_beta_heatmap_condition_2]],
+                              condition.1.name = input$select_beta_heatmap_condition_1,
+                              condition.2.name = input$select_beta_heatmap_condition_2,
                               annotationColors = add.colorbar,
                               columnTitle = paste("Heatmap with colorbar representing", 
                                                   input$select_beta_heatmap_condition, sep = " ")))
