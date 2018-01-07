@@ -952,9 +952,12 @@ shinyServer(function(input, output, session) {
       dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
     }
     dist.mat <- as.matrix(dist.mat)
-    DT::datatable(dist.mat)
+    return(dist.mat)
     
-  })
+  },
+  options = list( 
+      paging = TRUE, scrollX = TRUE
+  ))
   
   output$download_table_beta <- downloadHandler(
     filename = function() { paste('Beta_diversity_table', '.csv', sep='') },
