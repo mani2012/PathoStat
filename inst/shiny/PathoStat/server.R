@@ -1198,6 +1198,57 @@ shinyServer(function(input, output, session) {
   
   
   ## New DA analysis section
+  
+  output$edgerTable.new <- DT::renderDataTable({
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
+      if (input$taxl.edger !="no rank"){
+          pstat <- tax_glom(pstat, input$taxl.edger)
+      }
+      dge = phyloseq_to_edgeR(pstat, group=input$edger.condition)
+      # Perform binary test
+      et = exactTest(dge)
+      # Extract values from test results
+      tt = topTags(et, n=nrow(dge$table), adjust.method="BH", sort.by="PValue")
+      res = tt@.Data[[1]]
+      sigtab = res[(res$FDR < input$edger.padj.cutoff), ]
+      sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(pstat)[rownames(sigtab), ], "matrix"))
+
+          if (nrow(sigtab) == 0){
+              return(as.matrix("No differentially abundant items found!"))
+          } else{
+              sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(pstat)[rownames(sigtab), ], "matrix"))
+              sigtab$FDR <- as.numeric(formatC(sigtab$FDR, format = "e", digits = 2))
+              sigtab$logFC <- as.numeric(formatC(sigtab$logFC, format = "e", digits = 2))
+              
+              
+              sigtab <- sigtab[,c(which(colnames(sigtab) == input$taxl.edger)[1], 
+                                  which(colnames(sigtab) == "FDR"),
+                                  which(colnames(sigtab) == "logFC"))]
+              rownames(sigtab) <- 1:nrow(sigtab)
+              output$download_edger_tb <- downloadHandler(
+                  filename = function() { paste('download_edger_table', '.csv', sep='') },
+                  content = function(file) {
+                      dist.mat <- as.matrix(sigtab)
+                      write.csv(data.frame(dist.mat), file)
+                  }
+              )
+              return(sigtab)
+              
+          }
+
+      
+  },
+  options = list( 
+      paging = TRUE
+  ))
+  
+  
+  
+  
+  
+  
+  
   output$DeSeq2Table.new <- DT::renderDataTable({
       shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
@@ -1251,7 +1302,7 @@ shinyServer(function(input, output, session) {
         sigtab$log2FoldChange <- as.numeric(formatC(sigtab$log2FoldChange, format = "e", digits = 2))
         
         rownames(sigtab) <- 1:nrow(sigtab)
-        sigtab <- sigtab[,c(which(colnames(sigtab) == input$taxl.da), 
+        sigtab <- sigtab[,c(which(colnames(sigtab) == input$taxl.da[1]), 
                             which(colnames(sigtab) == "padj"),
                             which(colnames(sigtab) == "log2FoldChange"))]
         output$download_deseq_tb <- downloadHandler(

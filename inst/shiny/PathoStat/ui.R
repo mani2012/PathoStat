@@ -303,6 +303,31 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                         )
                       )
              ),
+             tabPanel("edgeR", 
+                      
+                      sidebarLayout(
+                          sidebarPanel(
+                              selectizeInput('taxl.edger', 'Taxonomy Level', choices = tax.name, 
+                                             selected='no rank'),
+                              selectizeInput('edger.condition', 'Select condition', 
+                                             choices = covariates.two.levels),
+                              helpText("Continuous covariates would be automatically cut into factors with 3 levels."),
+                              numericInput('edger.padj.cutoff', 'Choose padj cut-off', 0.5,
+                                           min = 1e-100, max = 1),
+                              width=3
+                          ),
+                          mainPanel(
+                              tabPanel("edgeR", 
+                                       tabsetPanel(
+                                           tabPanel("DE output",
+                                                    DT::dataTableOutput("edgerTable.new"),
+                                                    downloadButton("download_edger_tb", "Download this table")
+                                           )
+                                       )
+                              ), width=9
+                          )
+                      )
+             ),
              tabPanel("Statistical Test (presence-absence or count based)",
              sidebarLayout(
                sidebarPanel(
