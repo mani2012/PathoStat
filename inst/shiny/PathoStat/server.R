@@ -29,6 +29,17 @@ shinyServer(function(input, output, session) {
     )
     
     
+    
+    # update samples
+    updateSample <- function(){
+        shinyInput <- vals$shiny.input
+        pstat <- shinyInput$pstat
+        updateSelectInput(session, "filterSample",
+                          choices = colnames(pstat@otu_table@.Data))
+    }
+    
+    
+    
     #Update covariate names
     updateCovariate <- function(){
         shinyInput <- vals$shiny.input
@@ -84,7 +95,7 @@ shinyServer(function(input, output, session) {
                              row.names = 1,
                              stringsAsFactors = FALSE,
                              sep = input$sep.count)
-        cat(dim(df.input))
+        #cat(dim(df.input))
         df.meta.input <- read.csv(input$annotfile.count$datapath,
                                   header = input$header.count,
                                   sep = input$sep.count,
@@ -126,7 +137,7 @@ shinyServer(function(input, output, session) {
         vals$shiny.input <- shinyInput
         # update ui 
         updateCovariate()
-        
+        updateSample()
         
         })
         
@@ -143,7 +154,7 @@ shinyServer(function(input, output, session) {
                     df.name.vec[i] <- input$countsfile.pathoscope[[i, 'name']]
                 }
                 
-                cat(df.name.vec)
+                #cat(df.name.vec)
                 datlist <- readPathoscopeData(input_dir, pathoreport_file_suffix, 
                                               use.input.files = TRUE,
                                               input.files.path.vec = df.path.vec,
@@ -205,9 +216,27 @@ shinyServer(function(input, output, session) {
                 vals$shiny.input <- shinyInput
                 # update ui        
                 updateCovariate()
-                
+                updateSample()
         })
 })
+    
+    
+    observeEvent(input$filterSampleButton,{
+        withBusyIndicatorServer("filterSampleButton", {
+        samples.remove <- input$filterSample
+        shinyInput <- vals$shiny.input
+        pstat <- shinyInput$pstat
+        samples.remove.index <- which(colnames(pstat@otu_table@.Data) %in% samples.remove)
+        pstat@otu_table@.Data <- pstat@otu_table@.Data[,-samples.remove.index]
+        pstat@sam_data@.Data <-  lapply(pstat@sam_data@.Data, function(x) {x <- x[-samples.remove.index]})
+        pstat@sam_data@row.names <- pstat@sam_data@row.names[-samples.remove.index]
+        shinyInput <- list(pstat = pstat)
+        vals$shiny.input <- shinyInput
+        
+        updateCovariate()
+        updateSample()
+    })
+    })
 
 
     
@@ -294,7 +323,21 @@ shinyServer(function(input, output, session) {
       Sample_Name <- colnames(pstat@otu_table@.Data)
       Reads_Number <- colSums(pstat@otu_table@.Data)
       data <- data.frame(Sample_Name, Reads_Number, stringsAsFactors = FALSE)
-      data$Sample_Name <- factor(data$Sample_Name, levels = unique(data$Sample_Name)[order(data$Reads_Number, decreasing = FALSE)])
+      
+      if (input$select_condition_sample_filter == "Reads Number"){
+          data$Sample_Name <- factor(data$Sample_Name, 
+                                     levels = unique(data$Sample_Name)[order(data$Reads_Number, 
+                                                                             decreasing = FALSE)])
+      } else{
+          data$Sample_Name <- paste(as.character(pstat@sam_data@.Data
+                                                 [[which(pstat@sam_data@names == input$select_condition_sample_filter)]]
+                                                 ),data$Sample_Name, sep = "-")
+          data$Sample_Name <- factor(data$Sample_Name, 
+                                     levels = unique(data$Sample_Name)
+                                     [order(pstat@sam_data@.Data[[which(pstat@sam_data@names == input$select_condition_sample_filter)]], 
+                                            decreasing = FALSE)])
+      }
+      
       p <- plot_ly(data, x = ~Sample_Name, y = ~Reads_Number, type = "bar", name = 'Sample reads count') %>% 
           layout(margin = list(b = 160))
       p

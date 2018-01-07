@@ -57,6 +57,12 @@ defaultGenesDisp <- 10
 maxGenes <- dim(pstat@otu_table)[1]
 
 
+
+
+#sample name
+sample.names.all <- colnames(pstat@otu_table@.Data)
+
+
 # load ui tabs right before calling shinyUI()
 source("ui_01_upload.R", local = TRUE) #creates shiny_panel_upload variable
 source("ui_02_filter.R", local = TRUE) #creates shiny_panel_upload variable
