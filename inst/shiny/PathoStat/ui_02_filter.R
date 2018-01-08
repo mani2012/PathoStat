@@ -43,7 +43,11 @@ shiny_panel_filter <- fluidPage(
                              tabPanel("Sample Reads Count Sum",
                                       selectInput("select_condition_sample_filter", "Order by:",
                                                   c("Reads Number", covariates)),
-                                      plotlyOutput("sampleCountSum"))
+                                      plotlyOutput("sampleCountSum")),
+                             tabPanel("Sample distribution in metadata",
+                                      selectInput("select_condition_sample_distribution", "See distribution in:",
+                                                  covariates),
+                                      plotlyOutput("sample_metadata_distribution"))
                          ), width=9
                      )
                  )

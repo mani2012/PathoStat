@@ -61,6 +61,11 @@ shinyServer(function(input, output, session) {
                 covariates.two.levels <- c(covariates.two.levels, covariates[i])
             }
         }
+        
+        updateSelectInput(session, "select_condition_sample_filter",
+                          choices = covariates)
+        updateSelectInput(session, "select_condition_sample_distribution",
+                          choices = covariates)
         updateSelectInput(session, "select_condition",
                           choices = covariates)
         updateSelectInput(session, "select_heatmap_condition_1",
@@ -345,6 +350,28 @@ shinyServer(function(input, output, session) {
   
   
   
+  
+  output$sample_metadata_distribution <- renderPlotly({
+      shinyInput <- vals$shiny.input 
+      pstat <- shinyInput$pstat
+      
+      Sample_Name <- colnames(pstat@otu_table@.Data)
+      condition.target <- pstat@sam_data@.Data[[which(pstat@sam_data@names == input$select_condition_sample_distribution)]]
+      data <- data.frame(Sample_Name, condition.target, stringsAsFactors = FALSE)
+          data$Sample_Name <- paste(as.character(pstat@sam_data@.Data
+                                                 [[which(pstat@sam_data@names == input$select_condition_sample_distribution)]]
+          ),data$Sample_Name, sep = "-")
+          data$Sample_Name <- factor(data$Sample_Name, 
+                                     levels = unique(data$Sample_Name)
+                                     [order(pstat@sam_data@.Data[[which(pstat@sam_data@names == input$select_condition_sample_distribution)]], 
+                                            decreasing = FALSE)])
+      
+      
+      p <- plot_ly(data, x = ~Sample_Name, y = ~condition.target, type = "bar", name = 'Sample distribution') %>% 
+          layout(margin = list(b = 160))
+      p
+  })
+  
   ### data input summary
   
   output$contents.count <- DT::renderDataTable({
@@ -428,7 +455,7 @@ shinyServer(function(input, output, session) {
     
     shinyInput <- vals$shiny.input 
     pstat <- shinyInput$pstat
-    cat(dim(pstat@otu_table@.Data))
+    #cat(dim(pstat@otu_table@.Data))
     taxdata <- findTaxData()
     #cat(dim(taxdata))
     dat <- melt(cbind(taxdata, ind = as.character(rownames(taxdata))),
