@@ -110,7 +110,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
     tabPanel("Diversity",
         tabsetPanel(
             tabPanel("Alpha Diversity", 
-                     
+                br(),     
                 sidebarLayout(
                     sidebarPanel(
                         br(),
@@ -129,6 +129,9 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                                 actionButton("download_alpha", "Download Alpha diversity pdf"),
                                 helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")
                        ),
+                       tabPanel("Taxa number Barplot", 
+                                plotlyOutput("AlphaDiversityBarplot")
+                       ),
                        tabPanel("Statistical Test", 
                                 selectInput("select_alpha_stat_method","Non-parametric Test", c("Mann-Whitney","Kruskal-Wallis")),
                                 verbatimTextOutput("alpha.stat.test")
@@ -143,7 +146,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                 )
           ),
           tabPanel("Beta Diversity", 
-                   
+                   br(),
                    sidebarLayout(
                      sidebarPanel(
                        selectizeInput('taxl.beta', 'Taxonomy Level', choices = tax.name, 

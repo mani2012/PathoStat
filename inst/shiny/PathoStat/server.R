@@ -689,6 +689,37 @@ shinyServer(function(input, output, session) {
     browseURL(tmpFile)}
   )
   
+  
+  
+  output$AlphaDiversityBarplot <- renderPlotly({
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
+      if (input$taxl.alpha !="no rank")  {
+          pstat <- tax_glom(pstat, input$taxl.alpha)
+      }
+      df.pam <- GET_PAM(pstat@otu_table@.Data)
+      
+      Sample_Name <- colnames(pstat@otu_table@.Data)
+      taxa.num <- as.numeric(colSums(df.pam))
+      data <- data.frame(Sample_Name, taxa.num, stringsAsFactors = FALSE)
+      data[,3] <- as.character(pstat@sam_data@.Data
+                               [[which(pstat@sam_data@names == input$select_alpha_div_condition)]])
+      colnames(data)[3] <- input$select_alpha_div_condition
+      data$Sample_Name <- paste(as.character(pstat@sam_data@.Data
+                                             [[which(pstat@sam_data@names == input$select_alpha_div_condition)]]
+      ),data$Sample_Name, sep = "-")
+      data$Sample_Name <- factor(data$Sample_Name, 
+                                 levels = unique(data$Sample_Name)
+                                 [order(pstat@sam_data@.Data[[which(pstat@sam_data@names == input$select_alpha_div_condition)]], 
+                                        decreasing = FALSE)])
+      
+      
+      p <- plot_ly(data, x = ~Sample_Name, y = ~taxa.num, type = "bar", color = as.formula(paste("~", input$select_alpha_div_condition, sep = "")), name = 'Sample taxa number') %>% 
+          layout(margin = list(b = 160))
+      p
+  })
+  
+  
   output$table.alpha <- DT::renderDataTable({
       shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
@@ -1133,7 +1164,8 @@ shinyServer(function(input, output, session) {
     table.output.pca <- t(summary(pca.tmp)$importance)
     table.output.pca[,2] <- scales::percent(as.numeric(table.output.pca[,2]))
     table.output.pca[,3] <- scales::percent(as.numeric(table.output.pca[,3]))
-    DT::datatable(table.output.pca)
+    #hide std
+    DT::datatable(table.output.pca[,-1])
     
   })
 
@@ -1219,7 +1251,8 @@ shinyServer(function(input, output, session) {
     rownames(df.output) <- paste("Axis", 1:nrow(df.output), sep = ".")
     df.output[,2] <- scales::percent(as.numeric(df.output[,2]))
     df.output[,3] <- scales::percent(as.numeric(df.output[,3]))
-    DT::datatable(df.output)
+    # hide eigenvalue
+    DT::datatable(df.output[,-1])
     
   })
   
