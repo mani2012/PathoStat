@@ -15,13 +15,26 @@ getSignatureFromMultipleGlmnet <- function(df.input, target.vec, nfolds = 10, lo
     #package
     require(glmnet)
     
+    # make target numeric
     if (!is.numeric(target.vec)){
         target.vec[target.vec == target.vec[1]] <- 1
         target.vec[target.vec != 1] <- 0
     }
     
+    # factorize catogorical variables
+    factor.variable.name <- c() 
+    for (i in 1:nrow(df.input)){
+        if (is.character(df.input[i,])){
+            df.input[i,] <- as.factor(df.input[i,])
+            factor.variable.name <- c(factor.variable.name, rownames(df.input)[i])
+        }
+    }
+    
+    x <- t(df.input)
+    x <- model.matrix( ~ .-1, data.frame(x))
+
     #body
-    x <- t(as.matrix(df.input))
+    
     
     featureDict <- list()
     featureNum <- c()

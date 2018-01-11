@@ -1448,28 +1448,39 @@ shinyServer(function(input, output, session) {
   
 
 ### biomarker
-  output$featureSelectionTmp <- renderPrint({
-      if (input$select_model_biomarker == "Lasso Logistic Regression"){
-          shinyInput <- vals$shiny.input
-          physeq1 <- shinyInput$pstat
-          if (input$taxl_biomarker !="no rank"){
-              physeq1 <- tax_glom(physeq1, input$taxl_biomarker)
-          }
-          df.input <- physeq1@otu_table@.Data
-          if (input$select_covariate_condition_biomarker != "No covariate"){
+  observeEvent(input$goButtonBiomarker, {
+      
+      output$featureSelectionTmp <- renderPrint({
+          
+          if (input$select_model_biomarker == "Lasso Logistic Regression"){
+              shinyInput <- vals$shiny.input
+              physeq1 <- shinyInput$pstat
+              if (input$taxl_biomarker !="no rank"){
+                  physeq1 <- tax_glom(physeq1, input$taxl_biomarker)
+              }
+              df.input <- physeq1@otu_table@.Data
+              if (input$select_covariate_condition_biomarker != "No covariate"){
+                  covariate.index <- match(input$select_covariate_condition_biomarker, physeq1@sam_data@names)
+                  df.covariate  <- data.frame(t(sapply(physeq1@sam_data@.Data[covariate.index], function(x) x)))
+                 
+                  rownames(df.covariate) <- input$select_covariate_condition_biomarker
+                  colnames(df.covariate) <- colnames(df.input)
+
+                  df.input <- rbind.data.frame(df.input, df.covariate)
+                  #cat(dim(df.input))
+              }
               
-              df.covariate <- t(pstat@sam_data[,input$select_covariate_condition_biomarker])
-              df.input <- rbind.data.frame(df.input, df.covariate)
+              target.vec <- physeq1@sam_data[[input$select_target_condition_biomarker]]
+              
+              
+              output.fs <- getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = input$num.cv.nfolds)
           }
+          output.fs
           
-          target.vec <- physeq1@sam_data[[input$select_target_condition_biomarker]]
-          
-          
-          output.fs <- getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = input$num.cv.nfolds)
-      }
-      output.fs
+      })
       
   })
+
   
   
 
