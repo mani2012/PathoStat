@@ -1465,7 +1465,7 @@ shinyServer(function(input, output, session) {
           target.vec <- physeq1@sam_data[[input$select_target_condition_biomarker]]
           
           
-          output.fs <- getSignatureFromMultipleGlmnet(df.input, target.vec)
+          output.fs <- getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = input$num.cv.nfolds)
       }
       output.fs
       
