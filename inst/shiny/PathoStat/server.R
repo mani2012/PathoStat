@@ -62,6 +62,10 @@ shinyServer(function(input, output, session) {
             }
         }
         
+        updateSelectInput(session, "select_covariate_condition_biomarker",
+                          choices = covariates)
+        updateSelectInput(session, "select_target_condition_biomarker",
+                          choices = covariates.two.levels)
         updateSelectInput(session, "select_condition_sample_filter",
                           choices = covariates)
         updateSelectInput(session, "select_condition_sample_distribution",
@@ -1443,8 +1447,30 @@ shinyServer(function(input, output, session) {
 
   
 
-
-
+### biomarker
+  output$featureSelectionTmp <- renderPrint({
+      if (input$select_model_biomarker == "Lasso Logistic Regression"){
+          shinyInput <- vals$shiny.input
+          physeq1 <- shinyInput$pstat
+          if (input$taxl_biomarker !="no rank"){
+              physeq1 <- tax_glom(physeq1, input$taxl_biomarker)
+          }
+          df.input <- physeq1@otu_table@.Data
+          if (input$select_covariate_condition_biomarker != "No covariate"){
+              
+              df.covariate <- t(pstat@sam_data[,input$select_covariate_condition_biomarker])
+              df.input <- rbind.data.frame(df.input, df.covariate)
+          }
+          
+          target.vec <- physeq1@sam_data[[input$select_target_condition_biomarker]]
+          
+          
+          output.fs <- getSignatureFromMultipleGlmnet(df.input, target.vec)
+      }
+      output.fs
+      
+  })
+  
   
 
   
