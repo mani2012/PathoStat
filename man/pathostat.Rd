@@ -16,7 +16,7 @@ pstat The pathostat object generated from the given phyloseq object
 Build PathoStat-class object from its phyloseq component.
 }
 \examples{
-rich_dense_biom  = system.file("extdata", "rich_dense_otu_table.biom", 
+rich_dense_biom  = system.file("extdata", "rich_dense_otu_table.biom",
     package="phyloseq")
 phyob <- phyloseq::import_biom(rich_dense_biom)
 pstat_biom <- pathostat(phyob)

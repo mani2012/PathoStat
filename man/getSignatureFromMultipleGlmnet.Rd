@@ -5,7 +5,7 @@
 \title{Use Lasso to do feature selection}
 \usage{
 getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = 10,
-  logisticRegression = FALSE, nRun = 100, alpha = 1)
+  logisticRegression = TRUE, nRun = 100, alpha = 1)
 }
 \arguments{
 \item{df.input}{Row is feature, column is sample. Required}

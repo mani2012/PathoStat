@@ -2,7 +2,7 @@
 % Please edit documentation in R/pathoStat.R
 \name{createPathoStat}
 \alias{createPathoStat}
-\title{Generates a PathoStat object from the PathoScope reports for further 
+\title{Generates a PathoStat object from the PathoScope reports for further
 analysis using the interactive shiny app}
 \usage{
 createPathoStat(input_dir = ".", sample_data_file = "sample_data.tsv",
@@ -19,11 +19,11 @@ createPathoStat(input_dir = ".", sample_data_file = "sample_data.tsv",
 pstat The pathostat object generated from the given tsv files
 }
 \description{
-Generates a PathoStat object from the PathoScope reports for further 
+Generates a PathoStat object from the PathoScope reports for further
 analysis using the interactive shiny app
 }
 \examples{
 example_data_dir <- system.file("example/data", package = "PathoStat")
-pstat <- createPathoStat(input_dir=example_data_dir, 
+pstat <- createPathoStat(input_dir=example_data_dir,
     sample_data_file="sample_data.tsv")
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/pathoStat.R
 \name{runPathoStat}
 \alias{runPathoStat}
-\title{Statistical Microbiome Analysis on the pathostat input and generates a 
+\title{Statistical Microbiome Analysis on the pathostat input and generates a
 html report and produces interactive shiny app plots}
 \usage{
 runPathoStat(pstat = NULL, report_file = "PathoStat_report.html",
@@ -16,7 +16,7 @@ runPathoStat(pstat = NULL, report_file = "PathoStat_report.html",
 
 \item{report_dir}{Output report directory path}
 
-\item{report_option_binary}{9 bits Binary String representing the plots to 
+\item{report_option_binary}{9 bits Binary String representing the plots to
 display and hide in the report}
 
 \item{view_report}{when TRUE, opens the report in a browser}
@@ -27,7 +27,7 @@ display and hide in the report}
 outputfile The output file with all the statistical plots
 }
 \description{
-Statistical Microbiome Analysis on the pathostat input and generates a 
+Statistical Microbiome Analysis on the pathostat input and generates a
 html report and produces interactive shiny app plots
 }
 \examples{
