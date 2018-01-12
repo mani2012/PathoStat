@@ -989,6 +989,7 @@ shinyServer(function(input, output, session) {
           result.list[[i]] <- wilcox.test(dist.list.tmp[[1]], dist.list.tmp[[2]])
           print(result.list[[i]])
           print("------------------------")
+          
         }
 
       } else{
