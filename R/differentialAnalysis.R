@@ -27,6 +27,7 @@
 #'
 #' @param ... Additional arguments passed on to \code{\link[edgeR]{DGEList}}
 #' 
+#' @export
 #' @examples
 #' 
 phyloseq_to_edgeR = function(physeq, group, method="RLE", ...){
