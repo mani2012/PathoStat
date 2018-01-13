@@ -4,16 +4,22 @@
 \alias{plotHeatmapColor}
 \title{Plot heatmap with color bar}
 \usage{
-plotHeatmapColor(df.input, condition.vec, do.scale = TRUE,
-  clusterRow = TRUE, clusterCol = TRUE, displayRowLabels = FALSE,
-  displayColumnLabels = TRUE, displayRowDendrograms = TRUE,
-  displayColumnDendrograms = TRUE, annotationColors = "auto",
-  columnTitle = "Title")
+plotHeatmapColor(df.input, condition.vec.1, condition.vec.2, condition.1.name,
+  condition.2.name, do.scale = TRUE, clusterRow = TRUE, clusterCol = TRUE,
+  displayRowLabels = FALSE, displayColumnLabels = TRUE,
+  displayRowDendrograms = TRUE, displayColumnDendrograms = TRUE,
+  annotationColors = "auto", columnTitle = "Title")
 }
 \arguments{
 \item{df.input}{Input data object that contains the data to be plotted. Required}
 
-\item{condition.vec}{The condition used for plotting the heatmap. Required}
+\item{condition.vec.1}{color vector. Required}
+
+\item{condition.vec.2}{color vector 2. Required}
+
+\item{condition.1.name}{color vector 1 name. Required}
+
+\item{condition.2.name}{color vector 2 name. Required}
 
 \item{clusterRow}{Cluster the rows. The default is TRUE}
 

@@ -6,12 +6,19 @@
 final guess relative abundance and count data}
 \usage{
 readPathoscopeData(input_dir = ".",
-  pathoreport_file_suffix = "-sam-report.tsv")
+  pathoreport_file_suffix = "-sam-report.tsv", use.input.files = FALSE,
+  input.files.path.vec = NULL, input.files.name.vec = NULL)
 }
 \arguments{
 \item{input_dir}{Directory where the tsv files from PathoScope are located}
 
 \item{pathoreport_file_suffix}{PathoScope report files suffix}
+
+\item{use.input.files}{whether input dir to pathoscope files or directly pathoscope files}
+
+\item{input.files.path.vec}{vector of pathoscope file paths}
+
+\item{input.files.name.vec}{vector of pathoscope file names}
 }
 \value{
 List of final guess relative abundance and count data

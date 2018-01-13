@@ -1,6 +1,6 @@
-#' pathostat object generated from example pathoscope report files 
+#' pathostat object generated from example pathoscope report files
 #'
-#' This example data consists of 33 samples from a diet study with 11 subjects 
+#' This example data consists of 33 samples from a diet study with 11 subjects
 #' taking 3 different diets in random order
 #'
 #' @name pstat_data
@@ -15,11 +15,11 @@
 "pstat"
 
 ###############################################################################
-#' Generates a PathoStat object from the PathoScope reports for further 
+#' Generates a PathoStat object from the PathoScope reports for further
 #' analysis using the interactive shiny app
-#' 
+#'
 #' @param input_dir Directory where the tsv files from PathoScope are located
-#' @param sample_data_file Sample Data file with information about samples 
+#' @param sample_data_file Sample Data file with information about samples
 #' @param pathoreport_file_suffix PathoScope report files suffix
 #' @return pstat The pathostat object generated from the given tsv files
 #' @import pander stats graphics reshape2 ggplot2 rentrez phyloseq
@@ -28,50 +28,50 @@
 #' @export
 #' @examples
 #' example_data_dir <- system.file("example/data", package = "PathoStat")
-#' pstat <- createPathoStat(input_dir=example_data_dir, 
+#' pstat <- createPathoStat(input_dir=example_data_dir,
 #'     sample_data_file="sample_data.tsv")
 createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
     pathoreport_file_suffix="-sam-report.tsv") {
     datlist <- readPathoscopeData(input_dir, pathoreport_file_suffix)
     dat <- datlist$data
     countdat <- datlist$countdata
-    
+
     #test and fix the constant/zero row
     row.remove.index <- c()
     if (sum(rowSums(as.matrix(countdat)) == 0) > 0){
       row.remove.index <- which(rowSums(as.matrix(countdat)) == 0)
       countdat <- countdat[-row.remove.index,]
     }
-    
+
     ids <- rownames(dat)
     tids <- unlist(lapply(ids, FUN = grepTid))
     taxonLevels <- findTaxonomy(tids)
     taxmat <- findTaxonMat(ids, taxonLevels)
-    
+
     #test and fix the constant/zero row
     taxmat <- taxmat[-row.remove.index,]
-    
+
     OTU <- otu_table(countdat, taxa_are_rows = TRUE)
     TAX <- tax_table(taxmat)
     physeq <- phyloseq(OTU, TAX)
     sample_file_path <- file.path(input_dir, sample_data_file)
     tbl <- read.table(sample_file_path, header=TRUE, sep="\t", row.names=1,
         stringsAsFactors=FALSE)
-    
+
     # change NA/NULL to 0
     # remove variables with identical values
     col.remove.index <- c()
     for (i in 1:ncol(tbl)){
       if(length(unique(tbl[,i])) < 2){
         col.remove.index <- c(col.remove.index, i)
-      } 
+      }
     }
     if (!is.null(col.remove.index)){
-      tbl <- tbl[,-col.remove.index]  
+      tbl <- tbl[,-col.remove.index]
     }
-    
-    
-    
+
+
+
     sampledata = sample_data(data.frame(tbl))
     random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=
         taxa_names(physeq))
@@ -81,14 +81,14 @@ createPathoStat <- function(input_dir=".", sample_data_file="sample_data.tsv",
 }
 
 ###############################################################################
-#' Build PathoStat-class object from its phyloseq component. 
-#' 
+#' Build PathoStat-class object from its phyloseq component.
+#'
 #' @param physeq1 phyloseq object
 #' @return pstat The pathostat object generated from the given phyloseq object
 #' @import phyloseq
 #' @export
 #' @examples
-#' rich_dense_biom  = system.file("extdata", "rich_dense_otu_table.biom", 
+#' rich_dense_biom  = system.file("extdata", "rich_dense_otu_table.biom",
 #'     package="phyloseq")
 #' phyob <- phyloseq::import_biom(rich_dense_biom)
 #' pstat_biom <- pathostat(phyob)
@@ -98,16 +98,16 @@ pathostat <- function(physeq1) {
 }
 
 ###############################################################################
-#' Statistical Microbiome Analysis on the pathostat input and generates a 
+#' Statistical Microbiome Analysis on the pathostat input and generates a
 #' html report and produces interactive shiny app plots
-#' 
+#'
 #' @param pstat phyloseq extension pathostat object
-#' @param report_file Output report file name 
-#' @param report_dir Output report directory path 
-#' @param report_option_binary 9 bits Binary String representing the plots to 
-#'  display and hide in the report 
-#' @param view_report when TRUE, opens the report in a browser 
-#' @param interactive when TRUE, opens the interactive shinyApp 
+#' @param report_file Output report file name
+#' @param report_dir Output report directory path
+#' @param report_option_binary 9 bits Binary String representing the plots to
+#'  display and hide in the report
+#' @param view_report when TRUE, opens the report in a browser
+#' @param interactive when TRUE, opens the interactive shinyApp
 #' @return outputfile The output file with all the statistical plots
 #' @import pander stats graphics reshape2 ggplot2 rentrez phyloseq
 #' @import MCMCpack corpcor knitr limma matrixStats methods alluvial BiocStyle
@@ -121,13 +121,14 @@ pathostat <- function(physeq1) {
 #' @importFrom utils browseURL
 #' @importFrom shiny runApp
 #' @importFrom rmarkdown render
+#' @importFrom shiny shinyOptions getShinyOption
 #' @export
 #' @examples
 #' runPathoStat(interactive = FALSE)
-runPathoStat <- function(pstat=NULL, report_file="PathoStat_report.html", 
-    report_dir=".", report_option_binary="111111111", view_report=FALSE, 
+runPathoStat <- function(pstat=NULL, report_file="PathoStat_report.html",
+    report_dir=".", report_option_binary="111111111", view_report=FALSE,
     interactive=TRUE) {
-    
+
     if (is.null(pstat))  {
         data_dir <- system.file("data", package = "PathoStat")
         infileName <- "pstat_data.rda"
@@ -136,7 +137,7 @@ runPathoStat <- function(pstat=NULL, report_file="PathoStat_report.html",
     if (report_dir == ".") {
         report_dir = getwd()
     }
-  
+
   #test and fix the constant/zero row
   row.remove.index <- c()
   if (sum(rowSums(as.matrix(pstat@otu_table@.Data)) == 0) > 0){
@@ -144,28 +145,28 @@ runPathoStat <- function(pstat=NULL, report_file="PathoStat_report.html",
     pstat@otu_table@.Data <- pstat@otu_table@.Data[-row.remove.index,]
     pstat@tax_table@.Data <- pstat@tax_table@.Data[-row.remove.index,]
   }
-  
+
 
   # remove variables with identical values
   col.remove.index <- c()
   for (i in 1:ncol(pstat@sam_data)){
     if(dim(unique(pstat@sam_data[,i]))[1] < 2){
       col.remove.index <- c(col.remove.index, i)
-    } 
+    }
   }
   if (!is.null(col.remove.index)){
-    pstat@sam_data <- pstat@sam_data[,-col.remove.index]  
+    pstat@sam_data <- pstat@sam_data[,-col.remove.index]
   }
-  
+
     shinyInput <- list(pstat = pstat, report_dir = report_dir)
     setShinyInput(shinyInput)
-    rmdfile <- system.file("reports/pathostat_report.Rmd", package = 
+    rmdfile <- system.file("reports/pathostat_report.Rmd", package =
         "PathoStat")
-    report_option_vector <- unlist(strsplit(as.character(report_option_binary), 
+    report_option_vector <- unlist(strsplit(as.character(report_option_binary),
         ""))
     static_lib_dir <- system.file("reports/libs", package = "PathoStat")
     file.copy(static_lib_dir, report_dir, recursive = TRUE)
-    outputfile <- rmarkdown::render(rmdfile, output_file = report_file, 
+    outputfile <- rmarkdown::render(rmdfile, output_file = report_file,
         output_dir = report_dir)
     shinyInput <- getShinyInput()
     setShinyInputOrig(shinyInput)
@@ -190,7 +191,7 @@ runPathoStat <- function(pstat=NULL, report_file="PathoStat_report.html",
 #' @examples
 #' getShinyInput()
 getShinyInput <- function() {
-    shinyInput <- getOption("pathostat.shinyInput")
+    shinyInput <- getShinyOption("pathostat.shinyInput")
     return(shinyInput)
 }
 #' Setter function to set the shinyInput option
@@ -200,7 +201,7 @@ getShinyInput <- function() {
 #' @examples
 #' setShinyInput(NULL)
 setShinyInput <- function(x) {
-    options(pathostat.shinyInput = x)
+    shinyOptions(pathostat.shinyInput = x)
 }
 
 #' Getter function to get the shinyInputOrig option
@@ -209,7 +210,7 @@ setShinyInput <- function(x) {
 #' @examples
 #' getShinyInputOrig()
 getShinyInputOrig <- function() {
-    shinyInputOrig <- getOption("pathostat.shinyInputOrig")
+    shinyInputOrig <- getShinyOption("pathostat.shinyInputOrig")
     return(shinyInputOrig)
 }
 #' Setter function to set the shinyInputOrig option
@@ -219,7 +220,7 @@ getShinyInputOrig <- function() {
 #' @examples
 #' setShinyInputOrig(NULL)
 setShinyInputOrig <- function(x) {
-    options(pathostat.shinyInputOrig = x)
+    shinyOptions(pathostat.shinyInputOrig = x)
 }
 
 #' Getter function to get the shinyInputCombat option
@@ -228,7 +229,7 @@ setShinyInputOrig <- function(x) {
 #' @examples
 #' getShinyInputCombat()
 getShinyInputCombat <- function() {
-    shinyInputCombat <- getOption("pathostat.shinyInputCombat")
+    shinyInputCombat <- getShinyOption("pathostat.shinyInputCombat")
     return(shinyInputCombat)
 }
 #' Setter function to set the shinyInputCombat option
@@ -238,7 +239,5 @@ getShinyInputCombat <- function() {
 #' @examples
 #' setShinyInputCombat(NULL)
 setShinyInputCombat <- function(x) {
-    options(pathostat.shinyInputCombat = x)
+    shinyOptions(pathostat.shinyInputCombat = x)
 }
-
-

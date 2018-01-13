@@ -19,7 +19,7 @@ pstat
 pathostat object
 }
 \description{
-This example data consists of 33 samples from a diet study with 11 subjects 
+This example data consists of 33 samples from a diet study with 11 subjects
 taking 3 different diets in random order
 }
 \keyword{datasets}

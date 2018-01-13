@@ -1,3 +1,25 @@
+
+#' Find the taxonomy for the given taxon id name
+#'
+#' @param pstat pathostat object
+#' @param input.id.vec names containing id
+#' @param tax.level target taxon level
+#' @return target taxon level names
+#' @export
+#' @examples
+#' names.new <- TranslateIdToTaxLevel(pstat, 
+#' c("ti|862962|org|Bacteroides_fragilis_638R", "ti|697329|org|Ruminococcus_albus_7" ), 
+#' "genus")
+
+TranslateIdToTaxLevel <- function(pstat, input.id.vec, tax.level){
+    tax.df <- pstat@tax_table@.Data
+    name.out <- as.character(tax.df[match(input.id.vec, rownames(tax.df)), 
+                                    which(colnames(tax.df) == tax.level)])
+    return(name.out)
+}
+
+
+
 #' Find the taxonomy for the given taxon id
 #'
 #' @param tid Given taxon id
