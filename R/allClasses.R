@@ -1,8 +1,8 @@
 ################################################################################
 #' PathoStat class to store PathoStat input data including phyloseq object
 #'
-#' Contains all currently-supported BatchQC output data classes: 
-#' 
+#' Contains all currently-supported BatchQC output data classes:
+#'
 #' slots:
 #' \describe{
 #'     \item{average_count}{a single object of class otu_tableOrNULL}
@@ -10,11 +10,12 @@
 #'     \item{highconf_count}{a single object of class otu_tableOrNULL}
 #'     \item{lowconf_count}{a single object of class otu_tableOrNULL}
 #' }
-#' 
+#'
 #' @name PathoStat-class
 #' @rdname PathoStat-class
+#' @export pathostat1
 #' @exportClass PathoStat
-pathostat1 <- setClass(Class="PathoStat", 
+pathostat1 <- setClass(Class="PathoStat",
     representation=representation(
         average_count="otu_tableOrNULL",
         besthit_count="otu_tableOrNULL",
