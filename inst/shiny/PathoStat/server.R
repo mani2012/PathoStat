@@ -175,6 +175,11 @@ shinyServer(function(input, output, session) {
                                           sep = input$sep.ps,
                                           row.names=1,
                                           stringsAsFactors=FALSE)
+
+                # choose only the samples in metadata that have counts data as well
+                df.meta.input <- df.meta.input[match(colnames(countdat), rownames(df.meta.input)), ]
+
+
                 #cat(dim(df.meta.input))
                 #test and fix the constant/zero row
                 row.remove.index <- c()
@@ -989,7 +994,7 @@ shinyServer(function(input, output, session) {
           result.list[[i]] <- wilcox.test(dist.list.tmp[[1]], dist.list.tmp[[2]])
           print(result.list[[i]])
           print("------------------------")
-          
+
         }
 
       } else{
