@@ -90,6 +90,8 @@ shinyServer(function(input, output, session) {
                           choices = covariates.colorbar)
         updateSelectInput(session, "da.condition",
                           choices = covariates.two.levels)
+        updateSelectInput(session, "edger.condition",
+                          choices = covariates.two.levels)
         updateSelectInput(session, "da.condition.covariate",
                           choices = covariates)
         updateSelectInput(session, "pa.condition",
@@ -1336,7 +1338,7 @@ shinyServer(function(input, output, session) {
         num.levels <- length(unique(sample_data(physeq1)[[input$da.condition.covariate[i]]]))
         if (num.levels >= 8){
           sam.index <- which(physeq1@sam_data@names %in% input$da.condition.covariate[i])
-          pstat@sam_data@.Data[[sam.index]] <- cut(pstat@sam_data@.Data[[sam.index]], breaks = 3)
+          physeq1@sam_data@.Data[[sam.index]] <- cut(physeq1@sam_data@.Data[[sam.index]], breaks = 3)
         }
       }
 
@@ -1463,9 +1465,13 @@ shinyServer(function(input, output, session) {
               physeq1 <- shinyInput$pstat
               if (input$taxl_biomarker !="no rank"){
                   physeq1 <- tax_glom(physeq1, input$taxl_biomarker)
+
               }
               df.input <- physeq1@otu_table@.Data
-              if (input$select_covariate_condition_biomarker != "No covariate"){
+              # change microbe names to selected taxon level
+              rownames(df.input) <- TranslateIdToTaxLevel(physeq1, rownames(df.input), input$taxl_biomarker)
+
+              if (!is.null(input$select_covariate_condition_biomarker)){
                   covariate.index <- match(input$select_covariate_condition_biomarker, physeq1@sam_data@names)
                   df.covariate  <- data.frame(t(sapply(physeq1@sam_data@.Data[covariate.index], function(x) x)))
 
@@ -1477,7 +1483,6 @@ shinyServer(function(input, output, session) {
               }
 
               target.vec <- physeq1@sam_data[[input$select_target_condition_biomarker]]
-
 
               output.fs <- getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = input$num.cv.nfolds)
           }
