@@ -1,8 +1,8 @@
 shiny_panel_upload <- fluidPage(
 
          useShinyjs(),
-         tags$style(appCSS),        
-         
+         tags$style(appCSS),
+
          tags$div(
              class = "jumbotron",
              tags$div(
@@ -12,9 +12,9 @@ shiny_panel_upload <- fluidPage(
                      column(2, img(src = "bu_logo.png", height = 80, width = 140)),
                      column(2, img(src = "cbm_logo.jpeg", height = 80, width = 140)),
                      column(1, img(src = "bu_bioinfo_logo.png", height = 80, width = 80))
-                     
+
                  ),
-                 
+
                  p("Statistical Microbiome Analysis Toolkit")
              )
          ),
@@ -53,7 +53,7 @@ shiny_panel_upload <- fluidPage(
                                   ),
                                   # Input: Checkbox if file has header ----
                                   checkboxInput("header.count", "Header", TRUE),
-                                  
+
                                   # Input: Select separator ----
                                   radioButtons("sep.count", "Separator",
                                                choices = c(Tab = "\t",
@@ -62,7 +62,7 @@ shiny_panel_upload <- fluidPage(
                                                ),
                                                selected = ","),
                                   withBusyIndicatorUI(
-                                      actionButton("uploadDataCount", 
+                                      actionButton("uploadDataCount",
                                                    "Upload",
                                                    class = "btn-primary")
                                   ),
@@ -91,9 +91,12 @@ shiny_panel_upload <- fluidPage(
                                                 ".tsv"
                                             )
                                   ),
+                                  textInput("report_suffix", "Report suffix", value = "-sam-report.tsv"),
+                                  numericInput("metadata_sample_name_col", "Which column in metadata is sample name?",
+                                               value = 1),
                                   # Input: Checkbox if file has header ----
                                   checkboxInput("header.ps", "Header", TRUE),
-                                  
+
                                   # Input: Select separator ----
                                   radioButtons("sep.ps", "Separator",
                                                choices = c(Tab = "\t",
@@ -102,12 +105,12 @@ shiny_panel_upload <- fluidPage(
                                                ),
                                                selected = "\t"),
                                   withBusyIndicatorUI(
-                                      actionButton("uploadDataPs", 
+                                      actionButton("uploadDataPs",
                                                    "Upload",
                                                    class = "btn-primary")
                                   ),
                                   helpText("After click, please wait for 30s until seeing a green check.")
-                                  
+
                  )
              ),
              mainPanel(
@@ -119,19 +122,19 @@ shiny_panel_upload <- fluidPage(
                                   DT::dataTableOutput("contents.meta")
                  ),
                  conditionalPanel(condition = sprintf("input['%s'] == 'patho.files'", "uploadChoice"),
-                                  
-                                  h5("Example pathoscope report files and annotation files 
+
+                                  h5("Example pathoscope report files and annotation files
                                      could be found at pathToPathoStat/inst/example/data/pathoscope_example/")
                                   ),
                  conditionalPanel(condition = sprintf("input['%s'] == 'files'", "uploadChoice"),
-                                  h5("Example count file and annotation file 
+                                  h5("Example count file and annotation file
                                      could be found at pathToPathoStat/inst/example/data/count_example/")
                                   )
-                 
-                 
-                 
-                 
-                 
+
+
+
+
+
                  )
              )
          )

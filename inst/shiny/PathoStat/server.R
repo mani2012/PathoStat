@@ -24,6 +24,7 @@ shinyServer(function(input, output, session) {
 
     vals <- reactiveValues(
         shiny.input = getShinyOption("pathostat.shinyInput"),
+        shiny.input.backup = getShinyOption("pathostat.shinyInput"),
         taxdata = NULL,
         taxcountdata = NULL
     )
@@ -67,7 +68,9 @@ shinyServer(function(input, output, session) {
         updateSelectInput(session, "select_target_condition_biomarker",
                           choices = covariates.two.levels)
         updateSelectInput(session, "select_condition_sample_filter",
-                          choices = covariates)
+                          choices = c("Reads Number", covariates))
+        updateSelectInput(session, "select_condition_sample_filter_sidebar",
+                          choices = c("Reads Number", covariates))
         updateSelectInput(session, "select_condition_sample_distribution",
                           choices = covariates)
         updateSelectInput(session, "select_condition",
@@ -146,6 +149,7 @@ shinyServer(function(input, output, session) {
         pstat <- pathostat1(physeq1)
         shinyInput <- list(pstat = pstat)
         vals$shiny.input <- shinyInput
+        vals$shiny.input.backup <- shinyInput
         # update ui
         updateCovariate()
         updateSample()
@@ -166,7 +170,7 @@ shinyServer(function(input, output, session) {
                 }
 
                 #cat(df.name.vec)
-                datlist <- readPathoscopeData(input_dir, pathoreport_file_suffix,
+                datlist <- readPathoscopeData(input_dir, pathoreport_file_suffix = input$report_suffix,
                                               use.input.files = TRUE,
                                               input.files.path.vec = df.path.vec,
                                               input.files.name.vec = df.name.vec)
@@ -175,14 +179,15 @@ shinyServer(function(input, output, session) {
                 df.meta.input <- read.csv(input$annotfile.ps$datapath,
                                           header = input$header.ps,
                                           sep = input$sep.ps,
-                                          row.names=1,
+                                          row.names=input$metadata_sample_name_col,
                                           stringsAsFactors=FALSE)
 
                 # choose only the samples in metadata that have counts data as well
                 df.meta.input <- df.meta.input[match(colnames(countdat), rownames(df.meta.input)), ]
 
 
-                #cat(dim(df.meta.input))
+                cat(colnames(countdat))
+                cat(rownames(df.meta.input))
                 #test and fix the constant/zero row
                 row.remove.index <- c()
                 if (sum(rowSums(as.matrix(countdat)) == 0) > 0){
@@ -230,6 +235,7 @@ shinyServer(function(input, output, session) {
                 shinyInput <- list(pstat = pstat)
                 #setShinyInput(shinyInput)
                 vals$shiny.input <- shinyInput
+                vals$shiny.input.backup <- shinyInput
                 # update ui
                 updateCovariate()
                 updateSample()
@@ -253,6 +259,15 @@ shinyServer(function(input, output, session) {
         updateSample()
     })
     })
+
+      observeEvent(input$resetSampleButton,{
+        withBusyIndicatorServer("resetSampleButton", {
+        vals$shiny.input <- vals$shiny.input.backup
+        updateCovariate()
+        updateSample()
+    })
+    })
+
 
 
 
@@ -333,6 +348,100 @@ shinyServer(function(input, output, session) {
   }
 
 
+
+
+  output$filter_type <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    if (input$select_condition_sample_filter_sidebar == "Reads Number"){
+      return("num.continuous")
+    }
+    variable.vec <- sample_data(pstat)[[
+          which(pstat@sam_data@names == input$select_condition_sample_filter_sidebar)]]
+    if (is.numeric(variable.vec)){
+      # catogorical or not
+        num.levels <- length(unique(variable.vec))
+        if (num.levels < 6){
+          return("cat")
+        } else{
+          return("num.continuous")
+        }
+    }else{
+      # non-numeric
+        return("cat")
+    }
+  })
+
+  outputOptions(output, "filter_type", suspendWhenHidden = FALSE)
+
+
+
+  observeEvent(input$filter_num,{
+    withBusyIndicatorServer("filter_num", {
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
+      # extract the feature vector
+
+      if (input$select_condition_sample_filter_sidebar == "Reads Number"){
+        feature.selected.vec <- colSums(pstat@otu_table@.Data)
+      }else{
+        feature.selected.vec <- pstat@sam_data@.Data[[
+          which(pstat@sam_data@names == input$select_condition_sample_filter_sidebar)]]
+      }
+
+      # get the index of sample keeping
+      samples.keep.index <- which(feature.selected.vec >= input$num_filter_min &
+                                    feature.selected.vec <= input$num_filter_max)
+
+      pstat@otu_table@.Data <- pstat@otu_table@.Data[,samples.keep.index]
+      pstat@sam_data@.Data <- lapply(pstat@sam_data@.Data, function(x) {x <- x[samples.keep.index]})
+      pstat@sam_data@row.names <- pstat@sam_data@row.names[samples.keep.index]
+      shinyInput <- list(pstat = pstat)
+      vals$shiny.input <- shinyInput
+
+      updateCovariate()
+      updateSample()
+    })
+  })
+
+  output$filter_cat_options <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    variable.vec <- sample_data(pstat)[[
+      which(pstat@sam_data@names == input$select_condition_sample_filter_sidebar)]]
+    filter.option.vec <- sort(unique(variable.vec))
+    tagList(
+      selectInput("cat_filter_options", "Keep these levels:", choices = filter.option.vec)
+    )
+  })
+
+
+  observeEvent(input$filter_cat,{
+    withBusyIndicatorServer("filter_cat", {
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
+      # extract the feature vector
+      feature.selected.vec <- pstat@sam_data@.Data[[
+        which(pstat@sam_data@names == input$select_condition_sample_filter_sidebar)]]
+
+      # get the index of sample keeping
+      samples.keep.index <- which(feature.selected.vec %in% input$cat_filter_options)
+
+      pstat@otu_table@.Data <- pstat@otu_table@.Data[,samples.keep.index]
+      pstat@sam_data@.Data <- lapply(pstat@sam_data@.Data, function(x) {x <- x[samples.keep.index]})
+      pstat@sam_data@row.names <- pstat@sam_data@row.names[samples.keep.index]
+      shinyInput <- list(pstat = pstat)
+      vals$shiny.input <- shinyInput
+
+      updateCovariate()
+      updateSample()
+    })
+  })
+
+
+
+
+
   output$sampleCountSum <- renderPlotly({
       shinyInput <- vals$shiny.input
       pstat <- shinyInput$pstat
@@ -359,6 +468,28 @@ shinyServer(function(input, output, session) {
       p
   })
 
+
+  #Render summary table
+  output$contents_summary <- renderTable({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    req(pstat)
+    summarizeTable(pstat)
+  })
+
+
+
+
+    output$sampleCountHist <- renderPlotly({
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
+      Sample_Name <- colnames(pstat@otu_table@.Data)
+      Reads_Number <- colSums(pstat@otu_table@.Data)
+      p <- plot_ly(x = Reads_Number[Reads_Number < input$hist_reads_num_max], type = "histogram", name = 'Sample reads count histogram') %>%
+          layout(margin = list(b = 160))
+
+      p
+  })
 
 
 

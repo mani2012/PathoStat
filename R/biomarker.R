@@ -3,39 +3,52 @@
 #' @param df.input Row is feature, column is sample. Required
 #' @param target.vec y vector. Required
 #' @param nfolds glmnet CV nfolds
-#' @param logisticRegression doing logistic regression or linear regression. 
+#' @param logisticRegression doing logistic regression or linear regression.
 #' @param nRun number of glmnet runs
 #' @param alpha same as in glmnet
 #' @export
-#' @examples 
+#' @examples
 #' getSignatureFromMultipleGlmnet(df.input, target.vec)
 
 getSignatureFromMultipleGlmnet <- function(df.input, target.vec, nfolds = 10, logisticRegression = TRUE, nRun=100, alpha = 1){
-    
+
     #package
     require(glmnet)
-    
+
     # make target numeric
     if (!is.numeric(target.vec)){
         target.vec[target.vec == target.vec[1]] <- 1
         target.vec[target.vec != 1] <- 0
     }
-    
+
     # factorize catogorical variables
-    factor.variable.name <- c() 
+    factor.row.index <- c()
+    factor.variable.name <- c()
     for (i in 1:nrow(df.input)){
         if (is.character(df.input[i,])){
             df.input[i,] <- as.factor(df.input[i,])
             factor.variable.name <- c(factor.variable.name, rownames(df.input)[i])
+            factor.row.index <- c(factor.row.index, i)
         }
     }
-    
-    x <- t(df.input)
-    x <- model.matrix( ~ .-1, data.frame(x))
+
+    return(head(df.input))
+
+    if (is.null(factor.row.index)){
+      x <- t(df.input)
+    } else{
+      df.input.factor <- t(df.input[factor.row.index,])
+      df.input.factor.onehot <- model.matrix( ~ .-1, data.frame(df.input.factor))
+      df.input.factor.numeric <- t(df.input[-factor.row.index,])
+      x <- cbind(df.input.factor.numeric, df.input.factor.onehot)
+    }
+
+    return(list(dim(x), head(x)))
+
 
     #body
-    
-    
+
+
     featureDict <- list()
     featureNum <- c()
     weights.vec <- rep(0,nrow(df.input))
@@ -48,7 +61,7 @@ getSignatureFromMultipleGlmnet <- function(df.input, target.vec, nfolds = 10, lo
         }
         weights.mat <- as.matrix(coef(fit2, s = "lambda.min"))
         weights.vec <- (weights.vec + weights.mat[-1,1])
-        
+
         tmp_vec <- as.vector((coef(fit2, s="lambda.min") != 0))
         featureFromGlmnet <- rownames(df.input)[tmp_vec]
         featureNum <- c(featureNum, length(featureFromGlmnet))
@@ -61,16 +74,16 @@ getSignatureFromMultipleGlmnet <- function(df.input, target.vec, nfolds = 10, lo
                 if (is.na(gene) == FALSE){
                     featureDict[[gene]] <- 1
                 }
-                
+
             }
         }
     }
     #print(featureDict)
-    
+
     featureSelectionComplete <- names(featureDict)
-    
+
     numFloor <- floor(mean(featureNum))
-    
+
     featureDictInverse <- list()
     for (i in seq(1,length(featureDict),1)){
         numTmp <- featureDict[[i]]
@@ -83,10 +96,10 @@ getSignatureFromMultipleGlmnet <- function(df.input, target.vec, nfolds = 10, lo
             featureDictInverse[[numTmpChr]] <- c(names(featureDict)[i])
         }
     }
-    
+
     numIndex <- sort(as.numeric(names(featureDictInverse)), decreasing = TRUE)
     featureSelectionFloor <- c()
-    
+
     for (i in seq(1,length(numIndex),1)){
         numTmp <- numIndex[i]
         numTmpChr <- as.character(numTmp)
@@ -95,7 +108,7 @@ getSignatureFromMultipleGlmnet <- function(df.input, target.vec, nfolds = 10, lo
             break
         }
     }
-    
+
     return.list <- list()
     return.list[["feature"]] <- featureSelectionFloor
     return.list[["counts"]] <- featureDict
@@ -103,5 +116,5 @@ getSignatureFromMultipleGlmnet <- function(df.input, target.vec, nfolds = 10, lo
     return.list[["weights"]] <- weights.vec
     # Here we get the features:
     return(return.list)
-    
+
 }

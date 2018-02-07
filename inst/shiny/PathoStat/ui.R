@@ -14,15 +14,15 @@ alpha.methods <- c("Shannon", "Simpson", "InvSimpson")
 # Weigthed Unifrac, Bray-Curtis
 beta.methods <- c("wUniFrac", "bray")
 
-tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 'family', 
+tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order', 'family',
     'genus', 'species', 'no rank')
-norm.methods <- c('EBayes coreOTU Normalization', 
+norm.methods <- c('EBayes coreOTU Normalization',
     'Quantile coreOTU Normalization', 'Library Size Scaling')
 measure.type <- c('Final Guess', 'Final Best Hit', 'Final High Confidence Hit')
 minbatch <- function(batch1){
     batch2 <- as.factor(batch1)
     batch3 <- split(batch1,batch2)
-    return(min(unlist(lapply(1:length(batch3), 
+    return(min(unlist(lapply(1:length(batch3),
         function(x) length(batch3[[x]])))))
 }
 
@@ -70,8 +70,8 @@ source("ui_07_biomarker.R", local = TRUE) #creates shiny_panel_upload variable
 
 
 
-shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), id="PathoStat", fluid=TRUE, 
-    
+shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), id="PathoStat", fluid=TRUE,
+
     theme = "bootstrap.min.css",
     tabPanel("Upload", shiny_panel_upload),
     tabPanel("Data Summary/Filtering", shiny_panel_filter),
@@ -80,7 +80,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
             sidebarPanel(
                 #selectizeInput('taxl', 'Taxonomy Level', choices = setNames(
                 #   tax.abb, tax.name)),
-                selectizeInput('taxl', 'Taxonomy Level', choices = tax.name, 
+                selectizeInput('taxl', 'Taxonomy Level', choices = tax.name,
                     selected='no rank'),
                 selectInput("select_condition", "Select Condition:",
                             covariates),
@@ -91,15 +91,15 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                     tabPanel("Taxonomy level RA",
                         ggvisOutput("TaxRelAbundancePlot")),
                     # new heatmap
-                    tabPanel("Heatmap", 
+                    tabPanel("Heatmap",
                              helpText("Note: Only variables with less than 8 levels could be mapped to color bar."),
-                             fluidRow(            
+                             fluidRow(
                                  column(3, selectInput("select_heatmap_condition_1", "Add colorbar based on:",
                                                        covariates.colorbar)),
                                  column(3, selectInput("select_heatmap_condition_2", "Add second colorbar based on:",
                                                                                         covariates.colorbar)),
                                  column(3, checkboxInput("checkbox_heatmap_scale", "Row scaling", value = TRUE)),
-                                 column(3, checkboxInput("checkbox_heatmap", "Add colorbar", value = TRUE))       
+                                 column(3, checkboxInput("checkbox_heatmap", "Add colorbar", value = TRUE))
                              ),
                              plotOutput("Heatmap", height="550px"),
                              downloadButton('download_heatmap_pdf', 'Download heatmap PDF'))
@@ -109,12 +109,12 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
     ),
     tabPanel("Diversity",
         tabsetPanel(
-            tabPanel("Alpha Diversity", 
-                br(),     
+            tabPanel("Alpha Diversity",
+                br(),
                 sidebarLayout(
                     sidebarPanel(
                         br(),
-                     selectizeInput('taxl.alpha', 'Taxonomy Level', choices = tax.name, 
+                     selectizeInput('taxl.alpha', 'Taxonomy Level', choices = tax.name,
                                      selected='no rank'),
                      selectInput("select_alpha_div_condition", "Compare between:",
                                  covariates.colorbar),
@@ -124,19 +124,19 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                     mainPanel(
                      br(),
                      tabsetPanel(
-                       tabPanel("Boxplot", 
+                       tabPanel("Boxplot",
                                 plotlyOutput("AlphaDiversity"),
                                 actionButton("download_alpha", "Download Alpha diversity pdf"),
                                 helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")
                        ),
-                       tabPanel("Taxa number Barplot", 
+                       tabPanel("Taxa number Barplot",
                                 plotlyOutput("AlphaDiversityBarplot")
                        ),
-                       tabPanel("Statistical Test", 
+                       tabPanel("Statistical Test",
                                 selectInput("select_alpha_stat_method","Non-parametric Test", c("Mann-Whitney","Kruskal-Wallis")),
                                 verbatimTextOutput("alpha.stat.test")
                        ),
-                       tabPanel("Alpha Diversity Table", 
+                       tabPanel("Alpha Diversity Table",
                                 br(),
                                 downloadButton('download_table_alpha', 'Download this table'),
                                 DT::dataTableOutput("table.alpha")
@@ -145,11 +145,11 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                     )
                 )
           ),
-          tabPanel("Beta Diversity", 
+          tabPanel("Beta Diversity",
                    br(),
                    sidebarLayout(
                      sidebarPanel(
-                       selectizeInput('taxl.beta', 'Taxonomy Level', choices = tax.name, 
+                       selectizeInput('taxl.beta', 'Taxonomy Level', choices = tax.name,
                                       selected='no rank'),
                        selectInput("select_beta_div_method", "Choose method:",
                                    beta.methods),
@@ -160,7 +160,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                      mainPanel(
                        br(),
                        tabsetPanel(
-                         tabPanel("Heatmap", 
+                         tabPanel("Heatmap",
                                   br(),
                                   fluidRow(
                                       column(3, selectInput("select_beta_heatmap_condition_1", "Add colorbar on:",
@@ -172,17 +172,17 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                                   plotOutput("BetaDiversityHeatmap"),
                                   downloadButton('download_beta_heatmap_pdf', 'Download heatmap PDF')
                          ),
-                         tabPanel("Boxplot", 
+                         tabPanel("Boxplot",
                                   plotlyOutput("BetaDiversityBoxplot"),
                                   actionButton("download_beta_boxplot", "Download pdf"),
                                   helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")
                          ),
-                         tabPanel("Statistical Test", 
+                         tabPanel("Statistical Test",
                                   selectInput("select_beta_stat_method","Select Test", c("PERMANOVA", "Kruskal-Wallis", "Mann-Whitney")),
                                   numericInput("num.permutation.permanova", "Number of permutations", value = 999, max = 2000),
                                   verbatimTextOutput("beta.stat.test")
                          ),
-                         tabPanel("Beta Diversity Table", 
+                         tabPanel("Beta Diversity Table",
                                   br(),
                                   downloadButton('download_table_beta', 'Download this table'),
                                   DT::dataTableOutput("table.beta")
@@ -191,23 +191,23 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                      )
                    )
           ),
-          
-            tabPanel("Exploratory Tree", plotOutput("ExploratoryTree", 
+
+            tabPanel("Exploratory Tree", plotOutput("ExploratoryTree",
                 height = "550px")),
-            tabPanel("BiPlot", 
+            tabPanel("BiPlot",
                 sidebarLayout(
                     sidebarPanel(
-                        selectizeInput('colorBiP', 'Color', choices = 
-                            c(tax.name[-length(tax.name)], 'condition', 'None'), 
+                        selectizeInput('colorBiP', 'Color', choices =
+                            c(tax.name[-length(tax.name)], 'condition', 'None'),
                             selected='genus'),
-                        selectizeInput('shapeBiP', 'Shape', choices = 
-                            c(tax.name[-length(tax.name)], 'condition', 'None'), 
+                        selectizeInput('shapeBiP', 'Shape', choices =
+                            c(tax.name[-length(tax.name)], 'condition', 'None'),
                             selected='condition'),
-                        selectizeInput('labelBiP', 'Label', choices = 
-                            c(tax.name[-length(tax.name)], 'condition', 'None'), 
+                        selectizeInput('labelBiP', 'Label', choices =
+                            c(tax.name[-length(tax.name)], 'condition', 'None'),
                             selected='None'),
-                        selectizeInput('methodBiP', 'Method', 
-                            choices=c("DCA", "CCA", "RDA", "DPCoA", 
+                        selectizeInput('methodBiP', 'Method',
+                            choices=c("DCA", "CCA", "RDA", "DPCoA",
                             "NMDS", "PCoA"), selected='NMDS'),
                         width=3
                     ),
@@ -216,19 +216,19 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                     )
                 )
             ),
-            tabPanel("Co-Occurrence", 
+            tabPanel("Co-Occurrence",
                 sidebarLayout(
                     sidebarPanel(
-                        selectizeInput('colorCo', 'Color', choices = 
-                            c(tax.name[-length(tax.name)], 'None'), 
+                        selectizeInput('colorCo', 'Color', choices =
+                            c(tax.name[-length(tax.name)], 'None'),
                             selected='genus'),
-                        selectizeInput('shapeCo', 'Shape', choices = 
-                            c(tax.name[-length(tax.name)], 'None'), 
+                        selectizeInput('shapeCo', 'Shape', choices =
+                            c(tax.name[-length(tax.name)], 'None'),
                             selected='None'),
-                        selectizeInput('labelCo', 'Label', choices = 
-                            c(tax.name[-length(tax.name)], 'None'), 
+                        selectizeInput('labelCo', 'Label', choices =
+                            c(tax.name[-length(tax.name)], 'None'),
                             selected='None'),
-                        sliderInput("max.dist", "Max Dist:", 
+                        sliderInput("max.dist", "Max Dist:",
                             min = 0, max = 1, value = 0.5, step= 0.1),
                         width=3
                     ),
@@ -239,7 +239,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
             )
         )
     ),
-    
+
     tabPanel("Dimension Reduction",
              sidebarLayout(
                  sidebarPanel(
@@ -247,7 +247,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                                   min = 1, max = 50),
                      numericInput('ycol.new', 'Principal Component (y-axis)', 2,
                                   min = 1, max = 50),
-                     selectizeInput('taxl.pca', 'Taxonomy Level', choices = tax.name, 
+                     selectizeInput('taxl.pca', 'Taxonomy Level', choices = tax.name,
                                     selected='no rank'),
                      selectInput("select_pca_color", "Color points by:",
                                  covariates),
@@ -257,14 +257,14 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                  ),
                  mainPanel(
                      tabsetPanel(
-                         tabPanel("PCA plot", 
+                         tabPanel("PCA plot",
                                   # This is a bit different pdf downloading method for plotly,
                                   # as we must buy lisence for that
                                   plotlyOutput("pca.plotly"),
                                   actionButton("download_pca", "Download PCA pdf"),
                                   helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")),
                          tabPanel("PCA variance", DT::dataTableOutput("PCAtable")),
-                         tabPanel("PCoA plot", 
+                         tabPanel("PCoA plot",
                                   plotlyOutput("pcoa.plotly"),
                                   selectInput("pcoa.method", "PCoA method:",
                                               beta.methods),
@@ -277,15 +277,15 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
     ),
     tabPanel("Differential Analysis",
         tabsetPanel(
-             tabPanel("Deseq2", 
-                      
+             tabPanel("Deseq2",
+
                       sidebarLayout(
                         sidebarPanel(
-                          selectizeInput('taxl.da', 'Taxonomy Level', choices = tax.name, 
+                          selectizeInput('taxl.da', 'Taxonomy Level', choices = tax.name,
                                          selected='no rank'),
-                          selectizeInput('da.condition', 'Select condition', 
+                          selectizeInput('da.condition', 'Select condition',
                                          choices = covariates.two.levels),
-                          selectizeInput('da.condition.covariate', 'Select (multiple) covariates', 
+                          selectizeInput('da.condition.covariate', 'Select (multiple) covariates',
                                          choices = covariates, multiple = TRUE),
                           helpText("Continuous covariates would be automatically cut into factors with 3 levels."),
                           numericInput('da.count.cutoff', 'Minumum count cut-off', 500,
@@ -295,7 +295,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                           width=3
                         ),
                         mainPanel(
-                            tabPanel("DeSeq2", 
+                            tabPanel("DeSeq2",
                                      tabsetPanel(
                                        tabPanel("DE output",
                                                 DT::dataTableOutput("DeSeq2Table.new"),
@@ -306,13 +306,13 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                         )
                       )
              ),
-             tabPanel("edgeR", 
-                      
+             tabPanel("edgeR",
+
                       sidebarLayout(
                           sidebarPanel(
-                              selectizeInput('taxl.edger', 'Taxonomy Level', choices = tax.name, 
+                              selectizeInput('taxl.edger', 'Taxonomy Level', choices = tax.name,
                                              selected='no rank'),
-                              selectizeInput('edger.condition', 'Select condition', 
+                              selectizeInput('edger.condition', 'Select condition',
                                              choices = covariates.two.levels),
                               helpText("Continuous covariates would be automatically cut into factors with 3 levels."),
                               numericInput('edger.padj.cutoff', 'Choose padj cut-off', 0.5,
@@ -320,7 +320,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                               width=3
                           ),
                           mainPanel(
-                              tabPanel("edgeR", 
+                              tabPanel("edgeR",
                                        tabsetPanel(
                                            tabPanel("DE output",
                                                     DT::dataTableOutput("edgerTable.new"),
@@ -334,9 +334,9 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
              tabPanel("Statistical Test (presence-absence or count based)",
              sidebarLayout(
                sidebarPanel(
-                 selectizeInput('taxl.pa', 'Taxonomy Level', choices = tax.name, 
+                 selectizeInput('taxl.pa', 'Taxonomy Level', choices = tax.name,
                                 selected='no rank'),
-                 selectizeInput('pa.condition', 'Select condition', 
+                 selectizeInput('pa.condition', 'Select condition',
                                 choices = covariates.two.levels),
                  numericInput('pa.count.cutoff', 'Minumum count cut-off', 500,
                               min = 1, max = 5000),
@@ -345,10 +345,10 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                  width=3
                ),
                mainPanel(
-                 tabPanel("Test output", 
+                 tabPanel("Test output",
                           tabsetPanel(
                             tabPanel("output",
-                                     selectizeInput('pa.method', 'Select test method', 
+                                     selectizeInput('pa.method', 'Select test method',
                                                     choices = c("Fisher Exact Test", "Chi-squared Test", "Mann-Whitney Test")),
                                      DT::dataTableOutput("pa.test"),
                                      downloadButton("download_pa_test", "Download this table")
@@ -361,7 +361,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
         tabPanel("Confidence Region",
                  sidebarLayout(
                    sidebarPanel(
-                     #selectizeInput('taxlcr', 'Taxonomy Level', choices = tax.name, 
+                     #selectizeInput('taxlcr', 'Taxonomy Level', choices = tax.name,
                      #    selected='no rank'),
                      selectizeInput('taxon1', 'Taxon 1', choices=row.names(
                        shinyInput$pstat@otu_table)),
@@ -369,7 +369,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                        shinyInput$pstat@otu_table)),
                      selectizeInput('sample', 'Sample', choices=colnames(
                        shinyInput$pstat@otu_table)),
-                     checkboxInput("uselogit", 
+                     checkboxInput("uselogit",
                                    "Use Logit Transformation", FALSE),
                      width=5
                    ),
@@ -379,7 +379,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                  )
         )
         )
-             
+
 
     ),
     tabPanel("Biomarker", shiny_panel_biomarker),
@@ -388,16 +388,16 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
             tabPanel("Visualization",
                 sidebarLayout(
                     sidebarPanel(
-                      selectInput(inputId="Allusset", 
-                          label="Visualization column", 
+                      selectInput(inputId="Allusset",
+                          label="Visualization column",
                           choices = colnames(shinyInput$pstat@sam_data)),
-                      checkboxInput(inputId="Allurar", 
-                          label="Rarefaction? (maximum reads of minimal 
+                      checkboxInput(inputId="Allurar",
+                          label="Rarefaction? (maximum reads of minimal
                           sample count)"),
-                      selectInput(inputId="Alluglom", label="Agglomerate taxa", 
+                      selectInput(inputId="Alluglom", label="Agglomerate taxa",
                           choices = colnames(shinyInput$pstat@tax_table)),
                       uiOutput("Allustax"),
-                      downloadButton('downloadAlluvialPlot', 
+                      downloadButton('downloadAlluvialPlot',
                                      'Download Plot')
                     ),
                     mainPanel(

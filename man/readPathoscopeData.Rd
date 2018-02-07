@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{readPathoscopeData}
 \alias{readPathoscopeData}
-\title{Reads the data from PathoScope reports and returns a list of 
+\title{Reads the data from PathoScope reports and returns a list of
 final guess relative abundance and count data}
 \usage{
 readPathoscopeData(input_dir = ".",
@@ -24,7 +24,7 @@ readPathoscopeData(input_dir = ".",
 List of final guess relative abundance and count data
 }
 \description{
-Reads the data from PathoScope reports and returns a list of 
+Reads the data from PathoScope reports and returns a list of
 final guess relative abundance and count data
 }
 \examples{
