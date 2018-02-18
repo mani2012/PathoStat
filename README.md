@@ -1,4 +1,4 @@
-PathoStat: PathoScope Statistical Analysis package
+PathoStat: Statistical Microbiome Analysis Toolkit
 ==================================================
 
 PathoStat is a R shiny package, designed for performing Statistical Microbiome Analysis on 
