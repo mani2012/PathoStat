@@ -3,7 +3,7 @@ PathoStat: Statistical Microbiome Analysis Toolkit
 
 PathoStat is a R shiny package, designed for performing Statistical Microbiome Analysis on 
 metagenomics results from sequencing data samples. In particular, it supports 
-analyses on the PathoScope generated report files. 
+analyses on the [PathoScope](https://github.com/PathoScope/PathoScope) generated report files. 
 
 The package includes:
 
