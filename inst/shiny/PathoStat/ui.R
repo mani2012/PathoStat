@@ -134,7 +134,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                        ),
                        tabPanel("Statistical Test",
                                 selectInput("select_alpha_stat_method","Non-parametric Test", c("Mann-Whitney","Kruskal-Wallis")),
-                                verbatimTextOutput("alpha.stat.test")
+                                tableOutput("alpha.stat.test")
                        ),
                        tabPanel("Alpha Diversity Table",
                                 br(),
@@ -180,7 +180,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                          tabPanel("Statistical Test",
                                   selectInput("select_beta_stat_method","Select Test", c("PERMANOVA", "Kruskal-Wallis", "Mann-Whitney")),
                                   numericInput("num.permutation.permanova", "Number of permutations", value = 999, max = 2000),
-                                  verbatimTextOutput("beta.stat.test")
+                                  tableOutput("beta.stat.test")
                          ),
                          tabPanel("Beta Diversity Table",
                                   br(),
@@ -190,53 +190,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                        )
                      )
                    )
-          ),
-
-            tabPanel("Exploratory Tree", plotOutput("ExploratoryTree",
-                height = "550px")),
-            tabPanel("BiPlot",
-                sidebarLayout(
-                    sidebarPanel(
-                        selectizeInput('colorBiP', 'Color', choices =
-                            c(tax.name[-length(tax.name)], 'condition', 'None'),
-                            selected='genus'),
-                        selectizeInput('shapeBiP', 'Shape', choices =
-                            c(tax.name[-length(tax.name)], 'condition', 'None'),
-                            selected='condition'),
-                        selectizeInput('labelBiP', 'Label', choices =
-                            c(tax.name[-length(tax.name)], 'condition', 'None'),
-                            selected='None'),
-                        selectizeInput('methodBiP', 'Method',
-                            choices=c("DCA", "CCA", "RDA", "DPCoA",
-                            "NMDS", "PCoA"), selected='NMDS'),
-                        width=3
-                    ),
-                    mainPanel(
-                        plotOutput("BiPlot", height = "550px"), width=9
-                    )
-                )
-            ),
-            tabPanel("Co-Occurrence",
-                sidebarLayout(
-                    sidebarPanel(
-                        selectizeInput('colorCo', 'Color', choices =
-                            c(tax.name[-length(tax.name)], 'None'),
-                            selected='genus'),
-                        selectizeInput('shapeCo', 'Shape', choices =
-                            c(tax.name[-length(tax.name)], 'None'),
-                            selected='None'),
-                        selectizeInput('labelCo', 'Label', choices =
-                            c(tax.name[-length(tax.name)], 'None'),
-                            selected='None'),
-                        sliderInput("max.dist", "Max Dist:",
-                            min = 0, max = 1, value = 0.5, step= 0.1),
-                        width=3
-                    ),
-                    mainPanel(
-                        plotOutput("CoOccurrence", height = "550px"), width=9
-                    )
-                )
-            )
+          )
         )
     ),
 
@@ -331,7 +285,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                           )
                       )
              ),
-             tabPanel("Statistical Test (presence-absence or count based)",
+             tabPanel("Abundance analysis",
              sidebarLayout(
                sidebarPanel(
                  selectizeInput('taxl.pa', 'Taxonomy Level', choices = tax.name,
@@ -357,55 +311,36 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                  ), width=9
                )
              )
-        ),
-        tabPanel("Confidence Region",
-                 sidebarLayout(
-                   sidebarPanel(
-                     #selectizeInput('taxlcr', 'Taxonomy Level', choices = tax.name,
-                     #    selected='no rank'),
-                     selectizeInput('taxon1', 'Taxon 1', choices=row.names(
-                       shinyInput$pstat@otu_table)),
-                     selectizeInput('taxon2', 'Taxon 2', choices=row.names(
-                       shinyInput$pstat@otu_table)),
-                     selectizeInput('sample', 'Sample', choices=colnames(
-                       shinyInput$pstat@otu_table)),
-                     checkboxInput("uselogit",
-                                   "Use Logit Transformation", FALSE),
-                     width=5
-                   ),
-                   mainPanel(
-                     plotOutput("confRegion", height = "550px"), width=7
-                   )
-                 )
         )
         )
 
 
     ),
     tabPanel("Biomarker", shiny_panel_biomarker),
-    tabPanel("Time Series",
-        tabsetPanel(
-            tabPanel("Visualization",
-                sidebarLayout(
-                    sidebarPanel(
-                      selectInput(inputId="Allusset",
-                          label="Visualization column",
-                          choices = colnames(shinyInput$pstat@sam_data)),
-                      checkboxInput(inputId="Allurar",
-                          label="Rarefaction? (maximum reads of minimal
-                          sample count)"),
-                      selectInput(inputId="Alluglom", label="Agglomerate taxa",
-                          choices = colnames(shinyInput$pstat@tax_table)),
-                      uiOutput("Allustax"),
-                      downloadButton('downloadAlluvialPlot',
-                                     'Download Plot')
-                    ),
-                    mainPanel(
-                      plotOutput("TimePlotVisu",height = "600px")
-                    )
-                )
-            )
-        )
-    )
+    tabPanel("Pathway (Under construction by Tyler)")
+    # tabPanel("Time Series",
+    #     tabsetPanel(
+    #         tabPanel("Visualization",
+    #             sidebarLayout(
+    #                 sidebarPanel(
+    #                   selectInput(inputId="Allusset",
+    #                       label="Visualization column",
+    #                       choices = colnames(shinyInput$pstat@sam_data)),
+    #                   checkboxInput(inputId="Allurar",
+    #                       label="Rarefaction? (maximum reads of minimal
+    #                       sample count)"),
+    #                   selectInput(inputId="Alluglom", label="Agglomerate taxa",
+    #                       choices = colnames(shinyInput$pstat@tax_table)),
+    #                   uiOutput("Allustax"),
+    #                   downloadButton('downloadAlluvialPlot',
+    #                                  'Download Plot')
+    #                 ),
+    #                 mainPanel(
+    #                   plotOutput("TimePlotVisu",height = "600px")
+    #                 )
+    #             )
+    #         )
+    #     )
+    # )
 )
 )

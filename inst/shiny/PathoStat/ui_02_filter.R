@@ -20,7 +20,7 @@ shiny_panel_filter <- fluidPage(
                          ),
                          conditionalPanel(condition = "input.filter_type == 'By Metadata'",
                               selectInput("select_condition_sample_filter_sidebar", "Select a variable",
-                                                      c("Reads Number", covariates)),
+                                                      c("Read Number", covariates)),
                               conditionalPanel(condition = "output.filter_type == 'num.continuous'",
                                                helpText("Please select range of the feature to keep"),
                                                numericInput("num_filter_min", "Min", 0),
@@ -48,12 +48,12 @@ shiny_panel_filter <- fluidPage(
                          tabsetPanel(
                              tabPanel("Sample summary",
                                       tableOutput("contents_summary"),
-                                      numericInput("hist_reads_num_max", "Please the max reads length for histogram",
+                                      numericInput("hist_read_num_max", "Please the max read length for histogram",
                                                    value = 1e10, min = 0, max = 1e10),
                                       plotlyOutput("sampleCountHist")),
-                             tabPanel("Sample Reads Count Sum",
+                             tabPanel("Sample Read Count Sum",
                                       selectInput("select_condition_sample_filter", "Order by:",
-                                                  c("Reads Number", covariates)),
+                                                  c("Read Number", covariates)),
                                       plotlyOutput("sampleCountSum")),
                              tabPanel("Sample distribution in metadata",
                                       selectInput("select_condition_sample_distribution", "See distribution in:",
@@ -65,7 +65,17 @@ shiny_panel_filter <- fluidPage(
 
 
         ),
-        tabPanel("Reads Count & RA",
+        tabPanel("Boxplot visualization",
+                 selectizeInput('taxl_single_species', 'Taxonomy Level', choices = tax.name,
+                                selected='no rank'),
+                 selectInput("select_single_species_condition", "Select condition",
+                             covariates.colorbar),
+                 selectInput("ssv_format", "Select data format", c("read count", "relative abundance")),
+                 uiOutput("single_species_ui"),
+                 plotlyOutput("single_species_boxplot")
+                 #plotlyOutput("single_species_barplot")
+        ),
+        tabPanel("Read Count & RA",
                  br(),
                  sidebarLayout(
                    sidebarPanel(
@@ -83,8 +93,8 @@ shiny_panel_filter <- fluidPage(
                        tabPanel("Count Table",
                                 br(),
                                 downloadButton('downloadCountData', 'Download Count CSV'),
-                                DT::dataTableOutput("TaxCountTable",width='95%')),
-                       coreOTUModuleUI("coreOTUModule")
+                                DT::dataTableOutput("TaxCountTable",width='95%'))
+                       #coreOTUModuleUI("coreOTUModule")
                      ), width=9
                    )
                  )

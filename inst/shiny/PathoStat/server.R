@@ -18,7 +18,11 @@ library(dplyr)
 # Converts decimal percentage to string with specified digits
 pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
 
-
+# get RA from counts
+getRelativeAbundance <- function(df){
+  ra.out <- apply(df, 2, function(x) round(x/sum(x), digits = 4))
+  return(ra.out)
+}
 
 shinyServer(function(input, output, session) {
 
@@ -65,12 +69,14 @@ shinyServer(function(input, output, session) {
 
         updateSelectInput(session, "select_covariate_condition_biomarker",
                           choices = covariates)
+        updateSelectInput(session, "select_single_species_condition",
+                          choices = covariates.colorbar)
         updateSelectInput(session, "select_target_condition_biomarker",
                           choices = covariates.two.levels)
         updateSelectInput(session, "select_condition_sample_filter",
-                          choices = c("Reads Number", covariates))
+                          choices = c("Read Number", covariates))
         updateSelectInput(session, "select_condition_sample_filter_sidebar",
-                          choices = c("Reads Number", covariates))
+                          choices = c("Read Number", covariates))
         updateSelectInput(session, "select_condition_sample_distribution",
                           choices = covariates)
         updateSelectInput(session, "select_condition",
@@ -353,9 +359,10 @@ shinyServer(function(input, output, session) {
   output$filter_type <- reactive({
     shinyInput <- vals$shiny.input
     pstat <- shinyInput$pstat
-    if (input$select_condition_sample_filter_sidebar == "Reads Number"){
+    if (input$select_condition_sample_filter_sidebar == "Read Number"){
       return("num.continuous")
     }
+
     variable.vec <- sample_data(pstat)[[
           which(pstat@sam_data@names == input$select_condition_sample_filter_sidebar)]]
     if (is.numeric(variable.vec)){
@@ -382,7 +389,7 @@ shinyServer(function(input, output, session) {
       pstat <- shinyInput$pstat
       # extract the feature vector
 
-      if (input$select_condition_sample_filter_sidebar == "Reads Number"){
+      if (input$select_condition_sample_filter_sidebar == "Read Number"){
         feature.selected.vec <- colSums(pstat@otu_table@.Data)
       }else{
         feature.selected.vec <- pstat@sam_data@.Data[[
@@ -446,12 +453,12 @@ shinyServer(function(input, output, session) {
       shinyInput <- vals$shiny.input
       pstat <- shinyInput$pstat
       Sample_Name <- colnames(pstat@otu_table@.Data)
-      Reads_Number <- colSums(pstat@otu_table@.Data)
-      data <- data.frame(Sample_Name, Reads_Number, stringsAsFactors = FALSE)
+      Read_Number <- colSums(pstat@otu_table@.Data)
+      data <- data.frame(Sample_Name, Read_Number, stringsAsFactors = FALSE)
 
-      if (input$select_condition_sample_filter == "Reads Number"){
+      if (input$select_condition_sample_filter == "Read Number"){
           data$Sample_Name <- factor(data$Sample_Name,
-                                     levels = unique(data$Sample_Name)[order(data$Reads_Number,
+                                     levels = unique(data$Sample_Name)[order(data$Read_Number,
                                                                              decreasing = FALSE)])
       } else{
           data$Sample_Name <- paste(as.character(pstat@sam_data@.Data
@@ -463,7 +470,7 @@ shinyServer(function(input, output, session) {
                                             decreasing = FALSE)])
       }
 
-      p <- plot_ly(data, x = ~Sample_Name, y = ~Reads_Number, type = "bar", name = 'Sample reads count') %>%
+      p <- plot_ly(data, x = ~Sample_Name, y = ~Read_Number, type = "bar", name = 'Sample read count') %>%
           layout(margin = list(b = 160))
       p
   })
@@ -484,8 +491,8 @@ shinyServer(function(input, output, session) {
       shinyInput <- vals$shiny.input
       pstat <- shinyInput$pstat
       Sample_Name <- colnames(pstat@otu_table@.Data)
-      Reads_Number <- colSums(pstat@otu_table@.Data)
-      p <- plot_ly(x = Reads_Number[Reads_Number < input$hist_reads_num_max], type = "histogram", name = 'Sample reads count histogram') %>%
+      Read_Number <- colSums(pstat@otu_table@.Data)
+      p <- plot_ly(x = Read_Number[Read_Number < input$hist_read_num_max], type = "histogram", name = 'Sample read count histogram') %>%
           layout(margin = list(b = 160))
 
       p
@@ -576,6 +583,106 @@ shinyServer(function(input, output, session) {
   options = list(
       paging = TRUE, scrollX = TRUE, pageLength = 5
   ))
+
+
+
+
+#### plot the single species boxplot
+  output$single_species_ui <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    species.name.vec <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl_single_species)
+    tagList(
+      selectInput("select_single_species_name_plot", "Select names (support multiple)", species.name.vec, selected = species.name.vec[1], multiple = TRUE)
+    )
+  })
+
+  plotSingleSpeciesBoxplotServer <- function(){
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+
+    if (input$taxl_single_species !="no rank")  {
+      pstat <- tax_glom(pstat, input$taxl_single_species)
+    }
+
+
+
+
+    if (length(input$select_single_species_name_plot) == 1){
+      condition.vec <- pstat@sam_data@.Data[[which(pstat@sam_data@names == input$select_single_species_condition)]]
+      # change microbe names to selected taxon level
+      species.name.vec <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl_single_species)
+      #cat(paste("condition:", length(condition.vec)))
+      read.num.condition.1 <- rep(0, length(condition.vec))
+
+      if (input$ssv_format == "read count"){
+        for (i in 1:nrow(pstat@otu_table@.Data)){
+          if (species.name.vec[i] == input$select_single_species_name_plot){
+            read.num.condition.1 <- read.num.condition.1 + pstat@otu_table@.Data[i,]
+          }
+        }
+        df.tmp <- data.frame(condition = condition.vec, read_Number = read.num.condition.1)
+        p <- plot_ly(df.tmp, y = ~read_Number, color = ~condition, type = "box")
+      }else{
+        df.ra <- getRelativeAbundance(pstat@otu_table@.Data)
+        for (i in 1:nrow(df.ra)){
+          if (species.name.vec[i] == input$select_single_species_name_plot){
+            read.num.condition.1 <- read.num.condition.1 + df.ra[i,]
+          }
+        }
+        df.tmp <- data.frame(condition = condition.vec, RA = read.num.condition.1)
+        p <- plot_ly(df.tmp, y = ~RA, color = ~condition, type = "box")
+      }
+
+      ## plot
+      p
+
+
+    } else{
+      condition.vec <- pstat@sam_data@.Data[[which(pstat@sam_data@names == input$select_single_species_condition)]]
+      condition.vec.all <- c()
+      species.vec <- c()
+      read.num.condition.all <- c()
+      species.name.vec <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl_single_species)
+      for (i in 1:length(input$select_single_species_name_plot)){
+        condition.vec.all <- c(condition.vec.all, condition.vec)
+        species.vec <- c(species.vec, rep(input$select_single_species_name_plot[i], length(condition.vec)))
+        read.num.condition.tmp <- rep(0, length(condition.vec))
+        for (j in 1:nrow(pstat@otu_table@.Data)){
+          if (species.name.vec[j] == input$select_single_species_name_plot[i]){
+            if (input$ssv_format == "read count"){
+              read.num.condition.tmp <- read.num.condition.tmp + pstat@otu_table@.Data[j,]
+            } else{
+              df.ra <- getRelativeAbundance(pstat@otu_table@.Data)
+              read.num.condition.tmp <- read.num.condition.tmp + df.ra[j,]
+            }
+
+
+          }
+        }
+        read.num.condition.all <- c(read.num.condition.all, read.num.condition.tmp)
+
+      }
+      if (input$ssv_format == "read count"){
+      df.tmp <- data.frame(condition = condition.vec.all, read_Number = read.num.condition.all, name = species.vec)
+      p <- plot_ly(df.tmp, x = ~name, y = ~read_Number, color = ~condition, type = "box") %>%
+        layout(boxmode = "group")
+      p
+      }else{
+        df.tmp <- data.frame(condition = condition.vec.all, RA = read.num.condition.all, name = species.vec)
+        p <- plot_ly(df.tmp, x = ~name, y = ~RA, color = ~condition, type = "box") %>%
+          layout(boxmode = "group")
+        p
+      }
+    }
+
+
+
+  }
+
+  output$single_species_boxplot <- renderPlotly({
+    plotSingleSpeciesBoxplotServer()
+  })
 
 
 
@@ -897,7 +1004,8 @@ shinyServer(function(input, output, session) {
     }
   )
 
-  output$alpha.stat.test <- renderPrint({
+
+  alpha.stat.output <- reactive({
     shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     if (input$taxl.alpha !="no rank")  {
@@ -912,34 +1020,53 @@ shinyServer(function(input, output, session) {
 
     if (length(unique(meta.data$condition)) == 2){
       if (input$select_alpha_stat_method == "Mann-Whitney"){
-        wilcox.test(richness ~ condition, data = meta.data)
+        tmp <- wilcox.test(richness ~ condition, data = meta.data)
+        output <- c(tmp$method, tmp$p.value)
+        output.table <- data.frame(output)
+        rownames(output.table) <- c("Method", "P-value")
+        output.table
       } else{
         print("Condition level number is 2, please use Mann-Whitney test.")
       }
 
     } else if (length(unique(meta.data$condition)) > 2){
       if (input$select_alpha_stat_method == "Mann-Whitney"){
-        print("Condition level number is larger than 2, pairwise Mann-Whitney test is applied. You could also check Kruskal-Wallis test result.")
-        print("---------------------------------------")
         result.list <- list()
+        meta.data.list <- list()
         for (i in 1:length(unique(meta.data$condition))){
-          meta.data.tmp <- meta.data[which(meta.data$condition != unique(meta.data$condition)[i]),]
-          print(paste(unique(meta.data.tmp$condition), collapse = " and "))
-          result.list[[i]] <- wilcox.test(richness ~ condition, data = meta.data.tmp)
-          print(result.list[[i]])
-          print("------------------------")
+          meta.data.list[[i]] <- meta.data[which(meta.data$condition != unique(meta.data$condition)[i]),]
+          result.list[[i]] <- wilcox.test(richness ~ condition, data = meta.data.list[[i]])
         }
+        output.table <- NULL
+        group.name <- c()
+        for (i in 1:length(result.list)){
+          output.tmp <- c(result.list[[i]]$method, result.list[[i]]$p.value)
+          output.table <- cbind(output.table, output.tmp)
+          group.name[i] <- paste(unique(meta.data.list[[i]]$condition), collapse = " and ")
+        }
+        rownames(output.table) <- c("Method", "P-value")
+        colnames(output.table) <- group.name
+        output.table
+
+
 
       } else{
-        kruskal.test(richness ~ condition, data = meta.data)
+        tmp <- kruskal.test(richness ~ condition, data = meta.data)
+        output <- c(tmp$method, tmp$p.value)
+        output.table <- data.frame(output)
+        rownames(output.table) <- c("Method", "P-value")
+        output.table
       }
 
     } else{
       "Condition level must be at least 2."
     }
-
-
   })
+  output$alpha.stat.test <- renderTable({
+    alpha.stat.output()
+  },include.rownames=TRUE)
+
+
 
 
   # independent heatmap plotting function in the server using specific data from input
@@ -1065,9 +1192,9 @@ shinyServer(function(input, output, session) {
 
 
 
-  output$beta.stat.test <- renderPrint({
-      shinyInput <- vals$shiny.input
-      physeq1 <- shinyInput$pstat
+  beta.stat.output <- reactive({
+    shinyInput <- vals$shiny.input
+    physeq1 <- shinyInput$pstat
     if (input$select_beta_stat_method == "PERMANOVA"){
       if (input$taxl.beta !="no rank")  {
         physeq1 <- tax_glom(physeq1, input$taxl.beta)
@@ -1117,30 +1244,42 @@ shinyServer(function(input, output, session) {
       names(dist.list) <- c(unique(meta.data$condition)[1], unique(meta.data$condition)[2], "between")
 
       if (input$select_beta_stat_method == "Mann-Whitney"){
-        print("Condition level number is larger than 2, pairwise Mann-Whitney test is applied.
-              You could also check Kruskal-Wallis test result.")
-        print("---------------------------------------")
         result.list <- list()
+        group.name <- c()
         for (i in 1:length(dist.list)){
           dist.list.tmp <- dist.list[which(names(dist.list) != names(dist.list)[i])]
-          print(paste(names(dist.list.tmp), collapse = " and "))
-          result.list[[i]] <- wilcox.test(dist.list.tmp[[1]], dist.list.tmp[[2]])
-          print(result.list[[i]])
-          print("------------------------")
 
+          group.name[i] <- paste(names(dist.list.tmp), collapse = " and ")
+          result.list[[i]] <- wilcox.test(dist.list.tmp[[1]], dist.list.tmp[[2]])
         }
+        output.table <- NULL
+        group.name <- c()
+        for (i in 1:length(result.list)){
+          output.tmp <- c(result.list[[i]]$method, result.list[[i]]$p.value)
+          output.table <- cbind(output.table, output.tmp)
+        }
+        rownames(output.table) <- c("Method", "P-value")
+        colnames(output.table) <- group.name
+        output.table
+
 
       } else{
-        kruskal.test(list(dist.within.a, dist.within.b, dist.between))
+        tmp <- kruskal.test(list(dist.within.a, dist.within.b, dist.between))
+        output <- c(tmp$method, tmp$p.value)
+        output.table <- data.frame(output)
+        rownames(output.table) <- c("Method", "P-value")
+        output.table
       }
 
     }
 
 
-
-
-
   })
+
+  output$beta.stat.test <- renderTable({
+    beta.stat.output()
+
+  },include.rownames=TRUE)
 
   output$table.beta <- DT::renderDataTable({
       shinyInput <- vals$shiny.input
