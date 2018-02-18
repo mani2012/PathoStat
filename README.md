@@ -16,7 +16,7 @@ The package includes:
     7. Biomarker identification
     8. Pathway analysis
     
-
+## Run Pathostat
 To launch PathoStat in R, just enter the command:
 ```r
 runPathoStat()
