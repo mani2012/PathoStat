@@ -41,6 +41,9 @@ shiny_panel_filter <- fluidPage(
                          withBusyIndicatorUI(
                            actionButton("resetSampleButton", "Reset")
                          ),
+                         br(),
+                         br(),
+                         downloadButton('download_rda', 'Download pathostat data'),
                          width=3
                      ),
                      mainPanel(

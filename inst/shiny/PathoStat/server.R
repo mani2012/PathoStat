@@ -4,7 +4,6 @@ library(d3heatmap)
 library(reshape2)
 library(limma)
 library(edgeR)
-library(DESeq2)
 library(phyloseq)
 library(ape)
 library(stats)
@@ -106,6 +105,21 @@ shinyServer(function(input, output, session) {
         updateSelectInput(session, "pa.condition",
                           choices = covariates.two.levels)
     }
+
+    observeEvent(input$uploadPathoStat,{
+      withBusyIndicatorServer("uploadPathoStat", {
+        load(input$rda_file$datapath)
+        shinyInput <- list(pstat = pstat)
+        vals$shiny.input <- shinyInput
+        vals$shiny.input.backup <- shinyInput
+        # update ui
+        updateCovariate()
+        updateSample()
+
+      })
+
+    })
+
 
     observeEvent(input$uploadDataCount,{
         withBusyIndicatorServer("uploadDataCount", {
@@ -275,7 +289,13 @@ shinyServer(function(input, output, session) {
     })
 
 
-
+      output$download_rda <- downloadHandler(filename = function() {
+        paste("pathostat", Sys.Date(), ".rda", sep="")
+      }, content = function(file) {
+        shinyInput <- vals$shiny.input
+        pstat <- shinyInput$pstat
+        save(pstat, file=file)
+      })
 
   # setInputs(FALSE)
   findAllTaxData <- function(taxonLevel) {
