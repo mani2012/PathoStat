@@ -26,19 +26,7 @@ runPathoStat()
 
 ## Installation
 
-To begin, install [Bioconductor](http://www.bioconductor.org/) and simply
-run the following to automatically install PathoStat and all the dependencies, 
-except pandoc, which you have to manually install as follows.
-
-```r
-source("http://bioconductor.org/biocLite.R")
-biocLite("PathoStat")
-```
-Install 'pandoc' package by following the instructions at the following URL:
-http://pandoc.org/installing.html
-
-If you want to install the latest development version of PathoStat from Github, 
-use [devtools](https://github.com/hadley/devtools) to install it as follows:
+Use [devtools](https://github.com/hadley/devtools) to install it as follows:
 ```r
 require(devtools)
 install_github("jasonzhao0307/PathoStat")
