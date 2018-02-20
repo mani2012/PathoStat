@@ -3,6 +3,7 @@ library(ggvis)
 library(d3heatmap)
 library(reshape2)
 library(limma)
+library(DESeq2)
 library(edgeR)
 library(phyloseq)
 library(ape)
@@ -14,6 +15,11 @@ library(webshot)
 library(vegan)
 library(dplyr)
 
+# get percent
+percent <- function(x, digits = 2, format = "f", ...) {
+  paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
+}
+
 # Converts decimal percentage to string with specified digits
 pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
 
@@ -21,6 +27,11 @@ pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
 getRelativeAbundance <- function(df){
   ra.out <- apply(df, 2, function(x) round(x/sum(x), digits = 4))
   return(ra.out)
+}
+
+getLogCPM <- function(df){
+  logCPM.out <- apply(df, 2, function(y) log10(y*1e6/sum(y) + 1))
+  return(logCPM.out)
 }
 
 shinyServer(function(input, output, session) {
@@ -876,8 +887,11 @@ shinyServer(function(input, output, session) {
       } else{
         add.colorbar <- NULL
       }
-      return(plotHeatmapColor(physeq1@otu_table@.Data,
-                              do.scale = input$checkbox_heatmap_scale,
+      df.plot <- physeq1@otu_table@.Data
+      rownames(df.plot) <- TranslateIdToTaxLevel(physeq1, rownames(df.plot),
+                                                 input$taxl)
+      return(plotHeatmapColor(getRelativeAbundance(df.plot),
+                              do.scale = FALSE,
                               condition.vec.1 = physeq1@sam_data[[input$select_heatmap_condition_1]],
                               condition.vec.2 = physeq1@sam_data[[input$select_heatmap_condition_2]],
                               condition.1.name = input$select_heatmap_condition_1,
@@ -887,13 +901,16 @@ shinyServer(function(input, output, session) {
                                                   input$select_heatmap_condition, sep = " ")))
     } else  {
       physeq2 <- tax_glom(physeq1, input$taxl)
+      df.plot <- physeq2@otu_table@.Data
+      rownames(df.plot) <- TranslateIdToTaxLevel(physeq2, rownames(df.plot),
+                                                 input$taxl)
       if (input$checkbox_heatmap){
         add.colorbar <- "auto"
       } else{
         add.colorbar <- NULL
       }
-      return(plotHeatmapColor(physeq2@otu_table@.Data,
-                              do.scale = input$checkbox_heatmap_scale,
+      return(plotHeatmapColor(getRelativeAbundance(df.plot),
+                              do.scale = FALSE,
                               condition.vec.1 = physeq2@sam_data[[input$select_heatmap_condition_1]],
                               condition.vec.2 = physeq2@sam_data[[input$select_heatmap_condition_2]],
                               condition.1.name = input$select_heatmap_condition_1,
@@ -1404,7 +1421,13 @@ shinyServer(function(input, output, session) {
       shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     if (input$taxl.pca=="no rank")  {
-      plotPCAPlotly(df.input = physeq1@otu_table@.Data,
+      df.plot <- physeq1@otu_table@.Data
+      if (input$select_pca_data_format == "log10 CPM"){
+        df.plot <- getLogCPM(df.plot)
+      }else if (input$select_pca_data_format == "RA"){
+        df.plot <- getRelativeAbundance(df.plot)
+      }
+      plotPCAPlotly(df.input = df.plot,
                     condition.color.vec = physeq1@sam_data[[input$select_pca_color]],
                     condition.color.name = input$select_pca_color,
                     condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]],
@@ -1416,7 +1439,13 @@ shinyServer(function(input, output, session) {
                                         input$select_pca_color, sep = " "))
     } else  {
       physeq2 <- tax_glom(physeq1, input$taxl.pca)
-      plotPCAPlotly(df.input = physeq2@otu_table@.Data,
+      df.plot <- physeq2@otu_table@.Data
+      if (input$select_pca_data_format == "log10 CPM"){
+        df.plot <- getLogCPM(df.plot)
+      }else if (input$select_pca_data_format == "RA"){
+        df.plot <- getRelativeAbundance(df.plot)
+      }
+      plotPCAPlotly(df.input = df.plot,
                     condition.color.vec = physeq2@sam_data[[input$select_pca_color]],
                     condition.color.name = input$select_pca_color,
                     condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]],
@@ -1567,6 +1596,20 @@ shinyServer(function(input, output, session) {
       if (input$taxl.edger !="no rank"){
           pstat <- tax_glom(pstat, input$taxl.edger)
       }
+
+
+
+      # number of samples in each level of target variable
+      target.var.index <- which(pstat@sam_data@names == input$edger.condition)
+      label.vec.num <- pstat@sam_data@.Data[[target.var.index]]
+      label.vec.save <- unique(label.vec.num)
+
+      # transform label into 1 and 0
+      label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
+      label.vec.num[label.vec.num != 1] <- 0
+
+
+
       dge = phyloseq_to_edgeR(pstat, group=input$edger.condition)
       # Perform binary test
       et = exactTest(dge)
@@ -1588,6 +1631,40 @@ shinyServer(function(input, output, session) {
                                   which(colnames(sigtab) == "FDR"),
                                   which(colnames(sigtab) == "logFC"))]
               rownames(sigtab) <- 1:nrow(sigtab)
+
+
+
+              # remove "others"
+              index.sigtab.save <- c()
+              for (i in 1:nrow(sigtab)){
+                if (sigtab[i,1] != "others"){
+                  index.sigtab.save <- c(index.sigtab.save, i)
+                }
+              }
+              sigtab <- sigtab[index.sigtab.save,]
+
+              num.1 <- c()
+              num.2 <- c()
+              species.names.tmp <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl.edger)
+              for (i in 1:nrow(sigtab)){
+                species.index <- which(species.names.tmp == sigtab[i,1])
+                num.1 <- c(num.1, sum((pstat@otu_table@.Data[species.index,which(label.vec.num == 1)] > 0)))
+                num.2 <- c(num.2, sum((pstat@otu_table@.Data[species.index,which(label.vec.num == 0)] > 0)))
+              }
+
+              sigtab <- cbind(sigtab, num.1)
+              sigtab <- cbind(sigtab, num.2)
+
+
+              df.output.prevalence <- percent(round((num.1 + num.2)/ncol(pstat@otu_table@.Data),4))
+              sigtab <- cbind(sigtab, df.output.prevalence)
+
+
+              colnames(sigtab)[ncol(sigtab)-2] <- label.vec.save[1]
+              colnames(sigtab)[ncol(sigtab)-1] <- label.vec.save[2]
+              colnames(sigtab)[ncol(sigtab)] <- "prevalence"
+
+
               output$download_edger_tb <- downloadHandler(
                   filename = function() { paste('download_edger_table', '.csv', sep='') },
                   content = function(file) {
@@ -1618,6 +1695,18 @@ shinyServer(function(input, output, session) {
       physeq1 <- tax_glom(physeq1, input$taxl.da)
     }
     physeq1 <- prune_samples(sample_sums(physeq1) > input$da.count.cutoff, physeq1)
+
+
+
+
+    # number of samples in each level of target variable
+    target.var.index <- which(physeq1@sam_data@names == input$da.condition)
+    label.vec.num <- physeq1@sam_data@.Data[[target.var.index]]
+    label.vec.save <- unique(label.vec.num)
+
+    # transform label into 1 and 0
+    label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
+    label.vec.num[label.vec.num != 1] <- 0
 
 
 
@@ -1664,9 +1753,50 @@ shinyServer(function(input, output, session) {
         sigtab$log2FoldChange <- as.numeric(formatC(sigtab$log2FoldChange, format = "e", digits = 2))
 
         rownames(sigtab) <- 1:nrow(sigtab)
+
+
+
+
+
+
         sigtab <- sigtab[,c(which(colnames(sigtab) == input$taxl.da[1]),
                             which(colnames(sigtab) == "padj"),
                             which(colnames(sigtab) == "log2FoldChange"))]
+
+
+
+
+
+        # remove "others"
+        index.sigtab.save <- c()
+        for (i in 1:nrow(sigtab)){
+          if (sigtab[i,1] != "others"){
+            index.sigtab.save <- c(index.sigtab.save, i)
+          }
+        }
+        sigtab <- sigtab[index.sigtab.save,]
+
+        num.1 <- c()
+        num.2 <- c()
+        species.names.tmp <- TranslateIdToTaxLevel(physeq1, rownames(physeq1@otu_table@.Data), input$taxl.da)
+        for (i in 1:nrow(sigtab)){
+          species.index <- which(species.names.tmp == sigtab[i,1])
+          num.1 <- c(num.1, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 1)] > 0)))
+          num.2 <- c(num.2, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 0)] > 0)))
+        }
+
+        sigtab <- cbind(sigtab, num.1)
+        sigtab <- cbind(sigtab, num.2)
+
+
+        df.output.prevalence <- percent(round((num.1 + num.2)/ncol(physeq1@otu_table@.Data),4))
+        sigtab <- cbind(sigtab, df.output.prevalence)
+
+
+        colnames(sigtab)[ncol(sigtab)-2] <- label.vec.save[1]
+        colnames(sigtab)[ncol(sigtab)-1] <- label.vec.save[2]
+        colnames(sigtab)[ncol(sigtab)] <- "prevalence"
+
         output$download_deseq_tb <- downloadHandler(
           filename = function() { paste('download_deseq2_table', '.csv', sep='') },
           content = function(file) {
@@ -1702,35 +1832,45 @@ shinyServer(function(input, output, session) {
     # change microbe names to selected taxon level
     rownames(df.pam) <- TranslateIdToTaxLevel(physeq1, rownames(df.pam), input$taxl.pa)
 
-    if (input$pa.method == "Fisher Exact Test"){
+    if (input$pa_method == "Fisher Exact Test"){
       output.mat <- Fisher_Test_Pam(df.pam,
                                     physeq1@sam_data[[input$pa.condition]],
                                     input$pa.padj.cutoff)
       output$download_pa_test <- downloadHandler(
-        filename = function() { paste(input$pa.method, '.csv', sep='') },
+        filename = function() { paste(input$pa_method, '.csv', sep='') },
         content = function(file) {
           write.csv(output.mat, file)
         }
       )
 
       DT::datatable(output.mat)
-    } else if(input$pa.method == "Chi-squared Test"){
+    } else if(input$pa_method == "Chi-squared Test"){
       output.mat <- Chisq_Test_Pam(df.pam,
                                    physeq1@sam_data[[input$pa.condition]],
                                    input$pa.padj.cutoff)
       output$download_pa_test <- downloadHandler(
-        filename = function() { paste(input$pa.method, '.csv', sep='') },
+        filename = function() { paste(input$pa_method, '.csv', sep='') },
         content = function(file) {
           write.csv(output.mat, file)
         }
       )
       DT::datatable(output.mat)
-    } else if (input$pa.method == "Mann-Whitney Test"){
-      output.mat <- Wilcox_Test_df(physeq1@otu_table@.Data,
+    } else if (input$pa_method == "Mann-Whitney Test"){
+      df.test <- physeq1@otu_table@.Data
+      rownames(df.test) <- TranslateIdToTaxLevel(physeq1, rownames(df.test), input$taxl.pa)
+
+      if (input$pa_mann_data_type == "log10 CPM"){
+        df.test <- getLogCPM(df.test)
+      }else if (input$pa_mann_data_type == "RA"){
+        df.test <- getRelativeAbundance(df.test)
+      }
+
+
+      output.mat <- Wilcox_Test_df(df.test,
                                    physeq1@sam_data[[input$pa.condition]],
                                    input$pa.padj.cutoff)
       output$download_pa_test <- downloadHandler(
-        filename = function() { paste(input$pa.method, '.csv', sep='') },
+        filename = function() { paste(input$pa_method, '.csv', sep='') },
         content = function(file) {
           write.csv(output.mat, file)
         }
@@ -1748,7 +1888,7 @@ shinyServer(function(input, output, session) {
 ### biomarker
   observeEvent(input$goButtonBiomarker, {
 
-      output$featureSelectionTmp <- renderPrint({
+      output$featureSelectionTmp <- renderTable({
 
           if (input$select_model_biomarker == "Lasso Logistic Regression"){
               shinyInput <- vals$shiny.input
@@ -1762,21 +1902,63 @@ shinyServer(function(input, output, session) {
               rownames(df.input) <- TranslateIdToTaxLevel(physeq1, rownames(df.input), input$taxl_biomarker)
 
               if (!is.null(input$select_covariate_condition_biomarker)){
-                  covariate.index <- match(input$select_covariate_condition_biomarker, physeq1@sam_data@names)
-                  df.covariate  <- data.frame(t(sapply(physeq1@sam_data@.Data[covariate.index], function(x) x)))
 
-                  rownames(df.covariate) <- input$select_covariate_condition_biomarker
-                  colnames(df.covariate) <- colnames(df.input)
+                  target.tmp <- physeq1@sam_data@.Data[[2]]
 
-                  df.input <- rbind.data.frame(df.input, df.covariate)
-                  #cat(dim(df.input))
+                  covariate.vec <- input$select_covariate_condition_biomarker
+                  df.list.tmp <- list()
+                  for (i in 1:length(covariate.vec)){
+                    df.list.tmp[[covariate.vec[i]]] <- physeq1@sam_data@.Data[[which(physeq1@sam_data@names == covariate.vec[i])]]
+                  }
+                  df.covariate <- data.frame(df.list.tmp)
+                  rownames(df.covariate) <- colnames(df.input)
+
+                  df.input <- cbind.data.frame(t(df.input), df.covariate)
+              } else{
+                df.input <- t(df.input)
               }
 
               target.vec <- physeq1@sam_data[[input$select_target_condition_biomarker]]
-
-              output.fs <- getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = input$num.cv.nfolds)
+              # use log CPM as normalization.
+              for(i in 1:ncol(df.input)){
+                if (is.numeric(df.input[,i])){
+                  df.input[,i] <- log10(df.input[,i]*1e6/sum(df.input[,i]) + 0.1)
+                }
+              }
+              #df.input
+              output.fs <- getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = input$num.cv.nfolds, nRun = input$num.biomarker.run)
           }
-          output.fs
+
+
+        # number of samples in each level of target variable
+        target.var.index <- which(physeq1@sam_data@names == input$select_target_condition_biomarker)
+        label.vec.num <- physeq1@sam_data@.Data[[target.var.index]]
+        label.vec.save <- unique(label.vec.num)
+
+        # transform label into 1 and 0
+        label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
+        label.vec.num[label.vec.num != 1] <- 0
+
+        num.1 <- c()
+        num.2 <- c()
+        species.names.tmp <- TranslateIdToTaxLevel(physeq1, rownames(physeq1@otu_table@.Data), input$taxl_biomarker)
+        for (i in 1:length(output.fs$feature)){
+          species.index <- which(species.names.tmp == output.fs$feature[i])
+          num.1 <- c(num.1, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 1)] > 0)))
+          num.2 <- c(num.2, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 0)] > 0)))
+        }
+
+          output.df <- data.frame(biomarker = output.fs$feature,
+                                  selection_rate = output.fs$selection_rate,
+                                  average_weights = output.fs$feature_weights,
+                                  num.1,
+                                  num.2,
+                                  percent(round((num.1+num.2)/ncol(physeq1@otu_table@.Data),4)))
+
+          colnames(output.df)[ncol(output.df)-2] <- label.vec.save[1]
+          colnames(output.df)[ncol(output.df)-1] <- label.vec.save[2]
+          colnames(output.df)[ncol(output.df)] <- "prevalence"
+          output.df
 
       })
 

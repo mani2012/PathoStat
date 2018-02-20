@@ -98,7 +98,6 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                                                        covariates.colorbar)),
                                  column(3, selectInput("select_heatmap_condition_2", "Add second colorbar based on:",
                                                                                         covariates.colorbar)),
-                                 column(3, checkboxInput("checkbox_heatmap_scale", "Row scaling", value = TRUE)),
                                  column(3, checkboxInput("checkbox_heatmap", "Add colorbar", value = TRUE))
                              ),
                              plotOutput("Heatmap", height="550px"),
@@ -215,6 +214,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                                   # This is a bit different pdf downloading method for plotly,
                                   # as we must buy lisence for that
                                   plotlyOutput("pca.plotly"),
+                                  selectInput("select_pca_data_format", "Select data type", c("read count", "log10 CPM", "RA")),
                                   actionButton("download_pca", "Download PCA pdf"),
                                   helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")),
                          tabPanel("PCA variance", DT::dataTableOutput("PCAtable")),
@@ -300,10 +300,13 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                ),
                mainPanel(
                  tabPanel("Test output",
+                          br(),
                           tabsetPanel(
                             tabPanel("output",
-                                     selectizeInput('pa.method', 'Select test method',
+                                     selectInput('pa_method', 'Select test method',
                                                     choices = c("Fisher Exact Test", "Chi-squared Test", "Mann-Whitney Test")),
+                                     conditionalPanel(condition = "input.pa_method == 'Mann-Whitney Test'",
+                                                      selectInput('pa_mann_data_type', 'Select data type', choices = c("read count", "log10 CPM", "RA"))),
                                      DT::dataTableOutput("pa.test"),
                                      downloadButton("download_pa_test", "Download this table")
                             )

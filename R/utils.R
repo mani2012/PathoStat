@@ -298,3 +298,19 @@ summarizeTable <- function(pstat){
                                 sum(colSums(pstat@otu_table@.Data != 0) < 5),
                                 sum(rowSums(pstat@otu_table@.Data) == 0))))
 }
+
+
+
+
+
+#' Compute percentage
+#'
+#' @param x a number or a vector
+#' @param digits how many digit of percentage
+#' @return the percentage
+#' @export
+#' @examples
+#' pecent.vec <- percet(c(0.9, 0.98))
+percent <- function(x, digits = 2, format = "f", ...) {
+  paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
+}

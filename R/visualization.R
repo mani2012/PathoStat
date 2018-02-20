@@ -29,13 +29,13 @@
 #' displayColumnDendrograms=TRUE, annotationColors = "auto",
 #' columnTitle="Title")
 
-plotHeatmapColor <- function(df.input, 
+plotHeatmapColor <- function(df.input,
                              condition.vec.1,
                              condition.vec.2,
                              condition.1.name,
                              condition.2.name,
                              do.scale = TRUE,
-                             clusterRow=TRUE, clusterCol=TRUE, displayRowLabels=FALSE,
+                             clusterRow=TRUE, clusterCol=TRUE, displayRowLabels=TRUE,
                              displayColumnLabels=TRUE, displayRowDendrograms=TRUE,
                              displayColumnDendrograms=TRUE, annotationColors = "auto",
                              columnTitle="Title"){
@@ -43,8 +43,8 @@ plotHeatmapColor <- function(df.input,
     if (sum(rowSums(as.matrix(df.input)) == 0) > 0){
         df.input <- df.input[-which(rowSums(as.matrix(df.input)) == 0),]
     }
-    
-    
+
+
     if (is.null(annotationColors)){
         topha <- NULL
     } else if (annotationColors == "auto") {
@@ -57,14 +57,14 @@ plotHeatmapColor <- function(df.input,
         col <- list()
         col[[paste(condition.1.name)]] <- setNames(colors[1:length(cond_levels.1)], cond_levels.1)
         col[[paste(condition.2.name)]] <- setNames(colors[1:length(cond_levels.2)], cond_levels.2)
-        
+
         df.plot <- list()
         df.plot[[paste(condition.1.name)]] <- condition.vec.1
         df.plot[[paste(condition.2.name)]] <- condition.vec.2
         topha <- ComplexHeatmap::HeatmapAnnotation(df = data.frame(df.plot),
                                                    col = col)
-    } 
-    
+    }
+
     # row scale
     if (do.scale == TRUE){
         df.input <- t(scale(t(df.input)))
@@ -93,18 +93,18 @@ plotHeatmapColor <- function(df.input,
 #' @param columnTitle Title to be displayed at top of heatmap.
 #' @export
 #' @examples
-#' plotPCAPlotly(df.input, condition.vec, condition.name = "condition", 
+#' plotPCAPlotly(df.input, condition.vec, condition.name = "condition",
 #' columnTitle = "Title", pc.a = "PC1", pc.b = "PC2")
-plotPCAPlotly <- function(df.input, 
-                          condition.color.vec, condition.color.name = "condition", 
+plotPCAPlotly <- function(df.input,
+                          condition.color.vec, condition.color.name = "condition",
                           condition.shape.vec, condition.shape.name = "condition",
                           columnTitle = "Title", pc.a = "PC1", pc.b = "PC2"){
-    
+
     #test and fix the constant/zero row
     if (sum(rowSums(as.matrix(df.input)) == 0) > 0){
         df.input <- df.input[-which(rowSums(as.matrix(df.input)) == 0),]
     }
-    
+
     # conduct PCA
     pca.tmp<- prcomp(t(df.input), scale = TRUE)
     tmp.df <- data.frame(pca.tmp$x)
@@ -112,14 +112,14 @@ plotPCAPlotly <- function(df.input,
     tmp.df[[paste(condition.color.name)]] <- condition.color.vec
     # add shape variable
     tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
-    plot_ly(tmp.df, 
-            x = as.formula(paste("~", pc.a, sep = "")), 
+    plot_ly(tmp.df,
+            x = as.formula(paste("~", pc.a, sep = "")),
             y = as.formula(paste("~", pc.b, sep = "")),
-            mode = "markers", 
-            color = as.formula(paste("~", condition.color.name, sep = "")), 
-            symbol = as.formula(paste("~", condition.shape.name, sep = "")), 
+            mode = "markers",
+            color = as.formula(paste("~", condition.color.name, sep = "")),
+            symbol = as.formula(paste("~", condition.shape.name, sep = "")),
             type = "scatter",
-            text = rownames(tmp.df), 
+            text = rownames(tmp.df),
             marker = list(size = 10))
 }
 
@@ -135,12 +135,12 @@ plotPCAPlotly <- function(df.input,
 #' @param condition.shape.name shape variable name. Required
 #' @param columnTitle Title to be displayed at top of heatmap.
 #' @export
-#' @examples 
-#' plotPCoAPlotly(physeq.input, condition.vec, condition.name = "condition", method = "bray", 
+#' @examples
+#' plotPCoAPlotly(physeq.input, condition.vec, condition.name = "condition", method = "bray",
 #' columnTitle = "Title", pc.a = "Axis.1", pc.b = "Axis.2")
-plotPCoAPlotly <- function(physeq.input, 
-                           condition.color.vec, condition.color.name = "condition", 
-                           condition.shape.vec, condition.shape.name = "condition", 
+plotPCoAPlotly <- function(physeq.input,
+                           condition.color.vec, condition.color.name = "condition",
+                           condition.shape.vec, condition.shape.name = "condition",
                            method = "bray", columnTitle = "Title", pc.a = "Axis.1", pc.b = "Axis.2"){
   # conduct PCoA
   # wUniFrac or bray
@@ -149,7 +149,7 @@ plotPCoAPlotly <- function(physeq.input,
   if (sum(rowSums(as.matrix(physeq.input@otu_table@.Data)) == 0) > 0){
     physeq.input@otu_table@.Data <- df.input[-which(rowSums(as.matrix(physeq.input@otu_table@.Data)) == 0),]
   }
-  
+
   if (method == "bray"){
     DistBC = phyloseq::distance(physeq.input, method = method)
     ordBC = ordinate(physeq.input, method = "PCoA", distance = DistBC)
@@ -159,20 +159,20 @@ plotPCoAPlotly <- function(physeq.input,
     ordUF = ordinate(physeq.input, method = "PCoA", distance = DistUF)
     tmp.df <- data.frame(ordUF$vectors)
   }
-  
+
     # add color variable
     tmp.df[[paste(condition.color.name)]] <- condition.color.vec
     # add shape variable
     tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
-  
-  plot_ly(tmp.df, 
-          x = as.formula(paste("~", pc.a, sep = "")), 
+
+  plot_ly(tmp.df,
+          x = as.formula(paste("~", pc.a, sep = "")),
           y = as.formula(paste("~", pc.b, sep = "")),
-          mode = "markers", 
-          color = as.formula(paste("~", condition.color.name, sep = "")), 
-          symbol = as.formula(paste("~", condition.shape.name, sep = "")), 
+          mode = "markers",
+          color = as.formula(paste("~", condition.color.name, sep = "")),
+          symbol = as.formula(paste("~", condition.shape.name, sep = "")),
           type = "scatter",
-          text = rownames(tmp.df), 
+          text = rownames(tmp.df),
           marker = list(size = 10))
 }
 

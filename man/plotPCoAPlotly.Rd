@@ -26,6 +26,6 @@ plotPCoAPlotly(physeq.input, condition.color.vec,
 Plot PCoA
 }
 \examples{
-plotPCoAPlotly(physeq.input, condition.vec, condition.name = "condition", method = "bray", 
+plotPCoAPlotly(physeq.input, condition.vec, condition.name = "condition", method = "bray",
 columnTitle = "Title", pc.a = "Axis.1", pc.b = "Axis.2")
 }

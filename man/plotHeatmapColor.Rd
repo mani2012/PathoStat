@@ -6,7 +6,7 @@
 \usage{
 plotHeatmapColor(df.input, condition.vec.1, condition.vec.2, condition.1.name,
   condition.2.name, do.scale = TRUE, clusterRow = TRUE, clusterCol = TRUE,
-  displayRowLabels = FALSE, displayColumnLabels = TRUE,
+  displayRowLabels = TRUE, displayColumnLabels = TRUE,
   displayRowDendrograms = TRUE, displayColumnDendrograms = TRUE,
   annotationColors = "auto", columnTitle = "Title")
 }
