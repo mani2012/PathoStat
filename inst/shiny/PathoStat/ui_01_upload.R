@@ -22,8 +22,8 @@ shiny_panel_upload <- fluidPage(
              sidebarPanel(
                  radioButtons("uploadChoice", "Upload:",
                               c("Example data" = "example",
-                                "Count File" = "files",
-                                "PathoScope Files" = "patho.files",
+                                "Count File" = "count",
+                                "PathoScope Files" = "pathofiles",
                                 "PathoStat file" = "pathostat.file"
                               )),
                  br(),
@@ -44,7 +44,7 @@ shiny_panel_upload <- fluidPage(
                                   )
 
                  ),
-                 conditionalPanel(condition = sprintf("input['%s'] == 'files'", "uploadChoice"),
+                 conditionalPanel(condition = sprintf("input['%s'] == 'count'", "uploadChoice"),
                                   fileInput("countsfile", "Counts .csv file (required):",
                                             accept = c(
                                                 "text/csv",
@@ -53,6 +53,16 @@ shiny_panel_upload <- fluidPage(
                                                 "text/plain",
                                                 ".csv",
                                                 ".tsv"
+                                            )
+                                  ),
+                                  fileInput("taxon.table", "Taxonomy table .csv file (required):",
+                                            accept = c(
+                                              "text/csv",
+                                              "text/comma-separated-values",
+                                              "text/tab-separated-values",
+                                              "text/plain",
+                                              ".csv",
+                                              ".tsv"
                                             )
                                   ),
                                   fileInput("annotfile.count", "Annotation .csv file (required):",
@@ -65,6 +75,8 @@ shiny_panel_upload <- fluidPage(
                                                 ".tsv"
                                             )
                                   ),
+                                  numericInput("metadata_sample_name_col_count", "Which column in metadata is sample name?",
+                                               value = 1),
                                   # Input: Checkbox if file has header ----
                                   checkboxInput("header.count", "Header", TRUE),
 
@@ -82,7 +94,7 @@ shiny_panel_upload <- fluidPage(
                                   ),
                                   helpText("After click, please wait for 30s until seeing a green check.")
                  ),
-                 conditionalPanel(condition = sprintf("input['%s'] == 'patho.files'", "uploadChoice"),
+                 conditionalPanel(condition = sprintf("input['%s'] == 'pathofiles'", "uploadChoice"),
                                   h5("Upload PathoScope generated .tsv files:"),
                                   fileInput("countsfile.pathoscope", "PathoScope outputs (required):",
                                             multiple = TRUE,
@@ -128,22 +140,22 @@ shiny_panel_upload <- fluidPage(
                  )
              ),
              mainPanel(
-                 h4("Please click \"open in browser\" for enabling functions like multiple files upload."),
-                 conditionalPanel(condition = sprintf("input['%s'] != 'example'", "uploadChoice"),
-                                  helpText("Counts Table"),
+
+                 conditionalPanel(condition = "input.uploadChoice === 'pathofiles'",
+                                  h4("Please click \"open in browser\" for enabling functions like multiple files upload."),
+                                  helpText("Counts Table: column names must be sample name"),
                                   DT::dataTableOutput("contents.count"),
                                   helpText("Annotation table"),
                                   DT::dataTableOutput("contents.meta")
                  ),
-                 conditionalPanel(condition = sprintf("input['%s'] == 'patho.files'", "uploadChoice"),
-
-                                  h5("Example pathoscope report files and annotation files
-                                     could be found at pathToPathoStat/inst/example/data/pathoscope_example/")
-                                  ),
-                 conditionalPanel(condition = sprintf("input['%s'] == 'files'", "uploadChoice"),
-                                  h5("Example count file and annotation file
-                                     could be found at pathToPathoStat/inst/example/data/count_example/")
-                                  )
+                 conditionalPanel(condition = "input.uploadChoice === 'count'",
+                                  helpText("Counts Table: column names must be sample name"),
+                                  DT::dataTableOutput("contents.count.2"),
+                                  helpText("Taxonomy Table: column names must be taxonomy levels, like family, genus, species..."),
+                                  DT::dataTableOutput("contents.taxonomy"),
+                                  helpText("Annotation table"),
+                                  DT::dataTableOutput("contents.meta.2")
+                 )
 
 
 

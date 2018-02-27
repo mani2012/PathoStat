@@ -14,7 +14,7 @@ shiny_panel_biomarker <- fluidPage(
                          numericInput("num.biomarker.run", "Total runs", value = 100, max = 500, min = 50),
                          selectInput("select_covariate_condition_biomarker", "Select Covarites Conditions:",
                                      covariates, multiple = TRUE),
-                         selectInput("select_model_biomarker", "Select Model", c("Lasso Logistic Regression", "Ensemble Model")),
+                         selectInput("select_model_biomarker", "Select Model", c("Lasso Logistic Regression")),
                          actionButton("goButtonBiomarker", "Run!"),
                          width=3
                      ),

@@ -9,11 +9,13 @@ library(phyloseq)
 library(ape)
 library(stats)
 library(PathoStat)
-library(alluvial)
+#library(alluvial)
 library(plotly)
 library(webshot)
 library(vegan)
 library(dplyr)
+
+
 
 # get percent
 percent <- function(x, digits = 2, format = "f", ...) {
@@ -43,7 +45,33 @@ shinyServer(function(input, output, session) {
         taxcountdata = NULL
     )
 
+    updateTaxLevel <- function(){
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
 
+      updateSelectInput(session, "taxl",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl.alpha",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl.beta",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl.pca",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl.da",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl.edger",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl.pa",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl",
+                        choices = colnames(pstat@tax_table@.Data))
+    }
 
     # update samples
     updateSample <- function(){
@@ -141,24 +169,32 @@ shinyServer(function(input, output, session) {
                              stringsAsFactors = FALSE,
                              sep = input$sep.count)
         #cat(dim(df.input))
+        df.taxon.input <- read.csv(input$taxon.table$datapath,
+                                  header = input$header.count,
+                                  sep = input$sep.count,
+                                  row.names=input$metadata_sample_name_col_count,
+                                  stringsAsFactors=FALSE)
+
         df.meta.input <- read.csv(input$annotfile.count$datapath,
                                   header = input$header.count,
                                   sep = input$sep.count,
-                                  row.names=1,
+                                  row.names=input$metadata_sample_name_col_count,
                                   stringsAsFactors=FALSE)
+
+        # choose only the samples in metadata that have counts data as well
+        df.meta.input <- df.meta.input[match(colnames(df.input), rownames(df.meta.input)), ]
+
+
         #test and fix the constant/zero row
         row.remove.index <- c()
         if (sum(rowSums(as.matrix(df.input)) == 0) > 0){
             row.remove.index <- which(rowSums(as.matrix(df.input)) == 0)
             df.input <- df.input[-row.remove.index,]
         }
-        ids <- rownames(df.input)
-        tids <- unlist(lapply(ids, FUN = grepTid))
-        taxonLevels <- findTaxonomy(tids)
-        taxmat <- findTaxonMat(ids, taxonLevels)
+
 
         OTU <- otu_table(df.input, taxa_are_rows = TRUE)
-        TAX <- tax_table(taxmat)
+        TAX <- tax_table(as.matrix(df.taxon.input))
         physeq <- phyloseq(OTU, TAX)
 
         # change NA/NULL to 0
@@ -184,6 +220,7 @@ shinyServer(function(input, output, session) {
         # update ui
         updateCovariate()
         updateSample()
+        updateTaxLevel()
 
         })
 
@@ -217,8 +254,8 @@ shinyServer(function(input, output, session) {
                 df.meta.input <- df.meta.input[match(colnames(countdat), rownames(df.meta.input)), ]
 
 
-                cat(colnames(countdat))
-                cat(rownames(df.meta.input))
+                #cat(colnames(countdat))
+                #cat(rownames(df.meta.input))
                 #test and fix the constant/zero row
                 row.remove.index <- c()
                 if (sum(rowSums(as.matrix(countdat)) == 0) > 0){
@@ -560,18 +597,8 @@ shinyServer(function(input, output, session) {
       # and uploads a file, head of that data file by default,
       # or all rows if selected, will be shown.
 
-      if (!is.null(input$countsfile)){
-          if (input$uploadChoice == "files"){
-              req(input$countsfile)
-              df <- read.csv(input$countsfile$datapath,
-                             header = input$header.count,
-                             sep = input$sep.count)
-              return(df)
-          }
-
-      }
       if (!is.null(input$countsfile.pathoscope)){
-          if (input$uploadChoice == "patho.files"){
+          if (input$uploadChoice == "pathofiles"){
           req(input$countsfile.pathoscope)
           df <- read.csv(input$countsfile.pathoscope[[1, 'datapath']],
                          skip = 1,
@@ -591,17 +618,8 @@ shinyServer(function(input, output, session) {
       # and uploads a file, head of that data file by default,
       # or all rows if selected, will be shown.
 
-      if (!is.null(input$annotfile.count)){
-          if (input$uploadChoice == "files"){
-          req(input$annotfile.count)
-          df <- read.csv(input$annotfile.count$datapath,
-                         header = input$header.count,
-                         sep = input$sep.count)
-          return(df)
-          }
-      }
       if (!is.null(input$annotfile.ps)){
-          if (input$uploadChoice == "patho.files"){
+          if (input$uploadChoice == "pathofiles"){
           req(input$countsfile.pathoscope)
 
           df <- read.csv(input$annotfile.ps$datapath,
@@ -616,7 +634,73 @@ shinyServer(function(input, output, session) {
   ))
 
 
+  ### data input summary
 
+  output$contents.count.2 <- DT::renderDataTable({
+
+    # input$file1 will be NULL initially. After the user selects
+    # and uploads a file, head of that data file by default,
+    # or all rows if selected, will be shown.
+
+    if (!is.null(input$countsfile)){
+      if (input$uploadChoice == "count"){
+        req(input$countsfile)
+        df <- read.csv(input$countsfile$datapath,
+                       header = input$header.count,
+                       sep = input$sep.count)
+        return(df)
+      }
+
+    }
+
+  },
+  options = list(
+    paging = TRUE, scrollX = TRUE, pageLength = 5
+  ))
+
+  output$contents.meta.2 <- DT::renderDataTable({
+
+    # input$file1 will be NULL initially. After the user selects
+    # and uploads a file, head of that data file by default,
+    # or all rows if selected, will be shown.
+
+    if (!is.null(input$annotfile.count)){
+      if (input$uploadChoice == "count"){
+        req(input$annotfile.count)
+        df <- read.csv(input$annotfile.count$datapath,
+                       header = input$header.count,
+                       sep = input$sep.count)
+        return(df)
+      }
+    }
+
+  },
+  options = list(
+    paging = TRUE, scrollX = TRUE, pageLength = 5
+  ))
+
+
+  output$contents.taxonomy <- DT::renderDataTable({
+
+    # input$file1 will be NULL initially. After the user selects
+    # and uploads a file, head of that data file by default,
+    # or all rows if selected, will be shown.
+
+
+    if (!is.null(input$taxon.table)){
+      if (input$uploadChoice == "count"){
+        req(input$taxon.table)
+
+        df <- read.csv(input$taxon.table$datapath,
+                       header = input$header.count,
+                       sep = input$sep.count)
+        return(df)
+      }
+    }
+  },
+  options = list(
+    paging = TRUE, scrollX = TRUE, pageLength = 5
+  ))
 
 #### plot the single species boxplot
   output$single_species_ui <- renderUI({
@@ -1969,6 +2053,8 @@ shinyServer(function(input, output, session) {
 
 
   Alluvialdata <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
     if(input$Allurar==T){
       DR<-rarefy_even_depth(pstat,
                             sample.size =min(colSums(otu_table(pstat))),
