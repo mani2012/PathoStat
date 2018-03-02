@@ -9,7 +9,11 @@ shiny_panel_biomarker <- fluidPage(
                          selectizeInput('taxl_biomarker', 'Taxonomy Level', choices = tax.name,
                                         selected='genus'),
                          selectInput("select_target_condition_biomarker", "Select Target Condition:",
-                                     covariates.two.levels),
+                                     covariates.colorbar),
+                         conditionalPanel(condition = "output.biomarker_condition_type == 'multiple'",
+                                          helpText("Please select 2 levels to compare"),
+                                          uiOutput("biomarker_condition_options")
+                         ),
                          numericInput("num.cv.nfolds", "Number of CV nfolds", value = 3, max = 20, min = 3),
                          numericInput("num.biomarker.run", "Total runs", value = 100, max = 500, min = 50),
                          selectInput("select_covariate_condition_biomarker", "Select Covarites Conditions:",

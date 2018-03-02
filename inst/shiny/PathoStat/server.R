@@ -110,7 +110,7 @@ shinyServer(function(input, output, session) {
         updateSelectInput(session, "select_single_species_condition",
                           choices = covariates.colorbar)
         updateSelectInput(session, "select_target_condition_biomarker",
-                          choices = covariates.two.levels)
+                          choices = covariates.colorbar)
         updateSelectInput(session, "select_condition_sample_filter",
                           choices = c("Read Number", covariates))
         updateSelectInput(session, "select_condition_sample_filter_sidebar",
@@ -136,13 +136,13 @@ shinyServer(function(input, output, session) {
         updateSelectInput(session, "select_pca_shape",
                           choices = covariates.colorbar)
         updateSelectInput(session, "da.condition",
-                          choices = covariates.two.levels)
+                          choices = covariates.colorbar)
         updateSelectInput(session, "edger.condition",
-                          choices = covariates.two.levels)
+                          choices = covariates.colorbar)
         updateSelectInput(session, "da.condition.covariate",
                           choices = covariates)
         updateSelectInput(session, "pa.condition",
-                          choices = covariates.two.levels)
+                          choices = covariates.colorbar)
     }
 
     observeEvent(input$uploadPathoStat,{
@@ -1686,6 +1686,21 @@ shinyServer(function(input, output, session) {
       # number of samples in each level of target variable
       target.var.index <- which(pstat@sam_data@names == input$edger.condition)
       label.vec.num <- pstat@sam_data@.Data[[target.var.index]]
+
+
+
+      # if selected condition has multiple levels
+      if (length(input$edger_condition_options_use) == 2){
+        sample.keep.index <- which(label.vec.num %in% input$edger_condition_options_use)
+        label.vec.num <- label.vec.num[sample.keep.index]
+        pstat@otu_table@.Data <- pstat@otu_table@.Data[,sample.keep.index]
+        pstat@sam_data@row.names <- pstat@sam_data@row.names[sample.keep.index]
+        for (i in 1:length(pstat@sam_data@names)){
+          pstat@sam_data@.Data[[i]] <- pstat@sam_data@.Data[[i]][sample.keep.index]
+        }
+      }
+
+
       label.vec.save <- unique(label.vec.num)
 
       # transform label into 1 and 0
@@ -1786,6 +1801,22 @@ shinyServer(function(input, output, session) {
     # number of samples in each level of target variable
     target.var.index <- which(physeq1@sam_data@names == input$da.condition)
     label.vec.num <- physeq1@sam_data@.Data[[target.var.index]]
+
+
+    # if selected condition has multiple levels
+    if (length(input$da_condition_options_use) == 2){
+      sample.keep.index <- which(label.vec.num %in% input$da_condition_options_use)
+      label.vec.num <- label.vec.num[sample.keep.index]
+      physeq1@otu_table@.Data <- physeq1@otu_table@.Data[,sample.keep.index]
+      physeq1@sam_data@row.names <- physeq1@sam_data@row.names[sample.keep.index]
+      for (i in 1:length(physeq1@sam_data@names)){
+        physeq1@sam_data@.Data[[i]] <- physeq1@sam_data@.Data[[i]][sample.keep.index]
+      }
+    }
+
+
+
+
     label.vec.save <- unique(label.vec.num)
 
     # transform label into 1 and 0
@@ -1901,6 +1932,71 @@ shinyServer(function(input, output, session) {
       paging = TRUE
   ))
 
+
+
+  ### check whether selected condition for DA has two levels or more
+  output$da_condition_type <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    target.var.index <- which(pstat@sam_data@names == input$da.condition)
+    label.vec <- pstat@sam_data@.Data[[target.var.index]]
+    label.level.num <- length(unique(label.vec))
+    if (label.level.num == 2){
+      return("binary")
+    } else{
+      return("multiple")
+    }
+
+  })
+  outputOptions(output, "da_condition_type", suspendWhenHidden = FALSE)
+
+  # select 2 levels
+  output$da_condition_options <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    variable.vec <- sample_data(pstat)[[
+      which(pstat@sam_data@names == input$da.condition)]]
+    filter.option.vec <- sort(unique(variable.vec))
+    tagList(
+      selectInput("da_condition_options_use", "Select 2 levels", choices = filter.option.vec, multiple = TRUE)
+    )
+  })
+
+
+  ### check whether selected condition for edger has two levels or more
+  output$edger_condition_type <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    target.var.index <- which(pstat@sam_data@names == input$edger.condition)
+    label.vec <- pstat@sam_data@.Data[[target.var.index]]
+    label.level.num <- length(unique(label.vec))
+    if (label.level.num == 2){
+      return("binary")
+    } else{
+      return("multiple")
+    }
+
+  })
+  outputOptions(output, "edger_condition_type", suspendWhenHidden = FALSE)
+
+  # select 2 levels
+  output$edger_condition_options <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    variable.vec <- sample_data(pstat)[[
+      which(pstat@sam_data@names == input$edger.condition)]]
+    filter.option.vec <- sort(unique(variable.vec))
+    tagList(
+      selectInput("edger_condition_options_use", "Select 2 levels", choices = filter.option.vec, multiple = TRUE)
+    )
+  })
+
+
+
+
+
+
+
   # Presence-Absence Variance analysis
 
   output$pa.test <- DT::renderDataTable({
@@ -1910,6 +2006,22 @@ shinyServer(function(input, output, session) {
       physeq1 <- tax_glom(physeq1, input$taxl.pa)
     }
     physeq1 <- prune_samples(sample_sums(physeq1) > input$pa.count.cutoff, physeq1)
+
+
+    target.var.index <- which(physeq1@sam_data@names == input$pa.condition)
+    label.vec.num <- physeq1@sam_data@.Data[[target.var.index]]
+    # if selected condition has multiple levels
+    if (length(input$pa_condition_options_use) == 2){
+      sample.keep.index <- which(label.vec.num %in% input$pa_condition_options_use)
+      label.vec.num <- label.vec.num[sample.keep.index]
+      physeq1@otu_table@.Data <- physeq1@otu_table@.Data[,sample.keep.index]
+      physeq1@sam_data@row.names <- physeq1@sam_data@row.names[sample.keep.index]
+      for (i in 1:length(physeq1@sam_data@names)){
+        physeq1@sam_data@.Data[[i]] <- physeq1@sam_data@.Data[[i]][sample.keep.index]
+      }
+    }
+
+
     df.pam <- GET_PAM(physeq1@otu_table@.Data)
 
 
@@ -1963,10 +2075,36 @@ shinyServer(function(input, output, session) {
     }
 
 
-
-
   })
 
+
+  ### check whether selected condition for pa has two levels or more
+  output$pa_condition_type <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    target.var.index <- which(pstat@sam_data@names == input$pa.condition)
+    label.vec <- pstat@sam_data@.Data[[target.var.index]]
+    label.level.num <- length(unique(label.vec))
+    if (label.level.num == 2){
+      return("binary")
+    } else{
+      return("multiple")
+    }
+
+  })
+  outputOptions(output, "pa_condition_type", suspendWhenHidden = FALSE)
+
+  # select 2 levels
+  output$pa_condition_options <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    variable.vec <- sample_data(pstat)[[
+      which(pstat@sam_data@names == input$pa.condition)]]
+    filter.option.vec <- sort(unique(variable.vec))
+    tagList(
+      selectInput("pa_condition_options_use", "Select 2 levels", choices = filter.option.vec, multiple = TRUE)
+    )
+  })
 
 
 ### biomarker
@@ -1981,7 +2119,29 @@ shinyServer(function(input, output, session) {
                   physeq1 <- tax_glom(physeq1, input$taxl_biomarker)
 
               }
+
+              target.var.index <- which(physeq1@sam_data@names == input$select_target_condition_biomarker)
+              label.vec.num <- physeq1@sam_data@.Data[[target.var.index]]
+              # if selected condition has multiple levels
+              if (length(input$biomarker_condition_options_use) == 2){
+                sample.keep.index <- which(label.vec.num %in% input$biomarker_condition_options_use)
+                label.vec.num <- label.vec.num[sample.keep.index]
+                physeq1@otu_table@.Data <- physeq1@otu_table@.Data[,sample.keep.index]
+                physeq1@sam_data@row.names <- physeq1@sam_data@row.names[sample.keep.index]
+                for (i in 1:length(physeq1@sam_data@names)){
+                  physeq1@sam_data@.Data[[i]] <- physeq1@sam_data@.Data[[i]][sample.keep.index]
+                }
+              }
+
+
+              # use log CPM as normalization.
               df.input <- physeq1@otu_table@.Data
+              for(i in 1:ncol(df.input)){
+                if (is.numeric(df.input[,i])){
+                  df.input[,i] <- log10(df.input[,i]*1e6/sum(df.input[,i]) + 0.1)
+                }
+              }
+
               # change microbe names to selected taxon level
               rownames(df.input) <- TranslateIdToTaxLevel(physeq1, rownames(df.input), input$taxl_biomarker)
 
@@ -2002,17 +2162,11 @@ shinyServer(function(input, output, session) {
                 df.input <- t(df.input)
               }
 
-              target.vec <- physeq1@sam_data[[input$select_target_condition_biomarker]]
-              # use log CPM as normalization.
-              for(i in 1:ncol(df.input)){
-                if (is.numeric(df.input[,i])){
-                  df.input[,i] <- log10(df.input[,i]*1e6/sum(df.input[,i]) + 0.1)
-                }
-              }
-              #df.input
+
+                target.vec <- physeq1@sam_data[[input$select_target_condition_biomarker]]
+
               output.fs <- getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = input$num.cv.nfolds, nRun = input$num.biomarker.run)
           }
-
 
         # number of samples in each level of target variable
         target.var.index <- which(physeq1@sam_data@names == input$select_target_condition_biomarker)
@@ -2023,6 +2177,7 @@ shinyServer(function(input, output, session) {
         label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
         label.vec.num[label.vec.num != 1] <- 0
 
+        label.vec.num <- as.numeric(label.vec.num)
         num.1 <- c()
         num.2 <- c()
         species.names.tmp <- TranslateIdToTaxLevel(physeq1, rownames(physeq1@otu_table@.Data), input$taxl_biomarker)
@@ -2032,17 +2187,20 @@ shinyServer(function(input, output, session) {
           num.2 <- c(num.2, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 0)] > 0)))
         }
 
-          output.df <- data.frame(biomarker = output.fs$feature,
-                                  selection_rate = output.fs$selection_rate,
-                                  average_weights = output.fs$feature_weights,
-                                  num.1,
-                                  num.2,
-                                  percent(round((num.1+num.2)/ncol(physeq1@otu_table@.Data),4)))
+        output.df <- data.frame(biomarker = output.fs$feature,
+                                selection_rate = output.fs$selection_rate,
+                                average_weights = output.fs$feature_weights,
+                                num.1,
+                                num.2,
+                                percent(round((num.1+num.2)/ncol(physeq1@otu_table@.Data),4)))
 
-          colnames(output.df)[ncol(output.df)-2] <- label.vec.save[1]
-          colnames(output.df)[ncol(output.df)-1] <- label.vec.save[2]
-          colnames(output.df)[ncol(output.df)] <- "prevalence"
-          output.df
+        colnames(output.df)[ncol(output.df)-2] <- label.vec.save[1]
+        colnames(output.df)[ncol(output.df)-1] <- label.vec.save[2]
+        colnames(output.df)[ncol(output.df)] <- "prevalence"
+        output.df
+
+
+
 
       })
 
@@ -2050,8 +2208,45 @@ shinyServer(function(input, output, session) {
 
 
 
+  ### check whether selected condition for biomarker has two levels or more
+  output$biomarker_condition_type <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    target.var.index <- which(pstat@sam_data@names == input$select_target_condition_biomarker)
+    label.vec <- pstat@sam_data@.Data[[target.var.index]]
+    label.level.num <- length(unique(label.vec))
+    if (label.level.num == 2){
+      return("binary")
+    } else{
+      return("multiple")
+    }
+
+  })
+  outputOptions(output, "biomarker_condition_type", suspendWhenHidden = FALSE)
+
+  # select 2 levels
+  output$biomarker_condition_options <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    variable.vec <- sample_data(pstat)[[
+      which(pstat@sam_data@names == input$select_target_condition_biomarker)]]
+    filter.option.vec <- sort(unique(variable.vec))
+    tagList(
+      selectInput("biomarker_condition_options_use", "Select 2 levels", choices = filter.option.vec, multiple = TRUE)
+    )
+  })
 
 
+
+
+
+
+
+
+
+
+# Time series
+# will be updated in V2
   Alluvialdata <- reactive({
     shinyInput <- vals$shiny.input
     pstat <- shinyInput$pstat

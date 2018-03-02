@@ -231,67 +231,82 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
     ),
     tabPanel("Differential Analysis",
         tabsetPanel(
-             tabPanel("Deseq2",
-
-                      sidebarLayout(
-                        sidebarPanel(
-                          selectizeInput('taxl.da', 'Taxonomy Level', choices = tax.name,
-                                         selected='no rank'),
-                          selectizeInput('da.condition', 'Select condition',
-                                         choices = covariates.two.levels),
-                          selectizeInput('da.condition.covariate', 'Select (multiple) covariates',
-                                         choices = covariates, multiple = TRUE),
-                          helpText("Continuous covariates would be automatically cut into factors with 3 levels."),
-                          numericInput('da.count.cutoff', 'Minumum count cut-off', 500,
-                                       min = 1, max = 5000),
-                          numericInput('da.padj.cutoff', 'Choose padj cut-off', 0.5,
-                                       min = 1e-100, max = 1),
-                          width=3
-                        ),
-                        mainPanel(
-                            tabPanel("DeSeq2",
-                                     tabsetPanel(
-                                       tabPanel("DE output",
-                                                DT::dataTableOutput("DeSeq2Table.new"),
-                                                downloadButton("download_deseq_tb", "Download this table")
+             tabPanel("Differential Abundance",
+                      selectInput("DAmethod", "Select method",
+                        c("DESeq2", "edgeR")),
+                      conditionalPanel(condition = "input.DAmethod == 'DESeq2'",
+                                       sidebarLayout(
+                                         sidebarPanel(
+                                           selectizeInput('taxl.da', 'Taxonomy Level', choices = tax.name,
+                                                          selected='no rank'),
+                                           selectizeInput('da.condition', 'Select condition',
+                                                          choices = covariates.colorbar),
+                                           conditionalPanel(condition = "output.da_condition_type == 'multiple'",
+                                                            helpText("Please select 2 levels to compare"),
+                                                            uiOutput("da_condition_options")
+                                           ),
+                                           selectizeInput('da.condition.covariate', 'Select (multiple) covariates',
+                                                          choices = covariates, multiple = TRUE),
+                                           helpText("Continuous covariates would be automatically cut into factors with 3 levels."),
+                                           numericInput('da.count.cutoff', 'Minumum count cut-off', 500,
+                                                        min = 1, max = 5000),
+                                           numericInput('da.padj.cutoff', 'Choose padj cut-off', 0.5,
+                                                        min = 1e-100, max = 1),
+                                           width=3
+                                         ),
+                                         mainPanel(
+                                           tabPanel("DeSeq2",
+                                                    tabsetPanel(
+                                                      tabPanel("DE output",
+                                                               DT::dataTableOutput("DeSeq2Table.new"),
+                                                               downloadButton("download_deseq_tb", "Download this table")
+                                                      )
+                                                    )
+                                           ), width=9
+                                         )
                                        )
-                                     )
-                            ), width=9
-                        )
+                                       ),
+                      conditionalPanel(condition = "input.DAmethod == 'edgeR'",
+                                       sidebarLayout(
+                                         sidebarPanel(
+                                           selectizeInput('taxl.edger', 'Taxonomy Level', choices = tax.name,
+                                                          selected='no rank'),
+                                           selectizeInput('edger.condition', 'Select condition',
+                                                          choices = covariates.colorbar),
+                                           conditionalPanel(condition = "output.edger_condition_type == 'multiple'",
+                                                            helpText("Please select 2 levels to compare"),
+                                                            uiOutput("edger_condition_options")
+                                           ),
+                                           helpText("Continuous covariates would be automatically cut into factors with 3 levels."),
+                                           numericInput('edger.padj.cutoff', 'Choose padj cut-off', 0.5,
+                                                        min = 1e-100, max = 1),
+                                           width=3
+                                         ),
+                                         mainPanel(
+                                           tabPanel("edgeR",
+                                                    tabsetPanel(
+                                                      tabPanel("DE output",
+                                                               DT::dataTableOutput("edgerTable.new"),
+                                                               downloadButton("download_edger_tb", "Download this table")
+                                                      )
+                                                    )
+                                           ), width=9
+                                         )
+                                       )
                       )
              ),
-             tabPanel("edgeR",
 
-                      sidebarLayout(
-                          sidebarPanel(
-                              selectizeInput('taxl.edger', 'Taxonomy Level', choices = tax.name,
-                                             selected='no rank'),
-                              selectizeInput('edger.condition', 'Select condition',
-                                             choices = covariates.two.levels),
-                              helpText("Continuous covariates would be automatically cut into factors with 3 levels."),
-                              numericInput('edger.padj.cutoff', 'Choose padj cut-off', 0.5,
-                                           min = 1e-100, max = 1),
-                              width=3
-                          ),
-                          mainPanel(
-                              tabPanel("edgeR",
-                                       tabsetPanel(
-                                           tabPanel("DE output",
-                                                    DT::dataTableOutput("edgerTable.new"),
-                                                    downloadButton("download_edger_tb", "Download this table")
-                                           )
-                                       )
-                              ), width=9
-                          )
-                      )
-             ),
-             tabPanel("Abundance analysis",
+             tabPanel("Statistical Test",
              sidebarLayout(
                sidebarPanel(
                  selectizeInput('taxl.pa', 'Taxonomy Level', choices = tax.name,
                                 selected='no rank'),
                  selectizeInput('pa.condition', 'Select condition',
-                                choices = covariates.two.levels),
+                                choices = covariates.colorbar),
+                 conditionalPanel(condition = "output.pa_condition_type == 'multiple'",
+                                  helpText("Please select 2 levels to compare"),
+                                  uiOutput("pa_condition_options")
+                 ),
                  numericInput('pa.count.cutoff', 'Minumum count cut-off', 500,
                               min = 1, max = 5000),
                  numericInput('pa.padj.cutoff', 'Choose padj cut-off', 0.5,
@@ -319,8 +334,8 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
 
 
     ),
-    tabPanel("Biomarker", shiny_panel_biomarker),
-    tabPanel("Pathway (Under construction by Tyler)")
+    tabPanel("Biomarker", shiny_panel_biomarker)
+    #tabPanel("Pathway (Under construction by Tyler)")
     # tabPanel("Time Series",
     #     tabsetPanel(
     #         tabPanel("Visualization",
