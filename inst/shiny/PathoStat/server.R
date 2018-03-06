@@ -172,7 +172,7 @@ shinyServer(function(input, output, session) {
         df.taxon.input <- read.csv(input$taxon.table$datapath,
                                   header = input$header.count,
                                   sep = input$sep.count,
-                                  row.names=input$metadata_sample_name_col_count,
+                                  row.names= 1,
                                   stringsAsFactors=FALSE)
 
         df.meta.input <- read.csv(input$annotfile.count$datapath,
@@ -370,8 +370,9 @@ shinyServer(function(input, output, session) {
       labvec[is.na(labvec)] <- ""
       names <- rownames(taxcountdata)
       for (i in 1:length(names))  {
-        tid <- grepTid(names[i])
-        labvec[i] <- paste0( "ti|", tid, "|", labvec[i])
+        #tid <- grepTid(names[i])
+        #labvec[i] <- paste0( "ti|", tid, "|", labvec[i])
+        labvec[i] <- paste0(names[i], labvec[i])
       }
       rownames(taxcountdata) <- labvec
       rownames(taxdata) <- labvec

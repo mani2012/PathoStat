@@ -149,11 +149,18 @@ shiny_panel_upload <- fluidPage(
                                   DT::dataTableOutput("contents.meta")
                  ),
                  conditionalPanel(condition = "input.uploadChoice === 'count'",
+
+                                  tags$img(src='count_table_example.png', height = 180, width = 800),
                                   helpText("Counts Table: column names must be sample name"),
+                                  helpText("The first column must be microbe name"),
+
                                   DT::dataTableOutput("contents.count.2"),
                                   helpText("Taxonomy Table: column names must be taxonomy levels, like family, genus, species..."),
+                                  helpText("The first column must be microbe name"),
+
                                   DT::dataTableOutput("contents.taxonomy"),
                                   helpText("Annotation table"),
+
                                   DT::dataTableOutput("contents.meta.2")
                  )
 
