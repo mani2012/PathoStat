@@ -739,6 +739,15 @@ shinyServer(function(input, output, session) {
         }
         df.tmp <- data.frame(condition = condition.vec, read_Number = read.num.condition.1)
         p <- plot_ly(df.tmp, y = ~read_Number, color = ~condition, type = "box")
+      }else if(input$ssv_format == "log10 CPM"){
+        df.cpm <- getLogCPM(pstat@otu_table@.Data)
+        for (i in 1:nrow(df.cpm)){
+          if (species.name.vec[i] == input$select_single_species_name_plot){
+            read.num.condition.1 <- read.num.condition.1 + df.cpm[i,]
+          }
+        }
+        df.tmp <- data.frame(condition = condition.vec, logCPM = read.num.condition.1)
+        p <- plot_ly(df.tmp, y = ~logCPM, color = ~condition, type = "box")
       }else{
         df.ra <- getRelativeAbundance(pstat@otu_table@.Data)
         for (i in 1:nrow(df.ra)){
@@ -768,7 +777,10 @@ shinyServer(function(input, output, session) {
           if (species.name.vec[j] == input$select_single_species_name_plot[i]){
             if (input$ssv_format == "read count"){
               read.num.condition.tmp <- read.num.condition.tmp + pstat@otu_table@.Data[j,]
-            } else{
+            }else if(input$ssv_format == "log10 CPM"){
+              df.cpm <- getLogCPM(pstat@otu_table@.Data)
+              read.num.condition.tmp <- read.num.condition.tmp + df.cpm[j,]
+            }else{
               df.ra <- getRelativeAbundance(pstat@otu_table@.Data)
               read.num.condition.tmp <- read.num.condition.tmp + df.ra[j,]
             }
@@ -784,6 +796,11 @@ shinyServer(function(input, output, session) {
       p <- plot_ly(df.tmp, x = ~name, y = ~read_Number, color = ~condition, type = "box") %>%
         layout(boxmode = "group")
       p
+      }else if(input$ssv_format == "log10 CPM"){
+        df.tmp <- data.frame(condition = condition.vec.all, logCPM = read.num.condition.all, name = species.vec)
+        p <- plot_ly(df.tmp, x = ~name, y = ~logCPM, color = ~condition, type = "box") %>%
+          layout(boxmode = "group")
+        p
       }else{
         df.tmp <- data.frame(condition = condition.vec.all, RA = read.num.condition.all, name = species.vec)
         p <- plot_ly(df.tmp, x = ~name, y = ~RA, color = ~condition, type = "box") %>%

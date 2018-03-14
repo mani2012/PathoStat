@@ -73,7 +73,7 @@ shiny_panel_filter <- fluidPage(
                                 selected='no rank'),
                  selectInput("select_single_species_condition", "Select condition",
                              covariates.colorbar),
-                 selectInput("ssv_format", "Select data format", c("read count", "relative abundance")),
+                 selectInput("ssv_format", "Select data format", c("read count", "relative abundance", "log10 CPM")),
                  uiOutput("single_species_ui"),
                  plotlyOutput("single_species_boxplot")
                  #plotlyOutput("single_species_barplot")
