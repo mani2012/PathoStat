@@ -14,7 +14,6 @@ The package includes:
     5. Differential Expression (DEseq2, edgeR)
     6. Dimension Reduction (PCA, PCoA)
     7. Biomarker identification
-    8. Pathway analysis
     
 ## Run Pathostat
 To launch PathoStat in R, just enter the command:
