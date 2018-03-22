@@ -102,7 +102,6 @@ pathostat <- function(physeq1) {
 #' html report and produces interactive shiny app plots
 #'
 #' @param pstat phyloseq extension pathostat object
-#' @param report_file Output report file name
 #' @param report_dir Output report directory path
 #' @param report_option_binary 9 bits Binary String representing the plots to
 #'  display and hide in the report
@@ -125,7 +124,7 @@ pathostat <- function(physeq1) {
 #' @export
 #' @examples
 #' runPathoStat(interactive = FALSE)
-runPathoStat <- function(pstat=NULL, report_file="PathoStat_report.html",
+runPathoStat <- function(pstat=NULL,
     report_dir=".", report_option_binary="111111111", view_report=FALSE,
     interactive=TRUE) {
 
@@ -166,8 +165,6 @@ runPathoStat <- function(pstat=NULL, report_file="PathoStat_report.html",
         ""))
     static_lib_dir <- system.file("reports/libs", package = "PathoStat")
     file.copy(static_lib_dir, report_dir, recursive = TRUE)
-    outputfile <- rmarkdown::render(rmdfile, output_file = report_file,
-        output_dir = report_dir)
     shinyInput <- getShinyInput()
     setShinyInputOrig(shinyInput)
     setShinyInputCombat(NULL)
