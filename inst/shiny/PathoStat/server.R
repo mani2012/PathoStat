@@ -2,18 +2,18 @@ library(shiny)
 library(ggvis)
 library(d3heatmap)
 library(reshape2)
-library(limma)
 library(DESeq2)
 library(edgeR)
 library(phyloseq)
 library(ape)
 library(stats)
 library(PathoStat)
-#library(alluvial)
 library(plotly)
 library(webshot)
 library(vegan)
 library(dplyr)
+
+
 
 
 
@@ -2126,99 +2126,115 @@ shinyServer(function(input, output, session) {
 
 
 ### biomarker
+
+
+  getBiomarker <- function(){
+    if (input$select_model_biomarker == "Lasso Logistic Regression"){
+      shinyInput <- vals$shiny.input
+      physeq1 <- shinyInput$pstat
+      if (input$taxl_biomarker !="no rank"){
+        physeq1 <- tax_glom(physeq1, input$taxl_biomarker)
+
+      }
+
+      target.var.index <- which(physeq1@sam_data@names == input$select_target_condition_biomarker)
+      label.vec.num <- physeq1@sam_data@.Data[[target.var.index]]
+      # if selected condition has multiple levels
+      if (length(input$biomarker_condition_options_use) == 2){
+        sample.keep.index <- which(label.vec.num %in% input$biomarker_condition_options_use)
+        label.vec.num <- label.vec.num[sample.keep.index]
+        physeq1@otu_table@.Data <- physeq1@otu_table@.Data[,sample.keep.index]
+        physeq1@sam_data@row.names <- physeq1@sam_data@row.names[sample.keep.index]
+        for (i in 1:length(physeq1@sam_data@names)){
+          physeq1@sam_data@.Data[[i]] <- physeq1@sam_data@.Data[[i]][sample.keep.index]
+        }
+      }
+
+
+      # use log CPM as normalization.
+      df.input <- physeq1@otu_table@.Data
+      for(i in 1:ncol(df.input)){
+        if (is.numeric(df.input[,i])){
+          df.input[,i] <- log10(df.input[,i]*1e6/sum(df.input[,i]) + 0.1)
+        }
+      }
+
+      # change microbe names to selected taxon level
+      rownames(df.input) <- TranslateIdToTaxLevel(physeq1, rownames(df.input), input$taxl_biomarker)
+
+      if (!is.null(input$select_covariate_condition_biomarker)){
+
+        target.tmp <- physeq1@sam_data@.Data[[2]]
+
+        covariate.vec <- input$select_covariate_condition_biomarker
+        df.list.tmp <- list()
+        for (i in 1:length(covariate.vec)){
+          df.list.tmp[[covariate.vec[i]]] <- physeq1@sam_data@.Data[[which(physeq1@sam_data@names == covariate.vec[i])]]
+        }
+        df.covariate <- data.frame(df.list.tmp)
+        rownames(df.covariate) <- colnames(df.input)
+
+        df.input <- cbind.data.frame(t(df.input), df.covariate)
+      } else{
+        df.input <- t(df.input)
+      }
+
+
+      target.vec <- physeq1@sam_data[[input$select_target_condition_biomarker]]
+
+      output.fs <- getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = input$num.cv.nfolds, nRun = input$num.biomarker.run)
+    }
+
+    # number of samples in each level of target variable
+    target.var.index <- which(physeq1@sam_data@names == input$select_target_condition_biomarker)
+    label.vec.num <- physeq1@sam_data@.Data[[target.var.index]]
+    label.vec.save <- unique(label.vec.num)
+
+    # transform label into 1 and 0
+    label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
+    label.vec.num[label.vec.num != 1] <- 0
+
+    label.vec.num <- as.numeric(label.vec.num)
+    num.1 <- c()
+    num.2 <- c()
+    species.names.tmp <- TranslateIdToTaxLevel(physeq1, rownames(physeq1@otu_table@.Data), input$taxl_biomarker)
+    for (i in 1:length(output.fs$feature)){
+      species.index <- which(species.names.tmp == output.fs$feature[i])
+      num.1 <- c(num.1, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 1)] > 0)))
+      num.2 <- c(num.2, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 0)] > 0)))
+    }
+
+    output.df <- data.frame(biomarker = output.fs$feature,
+                            selection_rate = output.fs$selection_rate,
+                            average_weights = output.fs$feature_weights,
+                            num.1,
+                            num.2,
+                            percent(round((num.1+num.2)/ncol(physeq1@otu_table@.Data),4)))
+
+    colnames(output.df)[ncol(output.df)-2] <- label.vec.save[1]
+    colnames(output.df)[ncol(output.df)-1] <- label.vec.save[2]
+    colnames(output.df)[ncol(output.df)] <- "prevalence"
+    return(list(output.df = output.df, df.input = df.input, target.vec = target.vec))
+
+
+  }
+
+
+
   observeEvent(input$goButtonBiomarker, {
 
+     biomarker.vals <- reactiveValues(
+      biomarker.list = getBiomarker()
+     )
+
       output$featureSelectionTmp <- renderTable({
+        biomarker.vals$biomarker.list$output.df
+      })
 
-          if (input$select_model_biomarker == "Lasso Logistic Regression"){
-              shinyInput <- vals$shiny.input
-              physeq1 <- shinyInput$pstat
-              if (input$taxl_biomarker !="no rank"){
-                  physeq1 <- tax_glom(physeq1, input$taxl_biomarker)
-
-              }
-
-              target.var.index <- which(physeq1@sam_data@names == input$select_target_condition_biomarker)
-              label.vec.num <- physeq1@sam_data@.Data[[target.var.index]]
-              # if selected condition has multiple levels
-              if (length(input$biomarker_condition_options_use) == 2){
-                sample.keep.index <- which(label.vec.num %in% input$biomarker_condition_options_use)
-                label.vec.num <- label.vec.num[sample.keep.index]
-                physeq1@otu_table@.Data <- physeq1@otu_table@.Data[,sample.keep.index]
-                physeq1@sam_data@row.names <- physeq1@sam_data@row.names[sample.keep.index]
-                for (i in 1:length(physeq1@sam_data@names)){
-                  physeq1@sam_data@.Data[[i]] <- physeq1@sam_data@.Data[[i]][sample.keep.index]
-                }
-              }
-
-
-              # use log CPM as normalization.
-              df.input <- physeq1@otu_table@.Data
-              for(i in 1:ncol(df.input)){
-                if (is.numeric(df.input[,i])){
-                  df.input[,i] <- log10(df.input[,i]*1e6/sum(df.input[,i]) + 0.1)
-                }
-              }
-
-              # change microbe names to selected taxon level
-              rownames(df.input) <- TranslateIdToTaxLevel(physeq1, rownames(df.input), input$taxl_biomarker)
-
-              if (!is.null(input$select_covariate_condition_biomarker)){
-
-                  target.tmp <- physeq1@sam_data@.Data[[2]]
-
-                  covariate.vec <- input$select_covariate_condition_biomarker
-                  df.list.tmp <- list()
-                  for (i in 1:length(covariate.vec)){
-                    df.list.tmp[[covariate.vec[i]]] <- physeq1@sam_data@.Data[[which(physeq1@sam_data@names == covariate.vec[i])]]
-                  }
-                  df.covariate <- data.frame(df.list.tmp)
-                  rownames(df.covariate) <- colnames(df.input)
-
-                  df.input <- cbind.data.frame(t(df.input), df.covariate)
-              } else{
-                df.input <- t(df.input)
-              }
-
-
-                target.vec <- physeq1@sam_data[[input$select_target_condition_biomarker]]
-
-              output.fs <- getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = input$num.cv.nfolds, nRun = input$num.biomarker.run)
-          }
-
-        # number of samples in each level of target variable
-        target.var.index <- which(physeq1@sam_data@names == input$select_target_condition_biomarker)
-        label.vec.num <- physeq1@sam_data@.Data[[target.var.index]]
-        label.vec.save <- unique(label.vec.num)
-
-        # transform label into 1 and 0
-        label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
-        label.vec.num[label.vec.num != 1] <- 0
-
-        label.vec.num <- as.numeric(label.vec.num)
-        num.1 <- c()
-        num.2 <- c()
-        species.names.tmp <- TranslateIdToTaxLevel(physeq1, rownames(physeq1@otu_table@.Data), input$taxl_biomarker)
-        for (i in 1:length(output.fs$feature)){
-          species.index <- which(species.names.tmp == output.fs$feature[i])
-          num.1 <- c(num.1, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 1)] > 0)))
-          num.2 <- c(num.2, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 0)] > 0)))
-        }
-
-        output.df <- data.frame(biomarker = output.fs$feature,
-                                selection_rate = output.fs$selection_rate,
-                                average_weights = output.fs$feature_weights,
-                                num.1,
-                                num.2,
-                                percent(round((num.1+num.2)/ncol(physeq1@otu_table@.Data),4)))
-
-        colnames(output.df)[ncol(output.df)-2] <- label.vec.save[1]
-        colnames(output.df)[ncol(output.df)-1] <- label.vec.save[2]
-        colnames(output.df)[ncol(output.df)] <- "prevalence"
-        output.df
-
-
-
+      output$loocv_output <- renderTable({
+        Bootstrap_LOOCV_LR_AUC(biomarker.vals$biomarker.list$df.input,
+                               biomarker.vals$biomarker.list$target.vec,
+                               nboot = input$num.bootstrap.loocv)
 
       })
 

@@ -26,7 +26,11 @@ shiny_panel_biomarker <- fluidPage(
                          tabsetPanel(
                              tabPanel("Feature selection",
                                       br(),
-                            tableOutput("featureSelectionTmp"))
+                            tableOutput("featureSelectionTmp")),
+                            tabPanel("LOOCV",
+                                     br(),
+                                     numericInput("num.bootstrap.loocv", "Number of Bootstrap LOOCV", value = 5, max = 100, min = 5),
+                                     tableOutput("loocv_output"))
                          ), width=9
                      )
                  )

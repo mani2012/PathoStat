@@ -146,9 +146,78 @@ getSignatureFromMultipleGlmnet <- function(df.input, target.vec, nfolds = 10, lo
 
 }
 
+#' Do bootstrap and LOOCV
+#'
+#' @param df Row is sample, column is feature. Required
+#' @param target.vec y vector. Required
+#' @param nboot number of BOOTSTRAP
+#' @export
+#' @examples
+#' Bootstrap_LOOCV_LR_AUC(df, target.vec, nboot)
+
+Bootstrap_LOOCV_LR_AUC <- function(df, target.vec, nboot=50){
+
+
+  library(gmodels)
+  library(ROCR)
+  # edit the file:  ~/.Renviron
+  # R_MAX_NUM_DLLS=150
+
+  output.auc.vec <- c()
+  output.other.df <- NULL
+
+  # make target numeric
+  if (!is.numeric(target.vec)){
+    target.vec[target.vec == target.vec[1]] <- 1
+    target.vec[target.vec != 1] <- 0
+  }
+  target.vec <- as.numeric(target.vec)
+  auc.vec <- c()
+  for (i in 1:nboot){
+    index.boot <- sample(1:ncol(df), ncol(df), replace = T)
+    df.tmp <- df[,index.boot]
+    auc.vec <- c(auc.vec, LOOAUC_simple_multiple_noplot_one_df(df.tmp, target.vec[index.boot]))
+  }
+
+  result.type <- c("AUC Estimate","CI lower","CI upper","Std. Error")
+  output.df <- data.frame(result.type, ci(auc.vec))
+  colnames(output.df) <- c("Type", "Value")
+  return(output.df)
+
+}
 
 
 
 
+#' LOOCV
+#'
+#' @param df Row is sample, column is feature. Required
+#' @param target.vec y vector. Required
+#' @export
+#' @examples
+#' LOOAUC_simple_multiple_noplot_one_df(df, target.vec)
+
+LOOAUC_simple_multiple_noplot_one_df <- function(df, targetVec){
+  auc.vec <- c()
+  nSample <- ncol(df)
+  vecProbTmp <- c()
+  testPredictionClassVec <- c()
+  for (j in 1:nSample){
+    train = t(as.matrix(df[,-j]))
+    test = t(as.matrix(df[,j]))
+    fit <- glmnet(train, targetVec[-j], family = "binomial")
+    testProb <- predict(fit,type="response", newx = test, s = 0)
+    vecProbTmp <- c(vecProbTmp, testProb)
+    testPredictionClassVec[j] <- predict(fit,type="class", newx = test, s = 0)
+  }
+  loo.pred = prediction(vecProbTmp, targetVec)
+  loo.perf = performance(loo.pred,"tpr","fpr")
+  auc <- performance(loo.pred,"auc")
+  auc <- unlist(slot(auc, "y.values"))
+  aucRound <- round(auc,3)
+  auc.vec <- c(auc.vec, aucRound)
+
+  return(mean(auc.vec))
+}
 
 
