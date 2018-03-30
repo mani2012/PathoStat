@@ -1,8 +1,8 @@
 shiny_panel_upload <- fluidPage(
 
          useShinyjs(),
-         tags$style(appCSS),        
-         
+         tags$style(appCSS),
+
          tags$div(
              class = "jumbotron",
              tags$div(
@@ -12,9 +12,9 @@ shiny_panel_upload <- fluidPage(
                      column(2, img(src = "bu_logo.png", height = 80, width = 140)),
                      column(2, img(src = "cbm_logo.jpeg", height = 80, width = 140)),
                      column(1, img(src = "bu_bioinfo_logo.png", height = 80, width = 80))
-                     
+
                  ),
-                 
+
                  p("Statistical Microbiome Analysis Toolkit")
              )
          ),
@@ -22,15 +22,29 @@ shiny_panel_upload <- fluidPage(
              sidebarPanel(
                  radioButtons("uploadChoice", "Upload:",
                               c("Example data" = "example",
-                                "Count File" = "files",
-                                "PathoScope Files" = "patho.files"
+                                "Count File" = "count",
+                                "PathoScope Files" = "pathofiles",
+                                "PathoStat file" = "pathostat.file"
                               )),
                  br(),
                  p(" "),
                  conditionalPanel(condition = sprintf("input['%s'] == 'example'", "uploadChoice"),
                                   helpText("Example data is loaded and ready to go!")
                  ),
-                 conditionalPanel(condition = sprintf("input['%s'] == 'files'", "uploadChoice"),
+                 conditionalPanel(condition = sprintf("input['%s'] == 'pathostat.file'", "uploadChoice"),
+                                  fileInput("rda_file", ".rda file (required):",
+                                            accept = c(
+                                              ".rda"
+                                            )
+                                  ),
+                                  withBusyIndicatorUI(
+                                    actionButton("uploadPathoStat",
+                                                 "Upload",
+                                                 class = "btn-primary")
+                                  )
+
+                 ),
+                 conditionalPanel(condition = sprintf("input['%s'] == 'count'", "uploadChoice"),
                                   fileInput("countsfile", "Counts .csv file (required):",
                                             accept = c(
                                                 "text/csv",
@@ -39,6 +53,16 @@ shiny_panel_upload <- fluidPage(
                                                 "text/plain",
                                                 ".csv",
                                                 ".tsv"
+                                            )
+                                  ),
+                                  fileInput("taxon.table", "Taxonomy table .csv file (required):",
+                                            accept = c(
+                                              "text/csv",
+                                              "text/comma-separated-values",
+                                              "text/tab-separated-values",
+                                              "text/plain",
+                                              ".csv",
+                                              ".tsv"
                                             )
                                   ),
                                   fileInput("annotfile.count", "Annotation .csv file (required):",
@@ -51,9 +75,11 @@ shiny_panel_upload <- fluidPage(
                                                 ".tsv"
                                             )
                                   ),
+                                  numericInput("metadata_sample_name_col_count", "Which column in metadata is sample name?",
+                                               value = 1),
                                   # Input: Checkbox if file has header ----
                                   checkboxInput("header.count", "Header", TRUE),
-                                  
+
                                   # Input: Select separator ----
                                   radioButtons("sep.count", "Separator",
                                                choices = c(Tab = "\t",
@@ -62,13 +88,13 @@ shiny_panel_upload <- fluidPage(
                                                ),
                                                selected = ","),
                                   withBusyIndicatorUI(
-                                      actionButton("uploadDataCount", 
+                                      actionButton("uploadDataCount",
                                                    "Upload",
                                                    class = "btn-primary")
                                   ),
                                   helpText("After click, please wait for 30s until seeing a green check.")
                  ),
-                 conditionalPanel(condition = sprintf("input['%s'] == 'patho.files'", "uploadChoice"),
+                 conditionalPanel(condition = sprintf("input['%s'] == 'pathofiles'", "uploadChoice"),
                                   h5("Upload PathoScope generated .tsv files:"),
                                   fileInput("countsfile.pathoscope", "PathoScope outputs (required):",
                                             multiple = TRUE,
@@ -91,9 +117,12 @@ shiny_panel_upload <- fluidPage(
                                                 ".tsv"
                                             )
                                   ),
+                                  textInput("report_suffix", "Report suffix", value = "-sam-report.tsv"),
+                                  numericInput("metadata_sample_name_col", "Which column in metadata is sample name?",
+                                               value = 1),
                                   # Input: Checkbox if file has header ----
                                   checkboxInput("header.ps", "Header", TRUE),
-                                  
+
                                   # Input: Select separator ----
                                   radioButtons("sep.ps", "Separator",
                                                choices = c(Tab = "\t",
@@ -102,36 +131,43 @@ shiny_panel_upload <- fluidPage(
                                                ),
                                                selected = "\t"),
                                   withBusyIndicatorUI(
-                                      actionButton("uploadDataPs", 
+                                      actionButton("uploadDataPs",
                                                    "Upload",
                                                    class = "btn-primary")
                                   ),
                                   helpText("After click, please wait for 30s until seeing a green check.")
-                                  
+
                  )
              ),
              mainPanel(
-                 h4("Please click \"open in browser\" for enabling functions like multiple files upload."),
-                 conditionalPanel(condition = sprintf("input['%s'] != 'example'", "uploadChoice"),
-                                  helpText("Counts Table"),
+
+                 conditionalPanel(condition = "input.uploadChoice === 'pathofiles'",
+                                  h4("Please click \"open in browser\" for enabling functions like multiple files upload."),
+                                  helpText("Counts Table: column names must be sample name"),
                                   DT::dataTableOutput("contents.count"),
                                   helpText("Annotation table"),
                                   DT::dataTableOutput("contents.meta")
                  ),
-                 conditionalPanel(condition = sprintf("input['%s'] == 'patho.files'", "uploadChoice"),
-                                  
-                                  h5("Example pathoscope report files and annotation files 
-                                     could be found at pathToPathoStat/inst/example/data/pathoscope_example/")
-                                  ),
-                 conditionalPanel(condition = sprintf("input['%s'] == 'files'", "uploadChoice"),
-                                  h5("Example count file and annotation file 
-                                     could be found at pathToPathoStat/inst/example/data/count_example/")
-                                  )
-                 
-                 
-                 
-                 
-                 
+                 conditionalPanel(condition = "input.uploadChoice === 'count'",
+
+                                  tags$img(src='count_table_example.png', height = 180, width = 800),
+                                  helpText("Counts Table: column names must be sample name"),
+                                  helpText("The first column must be microbe name"),
+
+                                  DT::dataTableOutput("contents.count.2"),
+                                  helpText("Taxonomy Table: column names must be taxonomy levels, like family, genus, species..."),
+                                  helpText("The first column must be microbe name"),
+
+                                  DT::dataTableOutput("contents.taxonomy"),
+                                  helpText("Annotation table"),
+
+                                  DT::dataTableOutput("contents.meta.2")
+                 )
+
+
+
+
+
                  )
              )
          )

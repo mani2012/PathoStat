@@ -5,14 +5,12 @@
 \title{Statistical Microbiome Analysis on the pathostat input and generates a
 html report and produces interactive shiny app plots}
 \usage{
-runPathoStat(pstat = NULL, report_file = "PathoStat_report.html",
-  report_dir = ".", report_option_binary = "111111111",
-  view_report = FALSE, interactive = TRUE)
+runPathoStat(pstat = NULL, report_dir = ".",
+  report_option_binary = "111111111", view_report = FALSE,
+  interactive = TRUE)
 }
 \arguments{
 \item{pstat}{phyloseq extension pathostat object}
-
-\item{report_file}{Output report file name}
 
 \item{report_dir}{Output report directory path}
 

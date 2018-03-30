@@ -2,33 +2,76 @@ library(shiny)
 library(ggvis)
 library(d3heatmap)
 library(reshape2)
-library(limma)
-library(edgeR)
 library(DESeq2)
+library(edgeR)
 library(phyloseq)
 library(ape)
 library(stats)
 library(PathoStat)
-library(alluvial)
 library(plotly)
 library(webshot)
 library(vegan)
 library(dplyr)
 
+
+
+
+
+# get percent
+percent <- function(x, digits = 2, format = "f", ...) {
+  paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
+}
+
 # Converts decimal percentage to string with specified digits
 pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
 
+# get RA from counts
+getRelativeAbundance <- function(df){
+  ra.out <- apply(df, 2, function(x) round(x/sum(x), digits = 4))
+  return(ra.out)
+}
 
+getLogCPM <- function(df){
+  logCPM.out <- apply(df, 2, function(y) log10(y*1e6/sum(y) + 1))
+  return(logCPM.out)
+}
 
 shinyServer(function(input, output, session) {
 
     vals <- reactiveValues(
         shiny.input = getShinyOption("pathostat.shinyInput"),
+        shiny.input.backup = getShinyOption("pathostat.shinyInput"),
         taxdata = NULL,
         taxcountdata = NULL
     )
 
+    updateTaxLevel <- function(){
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
 
+      updateSelectInput(session, "taxl",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl.alpha",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl.beta",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl.pca",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl.da",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl.edger",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl.pa",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl",
+                        choices = colnames(pstat@tax_table@.Data))
+      updateSelectInput(session, "taxl",
+                        choices = colnames(pstat@tax_table@.Data))
+    }
 
     # update samples
     updateSample <- function(){
@@ -64,10 +107,14 @@ shinyServer(function(input, output, session) {
 
         updateSelectInput(session, "select_covariate_condition_biomarker",
                           choices = covariates)
+        updateSelectInput(session, "select_single_species_condition",
+                          choices = covariates.colorbar)
         updateSelectInput(session, "select_target_condition_biomarker",
-                          choices = covariates.two.levels)
+                          choices = covariates.colorbar)
         updateSelectInput(session, "select_condition_sample_filter",
-                          choices = covariates)
+                          choices = c("Read Number", covariates))
+        updateSelectInput(session, "select_condition_sample_filter_sidebar",
+                          choices = c("Read Number", covariates))
         updateSelectInput(session, "select_condition_sample_distribution",
                           choices = covariates)
         updateSelectInput(session, "select_condition",
@@ -89,12 +136,29 @@ shinyServer(function(input, output, session) {
         updateSelectInput(session, "select_pca_shape",
                           choices = covariates.colorbar)
         updateSelectInput(session, "da.condition",
-                          choices = covariates.two.levels)
+                          choices = covariates.colorbar)
+        updateSelectInput(session, "edger.condition",
+                          choices = covariates.colorbar)
         updateSelectInput(session, "da.condition.covariate",
                           choices = covariates)
         updateSelectInput(session, "pa.condition",
-                          choices = covariates.two.levels)
+                          choices = covariates.colorbar)
     }
+
+    observeEvent(input$uploadPathoStat,{
+      withBusyIndicatorServer("uploadPathoStat", {
+        load(input$rda_file$datapath)
+        shinyInput <- list(pstat = pstat)
+        vals$shiny.input <- shinyInput
+        vals$shiny.input.backup <- shinyInput
+        # update ui
+        updateCovariate()
+        updateSample()
+
+      })
+
+    })
+
 
     observeEvent(input$uploadDataCount,{
         withBusyIndicatorServer("uploadDataCount", {
@@ -105,24 +169,32 @@ shinyServer(function(input, output, session) {
                              stringsAsFactors = FALSE,
                              sep = input$sep.count)
         #cat(dim(df.input))
+        df.taxon.input <- read.csv(input$taxon.table$datapath,
+                                  header = input$header.count,
+                                  sep = input$sep.count,
+                                  row.names= 1,
+                                  stringsAsFactors=FALSE)
+
         df.meta.input <- read.csv(input$annotfile.count$datapath,
                                   header = input$header.count,
                                   sep = input$sep.count,
-                                  row.names=1,
+                                  row.names=input$metadata_sample_name_col_count,
                                   stringsAsFactors=FALSE)
+
+        # choose only the samples in metadata that have counts data as well
+        df.meta.input <- df.meta.input[match(colnames(df.input), rownames(df.meta.input)), ]
+
+
         #test and fix the constant/zero row
         row.remove.index <- c()
         if (sum(rowSums(as.matrix(df.input)) == 0) > 0){
             row.remove.index <- which(rowSums(as.matrix(df.input)) == 0)
             df.input <- df.input[-row.remove.index,]
         }
-        ids <- rownames(df.input)
-        tids <- unlist(lapply(ids, FUN = grepTid))
-        taxonLevels <- findTaxonomy(tids)
-        taxmat <- findTaxonMat(ids, taxonLevels)
+
 
         OTU <- otu_table(df.input, taxa_are_rows = TRUE)
-        TAX <- tax_table(taxmat)
+        TAX <- tax_table(as.matrix(df.taxon.input))
         physeq <- phyloseq(OTU, TAX)
 
         # change NA/NULL to 0
@@ -144,9 +216,11 @@ shinyServer(function(input, output, session) {
         pstat <- pathostat1(physeq1)
         shinyInput <- list(pstat = pstat)
         vals$shiny.input <- shinyInput
+        vals$shiny.input.backup <- shinyInput
         # update ui
         updateCovariate()
         updateSample()
+        updateTaxLevel()
 
         })
 
@@ -164,7 +238,7 @@ shinyServer(function(input, output, session) {
                 }
 
                 #cat(df.name.vec)
-                datlist <- readPathoscopeData(input_dir, pathoreport_file_suffix,
+                datlist <- readPathoscopeData(input_dir, pathoreport_file_suffix = input$report_suffix,
                                               use.input.files = TRUE,
                                               input.files.path.vec = df.path.vec,
                                               input.files.name.vec = df.name.vec)
@@ -173,9 +247,15 @@ shinyServer(function(input, output, session) {
                 df.meta.input <- read.csv(input$annotfile.ps$datapath,
                                           header = input$header.ps,
                                           sep = input$sep.ps,
-                                          row.names=1,
+                                          row.names=input$metadata_sample_name_col,
                                           stringsAsFactors=FALSE)
-                #cat(dim(df.meta.input))
+
+                # choose only the samples in metadata that have counts data as well
+                df.meta.input <- df.meta.input[match(colnames(countdat), rownames(df.meta.input)), ]
+
+
+                #cat(colnames(countdat))
+                #cat(rownames(df.meta.input))
                 #test and fix the constant/zero row
                 row.remove.index <- c()
                 if (sum(rowSums(as.matrix(countdat)) == 0) > 0){
@@ -223,6 +303,7 @@ shinyServer(function(input, output, session) {
                 shinyInput <- list(pstat = pstat)
                 #setShinyInput(shinyInput)
                 vals$shiny.input <- shinyInput
+                vals$shiny.input.backup <- shinyInput
                 # update ui
                 updateCovariate()
                 updateSample()
@@ -247,7 +328,22 @@ shinyServer(function(input, output, session) {
     })
     })
 
+      observeEvent(input$resetSampleButton,{
+        withBusyIndicatorServer("resetSampleButton", {
+        vals$shiny.input <- vals$shiny.input.backup
+        updateCovariate()
+        updateSample()
+    })
+    })
 
+
+      output$download_rda <- downloadHandler(filename = function() {
+        paste("pathostat", Sys.Date(), ".rda", sep="")
+      }, content = function(file) {
+        shinyInput <- vals$shiny.input
+        pstat <- shinyInput$pstat
+        save(pstat, file=file)
+      })
 
   # setInputs(FALSE)
   findAllTaxData <- function(taxonLevel) {
@@ -274,8 +370,9 @@ shinyServer(function(input, output, session) {
       labvec[is.na(labvec)] <- ""
       names <- rownames(taxcountdata)
       for (i in 1:length(names))  {
-        tid <- grepTid(names[i])
-        labvec[i] <- paste0( "ti|", tid, "|", labvec[i])
+        #tid <- grepTid(names[i])
+        #labvec[i] <- paste0( "ti|", tid, "|", labvec[i])
+        labvec[i] <- paste0(names[i], labvec[i])
       }
       rownames(taxcountdata) <- labvec
       rownames(taxdata) <- labvec
@@ -326,16 +423,111 @@ shinyServer(function(input, output, session) {
   }
 
 
+
+
+  output$filter_type <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    if (input$select_condition_sample_filter_sidebar == "Read Number"){
+      return("num.continuous")
+    }
+
+    variable.vec <- sample_data(pstat)[[
+          which(pstat@sam_data@names == input$select_condition_sample_filter_sidebar)]]
+    if (is.numeric(variable.vec)){
+      # catogorical or not
+        num.levels <- length(unique(variable.vec))
+        if (num.levels < 6){
+          return("cat")
+        } else{
+          return("num.continuous")
+        }
+    }else{
+      # non-numeric
+        return("cat")
+    }
+  })
+
+  outputOptions(output, "filter_type", suspendWhenHidden = FALSE)
+
+
+
+  observeEvent(input$filter_num,{
+    withBusyIndicatorServer("filter_num", {
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
+      # extract the feature vector
+
+      if (input$select_condition_sample_filter_sidebar == "Read Number"){
+        feature.selected.vec <- colSums(pstat@otu_table@.Data)
+      }else{
+        feature.selected.vec <- pstat@sam_data@.Data[[
+          which(pstat@sam_data@names == input$select_condition_sample_filter_sidebar)]]
+      }
+
+      # get the index of sample keeping
+      samples.keep.index <- which(feature.selected.vec >= input$num_filter_min &
+                                    feature.selected.vec <= input$num_filter_max)
+
+      pstat@otu_table@.Data <- pstat@otu_table@.Data[,samples.keep.index]
+      pstat@sam_data@.Data <- lapply(pstat@sam_data@.Data, function(x) {x <- x[samples.keep.index]})
+      pstat@sam_data@row.names <- pstat@sam_data@row.names[samples.keep.index]
+      shinyInput <- list(pstat = pstat)
+      vals$shiny.input <- shinyInput
+
+      updateCovariate()
+      updateSample()
+    })
+  })
+
+  output$filter_cat_options <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    variable.vec <- sample_data(pstat)[[
+      which(pstat@sam_data@names == input$select_condition_sample_filter_sidebar)]]
+    filter.option.vec <- sort(unique(variable.vec))
+    tagList(
+      selectInput("cat_filter_options", "Keep these levels:", choices = filter.option.vec)
+    )
+  })
+
+
+  observeEvent(input$filter_cat,{
+    withBusyIndicatorServer("filter_cat", {
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
+      # extract the feature vector
+      feature.selected.vec <- pstat@sam_data@.Data[[
+        which(pstat@sam_data@names == input$select_condition_sample_filter_sidebar)]]
+
+      # get the index of sample keeping
+      samples.keep.index <- which(feature.selected.vec %in% input$cat_filter_options)
+
+      pstat@otu_table@.Data <- pstat@otu_table@.Data[,samples.keep.index]
+      pstat@sam_data@.Data <- lapply(pstat@sam_data@.Data, function(x) {x <- x[samples.keep.index]})
+      pstat@sam_data@row.names <- pstat@sam_data@row.names[samples.keep.index]
+      shinyInput <- list(pstat = pstat)
+      vals$shiny.input <- shinyInput
+
+      updateCovariate()
+      updateSample()
+    })
+  })
+
+
+
+
+
   output$sampleCountSum <- renderPlotly({
       shinyInput <- vals$shiny.input
       pstat <- shinyInput$pstat
       Sample_Name <- colnames(pstat@otu_table@.Data)
-      Reads_Number <- colSums(pstat@otu_table@.Data)
-      data <- data.frame(Sample_Name, Reads_Number, stringsAsFactors = FALSE)
+      Read_Number <- colSums(pstat@otu_table@.Data)
+      data <- data.frame(Sample_Name, Read_Number, stringsAsFactors = FALSE)
 
-      if (input$select_condition_sample_filter == "Reads Number"){
+      if (input$select_condition_sample_filter == "Read Number"){
           data$Sample_Name <- factor(data$Sample_Name,
-                                     levels = unique(data$Sample_Name)[order(data$Reads_Number,
+                                     levels = unique(data$Sample_Name)[order(data$Read_Number,
                                                                              decreasing = FALSE)])
       } else{
           data$Sample_Name <- paste(as.character(pstat@sam_data@.Data
@@ -347,11 +539,33 @@ shinyServer(function(input, output, session) {
                                             decreasing = FALSE)])
       }
 
-      p <- plot_ly(data, x = ~Sample_Name, y = ~Reads_Number, type = "bar", name = 'Sample reads count') %>%
+      p <- plot_ly(data, x = ~Sample_Name, y = ~Read_Number, type = "bar", name = 'Sample read count') %>%
           layout(margin = list(b = 160))
       p
   })
 
+
+  #Render summary table
+  output$contents_summary <- renderTable({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    req(pstat)
+    summarizeTable(pstat)
+  })
+
+
+
+
+    output$sampleCountHist <- renderPlotly({
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
+      Sample_Name <- colnames(pstat@otu_table@.Data)
+      Read_Number <- colSums(pstat@otu_table@.Data)
+      p <- plot_ly(x = Read_Number[Read_Number < input$hist_read_num_max], type = "histogram", name = 'Sample read count histogram') %>%
+          layout(margin = list(b = 160))
+
+      p
+  })
 
 
 
@@ -384,18 +598,8 @@ shinyServer(function(input, output, session) {
       # and uploads a file, head of that data file by default,
       # or all rows if selected, will be shown.
 
-      if (!is.null(input$countsfile)){
-          if (input$uploadChoice == "files"){
-              req(input$countsfile)
-              df <- read.csv(input$countsfile$datapath,
-                             header = input$header.count,
-                             sep = input$sep.count)
-              return(df)
-          }
-
-      }
       if (!is.null(input$countsfile.pathoscope)){
-          if (input$uploadChoice == "patho.files"){
+          if (input$uploadChoice == "pathofiles"){
           req(input$countsfile.pathoscope)
           df <- read.csv(input$countsfile.pathoscope[[1, 'datapath']],
                          skip = 1,
@@ -415,17 +619,8 @@ shinyServer(function(input, output, session) {
       # and uploads a file, head of that data file by default,
       # or all rows if selected, will be shown.
 
-      if (!is.null(input$annotfile.count)){
-          if (input$uploadChoice == "files"){
-          req(input$annotfile.count)
-          df <- read.csv(input$annotfile.count$datapath,
-                         header = input$header.count,
-                         sep = input$sep.count)
-          return(df)
-          }
-      }
       if (!is.null(input$annotfile.ps)){
-          if (input$uploadChoice == "patho.files"){
+          if (input$uploadChoice == "pathofiles"){
           req(input$countsfile.pathoscope)
 
           df <- read.csv(input$annotfile.ps$datapath,
@@ -438,6 +633,189 @@ shinyServer(function(input, output, session) {
   options = list(
       paging = TRUE, scrollX = TRUE, pageLength = 5
   ))
+
+
+  ### data input summary
+
+  output$contents.count.2 <- DT::renderDataTable({
+
+    # input$file1 will be NULL initially. After the user selects
+    # and uploads a file, head of that data file by default,
+    # or all rows if selected, will be shown.
+
+    if (!is.null(input$countsfile)){
+      if (input$uploadChoice == "count"){
+        req(input$countsfile)
+        df <- read.csv(input$countsfile$datapath,
+                       header = input$header.count,
+                       sep = input$sep.count)
+        return(df)
+      }
+
+    }
+
+  },
+  options = list(
+    paging = TRUE, scrollX = TRUE, pageLength = 5
+  ))
+
+  output$contents.meta.2 <- DT::renderDataTable({
+
+    # input$file1 will be NULL initially. After the user selects
+    # and uploads a file, head of that data file by default,
+    # or all rows if selected, will be shown.
+
+    if (!is.null(input$annotfile.count)){
+      if (input$uploadChoice == "count"){
+        req(input$annotfile.count)
+        df <- read.csv(input$annotfile.count$datapath,
+                       header = input$header.count,
+                       sep = input$sep.count)
+        return(df)
+      }
+    }
+
+  },
+  options = list(
+    paging = TRUE, scrollX = TRUE, pageLength = 5
+  ))
+
+
+  output$contents.taxonomy <- DT::renderDataTable({
+
+    # input$file1 will be NULL initially. After the user selects
+    # and uploads a file, head of that data file by default,
+    # or all rows if selected, will be shown.
+
+
+    if (!is.null(input$taxon.table)){
+      if (input$uploadChoice == "count"){
+        req(input$taxon.table)
+
+        df <- read.csv(input$taxon.table$datapath,
+                       header = input$header.count,
+                       sep = input$sep.count)
+        return(df)
+      }
+    }
+  },
+  options = list(
+    paging = TRUE, scrollX = TRUE, pageLength = 5
+  ))
+
+#### plot the single species boxplot
+  output$single_species_ui <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    species.name.vec <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl_single_species)
+    tagList(
+      selectInput("select_single_species_name_plot", "Select names (support multiple)", species.name.vec, selected = species.name.vec[1], multiple = TRUE)
+    )
+  })
+
+  plotSingleSpeciesBoxplotServer <- function(){
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+
+    if (input$taxl_single_species !="no rank")  {
+      pstat <- tax_glom(pstat, input$taxl_single_species)
+    }
+
+
+
+
+    if (length(input$select_single_species_name_plot) == 1){
+      condition.vec <- pstat@sam_data@.Data[[which(pstat@sam_data@names == input$select_single_species_condition)]]
+      # change microbe names to selected taxon level
+      species.name.vec <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl_single_species)
+      #cat(paste("condition:", length(condition.vec)))
+      read.num.condition.1 <- rep(0, length(condition.vec))
+
+      if (input$ssv_format == "read count"){
+        for (i in 1:nrow(pstat@otu_table@.Data)){
+          if (species.name.vec[i] == input$select_single_species_name_plot){
+            read.num.condition.1 <- read.num.condition.1 + pstat@otu_table@.Data[i,]
+          }
+        }
+        df.tmp <- data.frame(condition = condition.vec, read_Number = read.num.condition.1)
+        p <- plot_ly(df.tmp, y = ~read_Number, color = ~condition, type = "box")
+      }else if(input$ssv_format == "log10 CPM"){
+        df.cpm <- getLogCPM(pstat@otu_table@.Data)
+        for (i in 1:nrow(df.cpm)){
+          if (species.name.vec[i] == input$select_single_species_name_plot){
+            read.num.condition.1 <- read.num.condition.1 + df.cpm[i,]
+          }
+        }
+        df.tmp <- data.frame(condition = condition.vec, logCPM = read.num.condition.1)
+        p <- plot_ly(df.tmp, y = ~logCPM, color = ~condition, type = "box")
+      }else{
+        df.ra <- getRelativeAbundance(pstat@otu_table@.Data)
+        for (i in 1:nrow(df.ra)){
+          if (species.name.vec[i] == input$select_single_species_name_plot){
+            read.num.condition.1 <- read.num.condition.1 + df.ra[i,]
+          }
+        }
+        df.tmp <- data.frame(condition = condition.vec, RA = read.num.condition.1)
+        p <- plot_ly(df.tmp, y = ~RA, color = ~condition, type = "box")
+      }
+
+      ## plot
+      p
+
+
+    } else{
+      condition.vec <- pstat@sam_data@.Data[[which(pstat@sam_data@names == input$select_single_species_condition)]]
+      condition.vec.all <- c()
+      species.vec <- c()
+      read.num.condition.all <- c()
+      species.name.vec <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl_single_species)
+      for (i in 1:length(input$select_single_species_name_plot)){
+        condition.vec.all <- c(condition.vec.all, condition.vec)
+        species.vec <- c(species.vec, rep(input$select_single_species_name_plot[i], length(condition.vec)))
+        read.num.condition.tmp <- rep(0, length(condition.vec))
+        for (j in 1:nrow(pstat@otu_table@.Data)){
+          if (species.name.vec[j] == input$select_single_species_name_plot[i]){
+            if (input$ssv_format == "read count"){
+              read.num.condition.tmp <- read.num.condition.tmp + pstat@otu_table@.Data[j,]
+            }else if(input$ssv_format == "log10 CPM"){
+              df.cpm <- getLogCPM(pstat@otu_table@.Data)
+              read.num.condition.tmp <- read.num.condition.tmp + df.cpm[j,]
+            }else{
+              df.ra <- getRelativeAbundance(pstat@otu_table@.Data)
+              read.num.condition.tmp <- read.num.condition.tmp + df.ra[j,]
+            }
+
+
+          }
+        }
+        read.num.condition.all <- c(read.num.condition.all, read.num.condition.tmp)
+
+      }
+      if (input$ssv_format == "read count"){
+      df.tmp <- data.frame(condition = condition.vec.all, read_Number = read.num.condition.all, name = species.vec)
+      p <- plot_ly(df.tmp, x = ~name, y = ~read_Number, color = ~condition, type = "box") %>%
+        layout(boxmode = "group")
+      p
+      }else if(input$ssv_format == "log10 CPM"){
+        df.tmp <- data.frame(condition = condition.vec.all, logCPM = read.num.condition.all, name = species.vec)
+        p <- plot_ly(df.tmp, x = ~name, y = ~logCPM, color = ~condition, type = "box") %>%
+          layout(boxmode = "group")
+        p
+      }else{
+        df.tmp <- data.frame(condition = condition.vec.all, RA = read.num.condition.all, name = species.vec)
+        p <- plot_ly(df.tmp, x = ~name, y = ~RA, color = ~condition, type = "box") %>%
+          layout(boxmode = "group")
+        p
+      }
+    }
+
+
+
+  }
+
+  output$single_species_boxplot <- renderPlotly({
+    plotSingleSpeciesBoxplotServer()
+  })
 
 
 
@@ -611,8 +989,11 @@ shinyServer(function(input, output, session) {
       } else{
         add.colorbar <- NULL
       }
-      return(plotHeatmapColor(physeq1@otu_table@.Data,
-                              do.scale = input$checkbox_heatmap_scale,
+      df.plot <- physeq1@otu_table@.Data
+      rownames(df.plot) <- TranslateIdToTaxLevel(physeq1, rownames(df.plot),
+                                                 input$taxl)
+      return(plotHeatmapColor(getRelativeAbundance(df.plot),
+                              do.scale = FALSE,
                               condition.vec.1 = physeq1@sam_data[[input$select_heatmap_condition_1]],
                               condition.vec.2 = physeq1@sam_data[[input$select_heatmap_condition_2]],
                               condition.1.name = input$select_heatmap_condition_1,
@@ -622,13 +1003,16 @@ shinyServer(function(input, output, session) {
                                                   input$select_heatmap_condition, sep = " ")))
     } else  {
       physeq2 <- tax_glom(physeq1, input$taxl)
+      df.plot <- physeq2@otu_table@.Data
+      rownames(df.plot) <- TranslateIdToTaxLevel(physeq2, rownames(df.plot),
+                                                 input$taxl)
       if (input$checkbox_heatmap){
         add.colorbar <- "auto"
       } else{
         add.colorbar <- NULL
       }
-      return(plotHeatmapColor(physeq2@otu_table@.Data,
-                              do.scale = input$checkbox_heatmap_scale,
+      return(plotHeatmapColor(getRelativeAbundance(df.plot),
+                              do.scale = FALSE,
                               condition.vec.1 = physeq2@sam_data[[input$select_heatmap_condition_1]],
                               condition.vec.2 = physeq2@sam_data[[input$select_heatmap_condition_2]],
                               condition.1.name = input$select_heatmap_condition_1,
@@ -759,7 +1143,8 @@ shinyServer(function(input, output, session) {
     }
   )
 
-  output$alpha.stat.test <- renderPrint({
+
+  alpha.stat.output <- reactive({
     shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     if (input$taxl.alpha !="no rank")  {
@@ -774,34 +1159,53 @@ shinyServer(function(input, output, session) {
 
     if (length(unique(meta.data$condition)) == 2){
       if (input$select_alpha_stat_method == "Mann-Whitney"){
-        wilcox.test(richness ~ condition, data = meta.data)
+        tmp <- wilcox.test(richness ~ condition, data = meta.data)
+        output <- c(tmp$method, tmp$p.value)
+        output.table <- data.frame(output)
+        rownames(output.table) <- c("Method", "P-value")
+        output.table
       } else{
         print("Condition level number is 2, please use Mann-Whitney test.")
       }
 
     } else if (length(unique(meta.data$condition)) > 2){
       if (input$select_alpha_stat_method == "Mann-Whitney"){
-        print("Condition level number is larger than 2, pairwise Mann-Whitney test is applied. You could also check Kruskal-Wallis test result.")
-        print("---------------------------------------")
         result.list <- list()
+        meta.data.list <- list()
         for (i in 1:length(unique(meta.data$condition))){
-          meta.data.tmp <- meta.data[which(meta.data$condition != unique(meta.data$condition)[i]),]
-          print(paste(unique(meta.data.tmp$condition), collapse = " and "))
-          result.list[[i]] <- wilcox.test(richness ~ condition, data = meta.data.tmp)
-          print(result.list[[i]])
-          print("------------------------")
+          meta.data.list[[i]] <- meta.data[which(meta.data$condition != unique(meta.data$condition)[i]),]
+          result.list[[i]] <- wilcox.test(richness ~ condition, data = meta.data.list[[i]])
         }
+        output.table <- NULL
+        group.name <- c()
+        for (i in 1:length(result.list)){
+          output.tmp <- c(result.list[[i]]$method, result.list[[i]]$p.value)
+          output.table <- cbind(output.table, output.tmp)
+          group.name[i] <- paste(unique(meta.data.list[[i]]$condition), collapse = " and ")
+        }
+        rownames(output.table) <- c("Method", "P-value")
+        colnames(output.table) <- group.name
+        output.table
+
+
 
       } else{
-        kruskal.test(richness ~ condition, data = meta.data)
+        tmp <- kruskal.test(richness ~ condition, data = meta.data)
+        output <- c(tmp$method, tmp$p.value)
+        output.table <- data.frame(output)
+        rownames(output.table) <- c("Method", "P-value")
+        output.table
       }
 
     } else{
       "Condition level must be at least 2."
     }
-
-
   })
+  output$alpha.stat.test <- renderTable({
+    alpha.stat.output()
+  },include.rownames=TRUE)
+
+
 
 
   # independent heatmap plotting function in the server using specific data from input
@@ -927,9 +1331,9 @@ shinyServer(function(input, output, session) {
 
 
 
-  output$beta.stat.test <- renderPrint({
-      shinyInput <- vals$shiny.input
-      physeq1 <- shinyInput$pstat
+  beta.stat.output <- reactive({
+    shinyInput <- vals$shiny.input
+    physeq1 <- shinyInput$pstat
     if (input$select_beta_stat_method == "PERMANOVA"){
       if (input$taxl.beta !="no rank")  {
         physeq1 <- tax_glom(physeq1, input$taxl.beta)
@@ -979,30 +1383,42 @@ shinyServer(function(input, output, session) {
       names(dist.list) <- c(unique(meta.data$condition)[1], unique(meta.data$condition)[2], "between")
 
       if (input$select_beta_stat_method == "Mann-Whitney"){
-        print("Condition level number is larger than 2, pairwise Mann-Whitney test is applied.
-              You could also check Kruskal-Wallis test result.")
-        print("---------------------------------------")
         result.list <- list()
+        group.name <- c()
         for (i in 1:length(dist.list)){
           dist.list.tmp <- dist.list[which(names(dist.list) != names(dist.list)[i])]
-          print(paste(names(dist.list.tmp), collapse = " and "))
+
+          group.name[i] <- paste(names(dist.list.tmp), collapse = " and ")
           result.list[[i]] <- wilcox.test(dist.list.tmp[[1]], dist.list.tmp[[2]])
-          print(result.list[[i]])
-          print("------------------------")
-          
         }
+        output.table <- NULL
+        group.name <- c()
+        for (i in 1:length(result.list)){
+          output.tmp <- c(result.list[[i]]$method, result.list[[i]]$p.value)
+          output.table <- cbind(output.table, output.tmp)
+        }
+        rownames(output.table) <- c("Method", "P-value")
+        colnames(output.table) <- group.name
+        output.table
+
 
       } else{
-        kruskal.test(list(dist.within.a, dist.within.b, dist.between))
+        tmp <- kruskal.test(list(dist.within.a, dist.within.b, dist.between))
+        output <- c(tmp$method, tmp$p.value)
+        output.table <- data.frame(output)
+        rownames(output.table) <- c("Method", "P-value")
+        output.table
       }
 
     }
 
 
-
-
-
   })
+
+  output$beta.stat.test <- renderTable({
+    beta.stat.output()
+
+  },include.rownames=TRUE)
 
   output$table.beta <- DT::renderDataTable({
       shinyInput <- vals$shiny.input
@@ -1107,7 +1523,13 @@ shinyServer(function(input, output, session) {
       shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     if (input$taxl.pca=="no rank")  {
-      plotPCAPlotly(df.input = physeq1@otu_table@.Data,
+      df.plot <- physeq1@otu_table@.Data
+      if (input$select_pca_data_format == "log10 CPM"){
+        df.plot <- getLogCPM(df.plot)
+      }else if (input$select_pca_data_format == "RA"){
+        df.plot <- getRelativeAbundance(df.plot)
+      }
+      plotPCAPlotly(df.input = df.plot,
                     condition.color.vec = physeq1@sam_data[[input$select_pca_color]],
                     condition.color.name = input$select_pca_color,
                     condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]],
@@ -1119,7 +1541,13 @@ shinyServer(function(input, output, session) {
                                         input$select_pca_color, sep = " "))
     } else  {
       physeq2 <- tax_glom(physeq1, input$taxl.pca)
-      plotPCAPlotly(df.input = physeq2@otu_table@.Data,
+      df.plot <- physeq2@otu_table@.Data
+      if (input$select_pca_data_format == "log10 CPM"){
+        df.plot <- getLogCPM(df.plot)
+      }else if (input$select_pca_data_format == "RA"){
+        df.plot <- getRelativeAbundance(df.plot)
+      }
+      plotPCAPlotly(df.input = df.plot,
                     condition.color.vec = physeq2@sam_data[[input$select_pca_color]],
                     condition.color.name = input$select_pca_color,
                     condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]],
@@ -1270,6 +1698,35 @@ shinyServer(function(input, output, session) {
       if (input$taxl.edger !="no rank"){
           pstat <- tax_glom(pstat, input$taxl.edger)
       }
+
+
+
+      # number of samples in each level of target variable
+      target.var.index <- which(pstat@sam_data@names == input$edger.condition)
+      label.vec.num <- pstat@sam_data@.Data[[target.var.index]]
+
+
+
+      # if selected condition has multiple levels
+      if (length(input$edger_condition_options_use) == 2){
+        sample.keep.index <- which(label.vec.num %in% input$edger_condition_options_use)
+        label.vec.num <- label.vec.num[sample.keep.index]
+        pstat@otu_table@.Data <- pstat@otu_table@.Data[,sample.keep.index]
+        pstat@sam_data@row.names <- pstat@sam_data@row.names[sample.keep.index]
+        for (i in 1:length(pstat@sam_data@names)){
+          pstat@sam_data@.Data[[i]] <- pstat@sam_data@.Data[[i]][sample.keep.index]
+        }
+      }
+
+
+      label.vec.save <- unique(label.vec.num)
+
+      # transform label into 1 and 0
+      label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
+      label.vec.num[label.vec.num != 1] <- 0
+
+
+
       dge = phyloseq_to_edgeR(pstat, group=input$edger.condition)
       # Perform binary test
       et = exactTest(dge)
@@ -1291,6 +1748,40 @@ shinyServer(function(input, output, session) {
                                   which(colnames(sigtab) == "FDR"),
                                   which(colnames(sigtab) == "logFC"))]
               rownames(sigtab) <- 1:nrow(sigtab)
+
+
+
+              # remove "others"
+              index.sigtab.save <- c()
+              for (i in 1:nrow(sigtab)){
+                if (sigtab[i,1] != "others"){
+                  index.sigtab.save <- c(index.sigtab.save, i)
+                }
+              }
+              sigtab <- sigtab[index.sigtab.save,]
+
+              num.1 <- c()
+              num.2 <- c()
+              species.names.tmp <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl.edger)
+              for (i in 1:nrow(sigtab)){
+                species.index <- which(species.names.tmp == sigtab[i,1])
+                num.1 <- c(num.1, sum((pstat@otu_table@.Data[species.index,which(label.vec.num == 1)] > 0)))
+                num.2 <- c(num.2, sum((pstat@otu_table@.Data[species.index,which(label.vec.num == 0)] > 0)))
+              }
+
+              sigtab <- cbind(sigtab, num.1)
+              sigtab <- cbind(sigtab, num.2)
+
+
+              df.output.prevalence <- percent(round((num.1 + num.2)/ncol(pstat@otu_table@.Data),4))
+              sigtab <- cbind(sigtab, df.output.prevalence)
+
+
+              colnames(sigtab)[ncol(sigtab)-2] <- label.vec.save[1]
+              colnames(sigtab)[ncol(sigtab)-1] <- label.vec.save[2]
+              colnames(sigtab)[ncol(sigtab)] <- "prevalence"
+
+
               output$download_edger_tb <- downloadHandler(
                   filename = function() { paste('download_edger_table', '.csv', sep='') },
                   content = function(file) {
@@ -1324,6 +1815,34 @@ shinyServer(function(input, output, session) {
 
 
 
+
+    # number of samples in each level of target variable
+    target.var.index <- which(physeq1@sam_data@names == input$da.condition)
+    label.vec.num <- physeq1@sam_data@.Data[[target.var.index]]
+
+
+    # if selected condition has multiple levels
+    if (length(input$da_condition_options_use) == 2){
+      sample.keep.index <- which(label.vec.num %in% input$da_condition_options_use)
+      label.vec.num <- label.vec.num[sample.keep.index]
+      physeq1@otu_table@.Data <- physeq1@otu_table@.Data[,sample.keep.index]
+      physeq1@sam_data@row.names <- physeq1@sam_data@row.names[sample.keep.index]
+      for (i in 1:length(physeq1@sam_data@names)){
+        physeq1@sam_data@.Data[[i]] <- physeq1@sam_data@.Data[[i]][sample.keep.index]
+      }
+    }
+
+
+
+
+    label.vec.save <- unique(label.vec.num)
+
+    # transform label into 1 and 0
+    label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
+    label.vec.num[label.vec.num != 1] <- 0
+
+
+
     # deal with continuous covariates and multiple covariates
     # target condition is the last one in formula.
     if (!is.null(input$da.condition.covariate)){
@@ -1331,7 +1850,7 @@ shinyServer(function(input, output, session) {
         num.levels <- length(unique(sample_data(physeq1)[[input$da.condition.covariate[i]]]))
         if (num.levels >= 8){
           sam.index <- which(physeq1@sam_data@names %in% input$da.condition.covariate[i])
-          pstat@sam_data@.Data[[sam.index]] <- cut(pstat@sam_data@.Data[[sam.index]], breaks = 3)
+          physeq1@sam_data@.Data[[sam.index]] <- cut(physeq1@sam_data@.Data[[sam.index]], breaks = 3)
         }
       }
 
@@ -1367,9 +1886,50 @@ shinyServer(function(input, output, session) {
         sigtab$log2FoldChange <- as.numeric(formatC(sigtab$log2FoldChange, format = "e", digits = 2))
 
         rownames(sigtab) <- 1:nrow(sigtab)
+
+
+
+
+
+
         sigtab <- sigtab[,c(which(colnames(sigtab) == input$taxl.da[1]),
                             which(colnames(sigtab) == "padj"),
                             which(colnames(sigtab) == "log2FoldChange"))]
+
+
+
+
+
+        # remove "others"
+        index.sigtab.save <- c()
+        for (i in 1:nrow(sigtab)){
+          if (sigtab[i,1] != "others"){
+            index.sigtab.save <- c(index.sigtab.save, i)
+          }
+        }
+        sigtab <- sigtab[index.sigtab.save,]
+
+        num.1 <- c()
+        num.2 <- c()
+        species.names.tmp <- TranslateIdToTaxLevel(physeq1, rownames(physeq1@otu_table@.Data), input$taxl.da)
+        for (i in 1:nrow(sigtab)){
+          species.index <- which(species.names.tmp == sigtab[i,1])
+          num.1 <- c(num.1, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 1)] > 0)))
+          num.2 <- c(num.2, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 0)] > 0)))
+        }
+
+        sigtab <- cbind(sigtab, num.1)
+        sigtab <- cbind(sigtab, num.2)
+
+
+        df.output.prevalence <- percent(round((num.1 + num.2)/ncol(physeq1@otu_table@.Data),4))
+        sigtab <- cbind(sigtab, df.output.prevalence)
+
+
+        colnames(sigtab)[ncol(sigtab)-2] <- label.vec.save[1]
+        colnames(sigtab)[ncol(sigtab)-1] <- label.vec.save[2]
+        colnames(sigtab)[ncol(sigtab)] <- "prevalence"
+
         output$download_deseq_tb <- downloadHandler(
           filename = function() { paste('download_deseq2_table', '.csv', sep='') },
           content = function(file) {
@@ -1390,6 +1950,71 @@ shinyServer(function(input, output, session) {
       paging = TRUE
   ))
 
+
+
+  ### check whether selected condition for DA has two levels or more
+  output$da_condition_type <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    target.var.index <- which(pstat@sam_data@names == input$da.condition)
+    label.vec <- pstat@sam_data@.Data[[target.var.index]]
+    label.level.num <- length(unique(label.vec))
+    if (label.level.num == 2){
+      return("binary")
+    } else{
+      return("multiple")
+    }
+
+  })
+  outputOptions(output, "da_condition_type", suspendWhenHidden = FALSE)
+
+  # select 2 levels
+  output$da_condition_options <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    variable.vec <- sample_data(pstat)[[
+      which(pstat@sam_data@names == input$da.condition)]]
+    filter.option.vec <- sort(unique(variable.vec))
+    tagList(
+      selectInput("da_condition_options_use", "Select 2 levels", choices = filter.option.vec, multiple = TRUE)
+    )
+  })
+
+
+  ### check whether selected condition for edger has two levels or more
+  output$edger_condition_type <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    target.var.index <- which(pstat@sam_data@names == input$edger.condition)
+    label.vec <- pstat@sam_data@.Data[[target.var.index]]
+    label.level.num <- length(unique(label.vec))
+    if (label.level.num == 2){
+      return("binary")
+    } else{
+      return("multiple")
+    }
+
+  })
+  outputOptions(output, "edger_condition_type", suspendWhenHidden = FALSE)
+
+  # select 2 levels
+  output$edger_condition_options <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    variable.vec <- sample_data(pstat)[[
+      which(pstat@sam_data@names == input$edger.condition)]]
+    filter.option.vec <- sort(unique(variable.vec))
+    tagList(
+      selectInput("edger_condition_options_use", "Select 2 levels", choices = filter.option.vec, multiple = TRUE)
+    )
+  })
+
+
+
+
+
+
+
   # Presence-Absence Variance analysis
 
   output$pa.test <- DT::renderDataTable({
@@ -1399,41 +2024,67 @@ shinyServer(function(input, output, session) {
       physeq1 <- tax_glom(physeq1, input$taxl.pa)
     }
     physeq1 <- prune_samples(sample_sums(physeq1) > input$pa.count.cutoff, physeq1)
+
+
+    target.var.index <- which(physeq1@sam_data@names == input$pa.condition)
+    label.vec.num <- physeq1@sam_data@.Data[[target.var.index]]
+    # if selected condition has multiple levels
+    if (length(input$pa_condition_options_use) == 2){
+      sample.keep.index <- which(label.vec.num %in% input$pa_condition_options_use)
+      label.vec.num <- label.vec.num[sample.keep.index]
+      physeq1@otu_table@.Data <- physeq1@otu_table@.Data[,sample.keep.index]
+      physeq1@sam_data@row.names <- physeq1@sam_data@row.names[sample.keep.index]
+      for (i in 1:length(physeq1@sam_data@names)){
+        physeq1@sam_data@.Data[[i]] <- physeq1@sam_data@.Data[[i]][sample.keep.index]
+      }
+    }
+
+
     df.pam <- GET_PAM(physeq1@otu_table@.Data)
 
 
     # change microbe names to selected taxon level
     rownames(df.pam) <- TranslateIdToTaxLevel(physeq1, rownames(df.pam), input$taxl.pa)
 
-    if (input$pa.method == "Fisher Exact Test"){
+    if (input$pa_method == "Fisher Exact Test"){
       output.mat <- Fisher_Test_Pam(df.pam,
                                     physeq1@sam_data[[input$pa.condition]],
                                     input$pa.padj.cutoff)
       output$download_pa_test <- downloadHandler(
-        filename = function() { paste(input$pa.method, '.csv', sep='') },
+        filename = function() { paste(input$pa_method, '.csv', sep='') },
         content = function(file) {
           write.csv(output.mat, file)
         }
       )
 
       DT::datatable(output.mat)
-    } else if(input$pa.method == "Chi-squared Test"){
+    } else if(input$pa_method == "Chi-squared Test"){
       output.mat <- Chisq_Test_Pam(df.pam,
                                    physeq1@sam_data[[input$pa.condition]],
                                    input$pa.padj.cutoff)
       output$download_pa_test <- downloadHandler(
-        filename = function() { paste(input$pa.method, '.csv', sep='') },
+        filename = function() { paste(input$pa_method, '.csv', sep='') },
         content = function(file) {
           write.csv(output.mat, file)
         }
       )
       DT::datatable(output.mat)
-    } else if (input$pa.method == "Mann-Whitney Test"){
-      output.mat <- Wilcox_Test_df(physeq1@otu_table@.Data,
+    } else if (input$pa_method == "Mann-Whitney Test"){
+      df.test <- physeq1@otu_table@.Data
+      rownames(df.test) <- TranslateIdToTaxLevel(physeq1, rownames(df.test), input$taxl.pa)
+
+      if (input$pa_mann_data_type == "log10 CPM"){
+        df.test <- getLogCPM(df.test)
+      }else if (input$pa_mann_data_type == "RA"){
+        df.test <- getRelativeAbundance(df.test)
+      }
+
+
+      output.mat <- Wilcox_Test_df(df.test,
                                    physeq1@sam_data[[input$pa.condition]],
                                    input$pa.padj.cutoff)
       output$download_pa_test <- downloadHandler(
-        filename = function() { paste(input$pa.method, '.csv', sep='') },
+        filename = function() { paste(input$pa_method, '.csv', sep='') },
         content = function(file) {
           write.csv(output.mat, file)
         }
@@ -1442,41 +2093,148 @@ shinyServer(function(input, output, session) {
     }
 
 
-
-
   })
 
 
+  ### check whether selected condition for pa has two levels or more
+  output$pa_condition_type <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    target.var.index <- which(pstat@sam_data@names == input$pa.condition)
+    label.vec <- pstat@sam_data@.Data[[target.var.index]]
+    label.level.num <- length(unique(label.vec))
+    if (label.level.num == 2){
+      return("binary")
+    } else{
+      return("multiple")
+    }
+
+  })
+  outputOptions(output, "pa_condition_type", suspendWhenHidden = FALSE)
+
+  # select 2 levels
+  output$pa_condition_options <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    variable.vec <- sample_data(pstat)[[
+      which(pstat@sam_data@names == input$pa.condition)]]
+    filter.option.vec <- sort(unique(variable.vec))
+    tagList(
+      selectInput("pa_condition_options_use", "Select 2 levels", choices = filter.option.vec, multiple = TRUE)
+    )
+  })
+
 
 ### biomarker
+
+
+  getBiomarker <- function(){
+    if (input$select_model_biomarker == "Lasso Logistic Regression"){
+      shinyInput <- vals$shiny.input
+      physeq1 <- shinyInput$pstat
+      if (input$taxl_biomarker !="no rank"){
+        physeq1 <- tax_glom(physeq1, input$taxl_biomarker)
+
+      }
+
+      target.var.index <- which(physeq1@sam_data@names == input$select_target_condition_biomarker)
+      label.vec.num <- physeq1@sam_data@.Data[[target.var.index]]
+      # if selected condition has multiple levels
+      if (length(input$biomarker_condition_options_use) == 2){
+        sample.keep.index <- which(label.vec.num %in% input$biomarker_condition_options_use)
+        label.vec.num <- label.vec.num[sample.keep.index]
+        physeq1@otu_table@.Data <- physeq1@otu_table@.Data[,sample.keep.index]
+        physeq1@sam_data@row.names <- physeq1@sam_data@row.names[sample.keep.index]
+        for (i in 1:length(physeq1@sam_data@names)){
+          physeq1@sam_data@.Data[[i]] <- physeq1@sam_data@.Data[[i]][sample.keep.index]
+        }
+      }
+
+
+      # use log CPM as normalization.
+      df.input <- physeq1@otu_table@.Data
+      for(i in 1:ncol(df.input)){
+        if (is.numeric(df.input[,i])){
+          df.input[,i] <- log10(df.input[,i]*1e6/sum(df.input[,i]) + 0.1)
+        }
+      }
+
+      # change microbe names to selected taxon level
+      rownames(df.input) <- TranslateIdToTaxLevel(physeq1, rownames(df.input), input$taxl_biomarker)
+
+      if (!is.null(input$select_covariate_condition_biomarker)){
+
+        target.tmp <- physeq1@sam_data@.Data[[2]]
+
+        covariate.vec <- input$select_covariate_condition_biomarker
+        df.list.tmp <- list()
+        for (i in 1:length(covariate.vec)){
+          df.list.tmp[[covariate.vec[i]]] <- physeq1@sam_data@.Data[[which(physeq1@sam_data@names == covariate.vec[i])]]
+        }
+        df.covariate <- data.frame(df.list.tmp)
+        rownames(df.covariate) <- colnames(df.input)
+
+        df.input <- cbind.data.frame(t(df.input), df.covariate)
+      } else{
+        df.input <- t(df.input)
+      }
+
+
+      target.vec <- physeq1@sam_data[[input$select_target_condition_biomarker]]
+
+      output.fs <- getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = input$num.cv.nfolds, nRun = input$num.biomarker.run)
+    }
+
+    # number of samples in each level of target variable
+    target.var.index <- which(physeq1@sam_data@names == input$select_target_condition_biomarker)
+    label.vec.num <- physeq1@sam_data@.Data[[target.var.index]]
+    label.vec.save <- unique(label.vec.num)
+
+    # transform label into 1 and 0
+    label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
+    label.vec.num[label.vec.num != 1] <- 0
+
+    label.vec.num <- as.numeric(label.vec.num)
+    num.1 <- c()
+    num.2 <- c()
+    species.names.tmp <- TranslateIdToTaxLevel(physeq1, rownames(physeq1@otu_table@.Data), input$taxl_biomarker)
+    for (i in 1:length(output.fs$feature)){
+      species.index <- which(species.names.tmp == output.fs$feature[i])
+      num.1 <- c(num.1, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 1)] > 0)))
+      num.2 <- c(num.2, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 0)] > 0)))
+    }
+
+    output.df <- data.frame(biomarker = output.fs$feature,
+                            selection_rate = output.fs$selection_rate,
+                            average_weights = output.fs$feature_weights,
+                            num.1,
+                            num.2,
+                            percent(round((num.1+num.2)/ncol(physeq1@otu_table@.Data),4)))
+
+    colnames(output.df)[ncol(output.df)-2] <- label.vec.save[1]
+    colnames(output.df)[ncol(output.df)-1] <- label.vec.save[2]
+    colnames(output.df)[ncol(output.df)] <- "prevalence"
+    return(list(output.df = output.df, df.input = df.input, target.vec = target.vec))
+
+
+  }
+
+
+
   observeEvent(input$goButtonBiomarker, {
 
-      output$featureSelectionTmp <- renderPrint({
+     biomarker.vals <- reactiveValues(
+      biomarker.list = getBiomarker()
+     )
 
-          if (input$select_model_biomarker == "Lasso Logistic Regression"){
-              shinyInput <- vals$shiny.input
-              physeq1 <- shinyInput$pstat
-              if (input$taxl_biomarker !="no rank"){
-                  physeq1 <- tax_glom(physeq1, input$taxl_biomarker)
-              }
-              df.input <- physeq1@otu_table@.Data
-              if (input$select_covariate_condition_biomarker != "No covariate"){
-                  covariate.index <- match(input$select_covariate_condition_biomarker, physeq1@sam_data@names)
-                  df.covariate  <- data.frame(t(sapply(physeq1@sam_data@.Data[covariate.index], function(x) x)))
+      output$featureSelectionTmp <- renderTable({
+        biomarker.vals$biomarker.list$output.df
+      })
 
-                  rownames(df.covariate) <- input$select_covariate_condition_biomarker
-                  colnames(df.covariate) <- colnames(df.input)
-
-                  df.input <- rbind.data.frame(df.input, df.covariate)
-                  #cat(dim(df.input))
-              }
-
-              target.vec <- physeq1@sam_data[[input$select_target_condition_biomarker]]
-
-
-              output.fs <- getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = input$num.cv.nfolds)
-          }
-          output.fs
+      output$loocv_output <- renderTable({
+        Bootstrap_LOOCV_LR_AUC(biomarker.vals$biomarker.list$df.input,
+                               biomarker.vals$biomarker.list$target.vec,
+                               nboot = input$num.bootstrap.loocv)
 
       })
 
@@ -1484,9 +2242,48 @@ shinyServer(function(input, output, session) {
 
 
 
+  ### check whether selected condition for biomarker has two levels or more
+  output$biomarker_condition_type <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    target.var.index <- which(pstat@sam_data@names == input$select_target_condition_biomarker)
+    label.vec <- pstat@sam_data@.Data[[target.var.index]]
+    label.level.num <- length(unique(label.vec))
+    if (label.level.num == 2){
+      return("binary")
+    } else{
+      return("multiple")
+    }
+
+  })
+  outputOptions(output, "biomarker_condition_type", suspendWhenHidden = FALSE)
+
+  # select 2 levels
+  output$biomarker_condition_options <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    variable.vec <- sample_data(pstat)[[
+      which(pstat@sam_data@names == input$select_target_condition_biomarker)]]
+    filter.option.vec <- sort(unique(variable.vec))
+    tagList(
+      selectInput("biomarker_condition_options_use", "Select 2 levels", choices = filter.option.vec, multiple = TRUE)
+    )
+  })
 
 
+
+
+
+
+
+
+
+
+# Time series
+# will be updated in V2
   Alluvialdata <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
     if(input$Allurar==T){
       DR<-rarefy_even_depth(pstat,
                             sample.size =min(colSums(otu_table(pstat))),

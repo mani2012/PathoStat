@@ -1,14 +1,14 @@
 Package: PathoStat
 Type: Package
 Title: PathoStat Statistical Microbiome Analysis Package
-Version: 1.5.8
-Date: 2018-01-11
+Version: 1.6.9
+Date: 2018-03-27
 Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>, Matthew
         Bendall <bendall@gwmail.gwu.edu>, Sandro Valenzuela Diaz
         <sandrolvalenzuelad@gmail.com>, Eduardo Castro
         <castronallar@gmail.com>, Tyler Faits <tfaits@gmail.com>, Yue Zhao <jasonzhao0307@gmail.com>, W.
         Evan Johnson <wej@bu.edu>
-Maintainer: Solaiappan Manimaran <manimaran_1975@hotmail.com>
+Maintainer: Solaiappan Manimaran <manimaran_1975@hotmail.com>, Yue Zhao <jasonzhao0307@gmail.com>
 Description: The purpose of this package is to perform Statistical
         Microbiome Analysis on metagenomics results from sequencing
         data samples. In particular, it supports analyses on the
@@ -20,11 +20,12 @@ URL: https://github.com/mani2012/PathoStat
 BugReports: https://github.com/mani2012/PathoStat/issues
 License: GPL (>= 2)
 Depends: R (>= 3.3.1)
-Imports: MCMCpack, limma, corpcor, rmarkdown, knitr, pander,
-        matrixStats, reshape2, scales, ggplot2, rentrez, BatchQC, DT,
+Imports: limma, corpcor, knitr,
+        matrixStats, reshape2, scales, ggplot2, rentrez, DT,
         gtools, tidyr, plyr, dplyr, ape, phyloseq, shiny, grDevices,
-        stats, methods, XML, graphics, utils, alluvial, BiocStyle, edgeR,
-        preprocessCore, DESeq2, ComplexHeatmap, plotly, webshot, vegan, shinyjs
+        stats, methods, XML, graphics, utils, BiocStyle, edgeR,
+        preprocessCore, DESeq2, ComplexHeatmap, plotly, webshot, vegan, 
+        shinyjs, glmnet, gmodels, ROCR
 Collate: 'pathoStat.R' 'utils.R' 'taxonomy.R' 'confRegion.R'
         'allClasses.R' 'coreOTUModule.R' 'normalization.R' 'visualization.R' 
         'differentialAnalysis.R' 'biomarker.R'
@@ -32,7 +33,4 @@ Suggests: testthat
 biocViews: Microbiome, Metagenomics, GraphAndNetwork, Microarray,
         PatternLogic, PrincipalComponent, Sequencing, Software,
         Visualization, RNASeq
-SystemRequirements: pandoc (http://pandoc.org/installing.html) for
-        generating reports from markdown files.
-VignetteBuilder: knitr
 RoxygenNote: 6.0.1

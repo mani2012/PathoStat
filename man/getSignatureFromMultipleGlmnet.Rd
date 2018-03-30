@@ -8,7 +8,7 @@ getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = 10,
   logisticRegression = TRUE, nRun = 100, alpha = 1)
 }
 \arguments{
-\item{df.input}{Row is feature, column is sample. Required}
+\item{df.input}{Row is sample, column is feature. Required}
 
 \item{target.vec}{y vector. Required}
 

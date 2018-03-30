@@ -37,7 +37,7 @@ first line of the PathoID report.
 }
 \examples{
 input_dir <- system.file("example/data", package = "PathoStat")
-reportfiles <- list.files(input_dir, pattern = "*-sam-report.tsv", 
+reportfiles <- list.files(input_dir, pattern = "*-sam-report.tsv",
     full.names = TRUE)
 loadPathoscopeReports(reportfiles)
 }

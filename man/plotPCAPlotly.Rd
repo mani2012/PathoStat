@@ -26,6 +26,6 @@ plotPCAPlotly(df.input, condition.color.vec,
 Plot PCA
 }
 \examples{
-plotPCAPlotly(df.input, condition.vec, condition.name = "condition", 
+plotPCAPlotly(df.input, condition.vec, condition.name = "condition",
 columnTitle = "Title", pc.a = "PC1", pc.b = "PC2")
 }

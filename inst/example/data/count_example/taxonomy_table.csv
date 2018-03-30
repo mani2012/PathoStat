@@ -1,0 +1,11 @@
+,TestLevel,Phylum,Class,Order,Family,Genus,Species
+OTU1,b,b,v,v,l,n,
+OTU2,l,m,w,b,f,y,s
+OTU3,h,w,n,y,k,,
+OTU4,u,m,p,n,t,l,p
+OTU5,o,b,q,w,a,s,e
+OTU6,s,j,l,d,i,d,t
+OTU7,v,y,t,p,s,v,e
+OTU8,b,r,k,d,q,c,q
+OTU9,k,h,b,w,h,x,o
+OTU10,o,p,b,n,k,d,q
