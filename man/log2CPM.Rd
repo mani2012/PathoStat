@@ -18,9 +18,5 @@ list containing log2(quantile counts per mil reads) and library sizes
 Compute log2(counts per mil reads) and library size for each sample
 }
 \examples{
-example_data_dir <- system.file("example/data", package = "PathoStat")
-pathoreport_file_suffix <- "-sam-report.tsv"
-datlist <- readPathoscopeData(example_data_dir, pathoreport_file_suffix)
-countdat <- datlist$countdata
-lcpm <- log2CPM(countdat)
+log2CPM(matrix(1:12, nrow = 3))
 }

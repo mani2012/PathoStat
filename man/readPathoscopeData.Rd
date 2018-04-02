@@ -14,7 +14,8 @@ readPathoscopeData(input_dir = ".",
 
 \item{pathoreport_file_suffix}{PathoScope report files suffix}
 
-\item{use.input.files}{whether input dir to pathoscope files or directly pathoscope files}
+\item{use.input.files}{whether input dir to pathoscope files
+or directly pathoscope files}
 
 \item{input.files.path.vec}{vector of pathoscope file paths}
 
@@ -29,5 +30,4 @@ final guess relative abundance and count data
 }
 \examples{
 example_data_dir <- system.file("example/data", package = "PathoStat")
-readPathoscopeData(input_dir=example_data_dir)
 }

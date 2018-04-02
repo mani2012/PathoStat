@@ -29,7 +29,12 @@ shiny_panel_biomarker <- fluidPage(
                             tableOutput("featureSelectionTmp")),
                             tabPanel("LOOCV",
                                      br(),
-                                     numericInput("num.bootstrap.loocv", "Number of Bootstrap LOOCV", value = 5, max = 100, min = 5),
+                                     plotOutput("loocv_output_simple",height=300),
+                                     plotlyOutput("loocv.violin", height=300)),
+                            tabPanel("LOOCV Bootstrap",
+                                     br(),
+                                     numericInput("num.bootstrap.loocv", "Number of Bootstrap LOOCV", value = 20, max = 100, min = 5),
+                                     actionButton("goButtonBiomarkerBoot", "Run!"),
                                      tableOutput("loocv_output"))
                          ), width=9
                      )

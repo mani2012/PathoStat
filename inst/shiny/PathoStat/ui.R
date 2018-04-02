@@ -3,7 +3,6 @@ library(shinyjs)
 library(ggvis)
 library(d3heatmap)
 library(phyloseq)
-library(ape)
 library(plotly)
 source("helpers.R")
 
@@ -62,6 +61,11 @@ maxGenes <- dim(pstat@otu_table)[1]
 #sample name
 sample.names.all <- colnames(pstat@otu_table@.Data)
 
+
+# tags$style(type="text/css",
+#            ".shiny-output-error { visibility: hidden; }",
+#            ".shiny-output-error:before { visibility: hidden; }"
+# )
 
 # load ui tabs right before calling shinyUI()
 source("ui_01_upload.R", local = TRUE) #creates shiny_panel_upload variable

@@ -10,7 +10,8 @@ plotPCAPlotly(df.input, condition.color.vec,
   pc.b = "PC2")
 }
 \arguments{
-\item{df.input}{Input data object that contains the data to be plotted. Required}
+\item{df.input}{Input data object that contains
+the data to be plotted. Required}
 
 \item{condition.color.vec}{color vector. Required}
 
@@ -21,11 +22,20 @@ plotPCAPlotly(df.input, condition.color.vec,
 \item{condition.shape.name}{shape variable name. Required}
 
 \item{columnTitle}{Title to be displayed at top of heatmap.}
+
+\item{pc.a}{pc.1}
+
+\item{pc.b}{pc.2}
+}
+\value{
+the plot
 }
 \description{
 Plot PCA
 }
 \examples{
-plotPCAPlotly(df.input, condition.vec, condition.name = "condition",
-columnTitle = "Title", pc.a = "PC1", pc.b = "PC2")
+data('iris')
+plotPCAPlotly(t(iris[,1:4]),
+condition.color.vec = c(rep(1,100), rep(0,50)),
+condition.shape.vec = c(rep(0,100), rep(1,50)))
 }

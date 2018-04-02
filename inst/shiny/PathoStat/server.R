@@ -1,11 +1,11 @@
 library(shiny)
+library(ROCR)
 library(ggvis)
 library(d3heatmap)
 library(reshape2)
 library(DESeq2)
 library(edgeR)
 library(phyloseq)
-library(ape)
 library(stats)
 library(PathoStat)
 library(plotly)
@@ -17,10 +17,7 @@ library(dplyr)
 
 
 
-# get percent
-percent <- function(x, digits = 2, format = "f", ...) {
-  paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
-}
+
 
 # Converts decimal percentage to string with specified digits
 pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
@@ -265,9 +262,11 @@ shinyServer(function(input, output, session) {
 
                 ids <- rownames(countdat)
                 tids <- unlist(lapply(ids, FUN = grepTid))
+                print(tids)
                 taxonLevels <- findTaxonomy(tids)
+                print(str(taxonLevels))
                 taxmat <- findTaxonMat(ids, taxonLevels)
-
+                #print(taxmat)
                 #test and fix the constant/zero row
                 if (!is.null(row.remove.index)){
                     taxmat <- taxmat[-row.remove.index,]
@@ -347,10 +346,6 @@ shinyServer(function(input, output, session) {
 
   # setInputs(FALSE)
   findAllTaxData <- function(taxonLevel) {
-    #taxcountdata <- findTaxonLevelData(pstat@otu_table,
-    #    shinyInput$taxonLevels, taxonLevel)
-
-    #shinyInput <- getShinyInput()
     shinyInput <- vals$shiny.input
     pstat <- shinyInput$pstat
     if ((taxonLevel == "no rank"))  {
@@ -408,20 +403,6 @@ shinyServer(function(input, output, session) {
     findAllTaxData(input$taxlde)
     vals$taxcountdata
   })
-
-  findNormalizedCount <- function() {
-    if(input$norm == 'Quantile coreOTU Normalization')  {
-      dat <- coreOTUQuantile(vals$taxcountdata, input$otuthreshold,
-                             input$prevalence)
-    } else if(input$norm == 'Library Size Scaling')  {
-      dat <- sizeNormalize(vals$taxcountdata)
-    } else  {
-      dat <- coreOTUNormalize(vals$taxcountdata, input$ebweight,
-                              input$otuthreshold, input$prevalence)
-    }
-    dat
-  }
-
 
 
 
@@ -713,7 +694,7 @@ shinyServer(function(input, output, session) {
     )
   })
 
-  plotSingleSpeciesBoxplotServer <- function(){
+  plotSingleSpeciesBoxplotServer <- eventReactive(input$boxplotButton,{
     shinyInput <- vals$shiny.input
     pstat <- shinyInput$pstat
 
@@ -791,31 +772,46 @@ shinyServer(function(input, output, session) {
         read.num.condition.all <- c(read.num.condition.all, read.num.condition.tmp)
 
       }
+
       if (input$ssv_format == "read count"){
       df.tmp <- data.frame(condition = condition.vec.all, read_Number = read.num.condition.all, name = species.vec)
       p <- plot_ly(df.tmp, x = ~name, y = ~read_Number, color = ~condition, type = "box") %>%
         layout(boxmode = "group")
-      p
+      suppressMessages(p)
       }else if(input$ssv_format == "log10 CPM"){
         df.tmp <- data.frame(condition = condition.vec.all, logCPM = read.num.condition.all, name = species.vec)
         p <- plot_ly(df.tmp, x = ~name, y = ~logCPM, color = ~condition, type = "box") %>%
           layout(boxmode = "group")
-        p
+        suppressMessages(p)
       }else{
         df.tmp <- data.frame(condition = condition.vec.all, RA = read.num.condition.all, name = species.vec)
         p <- plot_ly(df.tmp, x = ~name, y = ~RA, color = ~condition, type = "box") %>%
           layout(boxmode = "group")
-        p
+        suppressMessages(p)
       }
+
     }
 
 
 
-  }
-
-  output$single_species_boxplot <- renderPlotly({
-    plotSingleSpeciesBoxplotServer()
   })
+
+
+      output$single_species_boxplot <- renderPlotly({
+        # suppress warnings
+        storeWarn<- getOption("warn")
+        options(warn = -1)
+        plott <- plotSingleSpeciesBoxplotServer()
+        #restore warnings, delayed so plot is completed
+        shinyjs::delay(expr =({
+          options(warn = storeWarn)
+        }) ,ms = 100)
+
+        plott
+      })
+
+
+
 
 
 
@@ -1055,7 +1051,7 @@ shinyServer(function(input, output, session) {
 
     meta.data <- physeq1@sam_data
     meta.data$sample.name <- rownames(meta.data)
-    meta.data$richness <- estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1]
+    meta.data$richness <- suppressWarnings(estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1])
     colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
     g <- ggplot(meta.data, aes(condition, richness, text=sample.name, color = condition)) +
       geom_point() + geom_boxplot() +
@@ -1116,7 +1112,7 @@ shinyServer(function(input, output, session) {
     }
     meta.data <- physeq1@sam_data
     meta.data$sample.name <- rownames(meta.data)
-    meta.data$richness <- estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1]
+    meta.data$richness <- suppressWarnings(estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1])
     colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
     rownames(meta.data) <- 1:nrow(meta.data)
 
@@ -1134,7 +1130,7 @@ shinyServer(function(input, output, session) {
       }
       meta.data <- physeq1@sam_data
       meta.data$sample.name <- rownames(meta.data)
-      meta.data$richness <- estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1]
+      meta.data$richness <- suppressWarnings(estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1])
       colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
       rownames(meta.data) <- 1:nrow(meta.data)
       meta.data <- as_tibble(meta.data)
@@ -1152,7 +1148,7 @@ shinyServer(function(input, output, session) {
     }
     meta.data <- physeq1@sam_data
     meta.data$sample.name <- rownames(meta.data)
-    meta.data$richness <- estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1]
+    meta.data$richness <- suppressWarnings(estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1])
     colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
     meta.data <- data.frame(meta.data)
     meta.data$condition <- as.factor(meta.data$condition)
@@ -2214,7 +2210,8 @@ shinyServer(function(input, output, session) {
     colnames(output.df)[ncol(output.df)-2] <- label.vec.save[1]
     colnames(output.df)[ncol(output.df)-1] <- label.vec.save[2]
     colnames(output.df)[ncol(output.df)] <- "prevalence"
-    return(list(output.df = output.df, df.input = df.input, target.vec = target.vec))
+    df.biomarker <- df.input[,which(colnames(df.input) %in% output.fs$feature)]
+    return(list(output.df = output.df, df.input = df.biomarker, target.vec = label.vec.num))
 
 
   }
@@ -2224,21 +2221,70 @@ shinyServer(function(input, output, session) {
   observeEvent(input$goButtonBiomarker, {
 
      biomarker.vals <- reactiveValues(
-      biomarker.list = getBiomarker()
+      biomarker.list = suppressWarnings(getBiomarker())
+     )
+     biomarker.vals.2 <- reactiveValues(
+       loocv.output.list = LOOAUC_simple_multiple_one_df(biomarker.vals$biomarker.list$df.input,
+                                                         biomarker.vals$biomarker.list$target.vec)
      )
 
       output$featureSelectionTmp <- renderTable({
         biomarker.vals$biomarker.list$output.df
       })
 
-      output$loocv_output <- renderTable({
-        Bootstrap_LOOCV_LR_AUC(biomarker.vals$biomarker.list$df.input,
-                               biomarker.vals$biomarker.list$target.vec,
-                               nboot = input$num.bootstrap.loocv)
+      output$loocv_output_simple <- renderPlot({
+
+        plot(biomarker.vals.2$loocv.output.list$loo.perf.plot, main="ROC curve",col="red",lwd=3, cex=4)
+        auc <- performance(biomarker.vals.2$loocv.output.list$loo.pred.plot,"auc")
+        auc <- unlist(slot(auc, "y.values"))
+        aucRound <- paste("AUC: ", round(auc,3))
+        abline(a=0,b=1,lwd=2,lty=2,col="gray")
+        legend(0.7,0.5, aucRound)
+      })
+
+
+      output$loocv.violin <- renderPlotly({
+        df.tmp <- data.frame(class.vec = biomarker.vals.2$loocv.output.list$testPredictionClassVec,
+                             class = c(rep(0, sum(biomarker.vals$biomarker.list$target.vec == 0)),
+                                       rep(1, sum(biomarker.vals$biomarker.list$target.vec == 1))))
+        p.tmp <- df.tmp %>%
+          plot_ly(
+            x = ~class,
+            y = ~class.vec,
+            split = ~class,
+            type = 'violin',
+            box = list(
+              visible = T
+            ),
+            meanline = list(
+              visible = T
+            )
+          ) %>%
+          layout(
+            xaxis = list(
+              title = "Class"
+            ),
+            yaxis = list(
+              title = "Predicted Probability",
+              zeroline = F
+            )
+          )
+        p.tmp
 
       })
 
+      bootstrap.out <- eventReactive(input$goButtonBiomarkerBoot, {
+        suppressWarnings(Bootstrap_LOOCV_LR_AUC(biomarker.vals$biomarker.list$df.input,
+                                                biomarker.vals$biomarker.list$target.vec,
+                                                nboot = input$num.bootstrap.loocv))
+      })
+
+      output$loocv_output <- renderTable({
+        bootstrap.out()
+      })
+
   })
+
 
 
 
@@ -2270,94 +2316,4 @@ shinyServer(function(input, output, session) {
     )
   })
 
-
-
-
-
-
-
-
-
-
-# Time series
-# will be updated in V2
-  Alluvialdata <- reactive({
-    shinyInput <- vals$shiny.input
-    pstat <- shinyInput$pstat
-    if(input$Allurar==T){
-      DR<-rarefy_even_depth(pstat,
-                            sample.size =min(colSums(otu_table(pstat))),
-                            replace=FALSE, rngseed=T)
-    }else{
-      DR<-pstat
-    }
-
-    if(is.null(input$Allusset) ||
-       is.null(input$Alluglom) ||
-       is.null(input$Allustax)){
-      return()
-    }
-    tryCatch({
-      tg<-paste("tax_glom(DR, taxrank='",input$Alluglom,"')",sep ='')
-      glom = eval(parse(text=tg))
-      tg<-paste("subset_taxa(glom, tax_table(glom)[,",input$Alluglom,"]
-                %in% ",input$Allustax ,")",sep ='')
-      glom = eval(parse(text=tg))
-    },error=function(cond){
-      return()
-    })
-    glom<-transform_sample_counts(glom, function(x) x / sum(x) )
-    glom_time <- sample_data(glom)[,input$Allusset]
-    glom_time$sample = rownames(glom_time)
-    rownames(glom_time) = NULL
-    glom_otu <- t(otu_table(glom))
-    cbind(glom_time, glom_otu) -> glom_otu_time
-    row.names(glom_otu_time) <- NULL
-    glom_otu_time$sample <- NULL
-    glom_otu_time <- plyr::ddply(glom_otu_time,input$Allusset,
-                                 plyr::numcolwise(mean))
-    tryCatch({
-      colnames(glom_otu_time) <- c(input$Allusset,
-                                   tax_table(glom)[as.matrix(colnames(
-                                     glom_otu_time)[-1]),input$Alluglom])
-      glom_otu_time_melted <- melt(glom_otu_time,
-                                   id.vars=c(input$Allusset), measure.vars=input$Allustax,
-                                   variable.name="taxa", value.name="proportion")
-    },error=function(cond){
-      return()
-    })
-    if(!exists("glom_otu_time_melted")){
-      return()
-    }
-    glom_otu_time_melted$proportion <- glom_otu_time_melted$proportion*100
-    glom_otu_time_melted <- glom_otu_time_melted[c(2,1,3)]
-    glom_otu_time_melted["proportion"]<-rapply(
-      glom_otu_time_melted["proportion"],
-      f=function(x) ifelse(is.nan(x),0,x), how="replace" )
-    return(glom_otu_time_melted)
-  })
-
-  output$TimePlotVisu<- renderPlot({
-    if(is.null(Alluvialdata())){
-      return()
-    }
-    alluvial_ts(Alluvialdata(), wave = .4, ygap = 2,plotdir = 'centred',
-                alpha=.9, rankup = FALSE, grid = TRUE, grid.lwd = 5, xmargin = 0.2,
-                lab.cex = 1, xlab = input$Allusset, ylab = '', border = NA,
-                axis.cex = 1, title = '')
-  })
-
-  output$downloadAlluvialPlot <- downloadHandler(
-    filename = function() { paste('Alluvialplot', '.pdf', sep='') },
-    content = function(file) {
-      pdf(file, width = 18, height = 10)
-      alluvial_ts(Alluvialdata(), wave = .4, ygap = 2,plotdir = 'centred',
-                  alpha=.8, rankup = FALSE, grid = TRUE, grid.lwd = 5,
-                  xmargin = 0.2, lab.cex = 1, xlab = input$Allusset, ylab = '',
-                  border = NA,axis.cex = 1, title = '')
-      dev.off()
-    }
-  )
-
-  callModule( coreOTUModule, "coreOTUModule", pstat )
 })

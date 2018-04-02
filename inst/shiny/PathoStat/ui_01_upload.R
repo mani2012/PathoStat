@@ -92,7 +92,7 @@ shiny_panel_upload <- fluidPage(
                                                    "Upload",
                                                    class = "btn-primary")
                                   ),
-                                  helpText("After click, please wait for 30s until seeing a green check.")
+                                  helpText("After click Upload, please wait until seeing a green check.")
                  ),
                  conditionalPanel(condition = sprintf("input['%s'] == 'pathofiles'", "uploadChoice"),
                                   h5("Upload PathoScope generated .tsv files:"),

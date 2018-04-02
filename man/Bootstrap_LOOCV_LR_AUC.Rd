@@ -4,18 +4,23 @@
 \alias{Bootstrap_LOOCV_LR_AUC}
 \title{Do bootstrap and LOOCV}
 \usage{
-Bootstrap_LOOCV_LR_AUC(df, target.vec, nboot = 50)
+Bootstrap_LOOCV_LR_AUC(df, targetVec, nboot = 50)
 }
 \arguments{
 \item{df}{Row is sample, column is feature. Required}
 
-\item{target.vec}{y vector. Required}
+\item{targetVec}{y vector. Required}
 
 \item{nboot}{number of BOOTSTRAP}
+}
+\value{
+bootstrap loocv result dataframe
 }
 \description{
 Do bootstrap and LOOCV
 }
 \examples{
-Bootstrap_LOOCV_LR_AUC(df, target.vec, nboot)
+data('iris')
+Bootstrap_LOOCV_LR_AUC(iris[,1:4],
+c(rep(1,100), rep(0,50)), nboot = 3)
 }

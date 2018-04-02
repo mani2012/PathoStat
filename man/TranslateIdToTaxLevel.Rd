@@ -20,7 +20,11 @@ target taxon level names
 Find the taxonomy for the given taxon id name
 }
 \examples{
-names.new <- TranslateIdToTaxLevel(pstat, 
-c("ti|862962|org|Bacteroides_fragilis_638R", "ti|697329|org|Ruminococcus_albus_7" ), 
+data_dir_test <- system.file("data", package = "PathoStat")
+pstat_test <- loadPstat(indir=data_dir_test,
+infileName="pstat_data_2_L1.rda")
+names.new <- TranslateIdToTaxLevel(pstat_test,
+c("ti|862962|org|Bacteroides_fragilis_638R",
+"ti|697329|org|Ruminococcus_albus_7" ),
 "genus")
 }

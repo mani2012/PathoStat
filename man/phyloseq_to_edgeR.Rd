@@ -16,24 +16,32 @@ vector or factor with length equal to \code{nsamples(physeq)}.}
 group/condition for each sample/library. Alternatively, you may provide
 the name of a sample variable. This name should be among the output of
 \code{sample_variables(physeq)}, in which case
-\code{get_variable(physeq, group)} would return either a character vector or factor.
+\code{get_variable(physeq, group)}
+would return either a character vector or factor.
 This is passed on to \code{\link[edgeR]{DGEList}},
 and you may find further details or examples in its documentation.}
 
-\item{method}{(Optional). The label of the edgeR-implemented normalization to use.
- See \code{\link[edgeR]{calcNormFactors}} for supported options and details.
- The default option is \code{"RLE"}, which is a scaling factor method
- proposed by Anders and Huber (2010).
- At time of writing, the \link[edgeR]{edgeR} package supported
- the following options to the \code{method} argument:
+\item{method}{(Optional). The label of the
+edgeR-implemented normalization to use.
+See \code{\link[edgeR]{calcNormFactors}} for supported options and details.
+The default option is \code{"RLE"}, which is a scaling factor method
+proposed by Anders and Huber (2010).
+At time of writing, the \link[edgeR]{edgeR} package supported
+the following options to the \code{method} argument:
 
- \code{c("TMM", "RLE", "upperquartile", "none")}.}
+\code{c("TMM", "RLE", "upperquartile", "none")}.}
 
 \item{...}{Additional arguments passed on to \code{\link[edgeR]{DGEList}}}
+}
+\value{
+dispersion
 }
 \description{
 Further details.
 }
 \examples{
-
+data_dir_test <- system.file("data", package = "PathoStat")
+pstat_test <- loadPstat(indir=data_dir_test,
+infileName="pstat_data_2_L1.rda")
+phyloseq_to_edgeR(pstat_test, group="Sex")
 }
