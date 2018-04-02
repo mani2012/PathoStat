@@ -1,3 +1,18 @@
+#' pathostat object generated from example pathoscope report files 
+#'
+#' This example data consists of 33 samples from a diet study with 11 subjects 
+#' taking 3 different diets in random order
+#'
+#' @name pstat_data
+#' @format pathostat object extension of phyloseq-class experiment-level object:
+#' \describe{
+#'     \item{otu_table}{OTU table with  41 taxa and 33 samples}
+#'     \item{sample_data}{Sample Data with 33 samples by 18 sample variables}
+#'     \item{tax_table}{Taxonomy Table with 41 taxa by 9 taxonomic ranks}
+#'     \item{sample_data}{Phylogenetic Tree with 41 tips and 40 internal nodes}
+#' }
+#' @return pathostat object
+"pstat"
 
 ###############################################################################
 #' Statistical Microbiome Analysis on the pathostat input and generates a

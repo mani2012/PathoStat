@@ -36,11 +36,20 @@ The package includes:
 
 ## Installation
 
-singleCellTK is under development. You can install the development version from
-github:
-```{r}
-# install.packages("devtools")
-devtools::install_github("compbiomed/PathoStat")
+To begin, install [Bioconductor](http://www.bioconductor.org/) and simply
+run the following to automatically install PathoStat and all the dependencies 
+as follows.
+
+```r
+source("http://bioconductor.org/biocLite.R")
+biocLite("PathoStat")
+```
+
+If you want to install the latest development version of PathoStat from Github, 
+use [devtools](https://github.com/hadley/devtools) to install it as follows:
+```r
+require(devtools)
+install_github("mani2012/PathoStat", build_vignettes=TRUE)
 ```
 
 ## Run Pathostat
