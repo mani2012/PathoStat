@@ -20,6 +20,8 @@ outfile .rda file
 Save the pathostat object to R data(.rda) file
 }
 \examples{
-data(pstat_data)
-outfile <- savePstat(pstat)
+data_dir_test <- system.file("data", package = "PathoStat")
+pstat_test <- loadPstat(indir=data_dir_test,
+infileName="pstat_data_2_L1.rda")
+outfile <- savePstat(pstat_test)
 }

@@ -4,12 +4,14 @@
 \alias{percent}
 \title{Compute percentage}
 \usage{
-percent(x, digits = 2, format = "f", ...)
+percent(x, digits = 2, format = "f")
 }
 \arguments{
 \item{x}{a number or a vector}
 
 \item{digits}{how many digit of percentage}
+
+\item{format}{numeric format, "f" for float}
 }
 \value{
 the percentage
@@ -18,5 +20,5 @@ the percentage
 Compute percentage
 }
 \examples{
-pecent.vec <- percet(c(0.9, 0.98))
+pecent.vec <- percent(c(0.9, 0.98))
 }

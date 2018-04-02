@@ -1,3 +1,8 @@
+# tags$style(type="text/css",
+#            ".shiny-output-error { visibility: hidden; }",
+#            ".shiny-output-error:before { visibility: hidden; }"
+# )
+
 shiny_panel_filter <- fluidPage(
 
     tabsetPanel(
@@ -75,7 +80,9 @@ shiny_panel_filter <- fluidPage(
                              covariates.colorbar),
                  selectInput("ssv_format", "Select data format", c("read count", "relative abundance", "log10 CPM")),
                  uiOutput("single_species_ui"),
+                 actionButton("boxplotButton", "Plot"),
                  plotlyOutput("single_species_boxplot")
+
                  #plotlyOutput("single_species_barplot")
         ),
         tabPanel("Read Count & RA",

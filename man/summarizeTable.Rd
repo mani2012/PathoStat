@@ -7,11 +7,17 @@
 summarizeTable(pstat)
 }
 \arguments{
-\item{indata}{Input pstat}
+\item{pstat}{Input pstat}
 }
 \value{
 A data.frame object of summary metrics.
 }
 \description{
 Creates a table of summary metrics
+}
+\examples{
+data_dir_test <- system.file("data", package = "PathoStat")
+pstat_test <- loadPstat(indir=data_dir_test,
+infileName="pstat_data_2_L1.rda")
+st.tmp <- summarizeTable(pstat_test)
 }

@@ -20,9 +20,14 @@ getSignatureFromMultipleGlmnet(df.input, target.vec, nfolds = 10,
 
 \item{alpha}{same as in glmnet}
 }
+\value{
+signature
+}
 \description{
 Use Lasso to do feature selection
 }
 \examples{
-getSignatureFromMultipleGlmnet(df.input, target.vec)
+data('iris')
+getSignatureFromMultipleGlmnet(iris[,1:4],
+c(rep(1,100), rep(0,50)), nfolds = 3, nRun = 10)
 }

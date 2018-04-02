@@ -2,7 +2,8 @@
 % Please edit documentation in R/differentialAnalysis.R
 \name{Fisher_Test_Pam}
 \alias{Fisher_Test_Pam}
-\title{Given PAM and disease/control annotation, do Chi-square test for each row of PAM}
+\title{Given PAM and disease/control annotation,
+do Chi-square test for each row of PAM}
 \usage{
 Fisher_Test_Pam(pam, label.vec.num, pvalue.cutoff = 0.05)
 }
@@ -17,8 +18,11 @@ Fisher_Test_Pam(pam, label.vec.num, pvalue.cutoff = 0.05)
 df.output object
 }
 \description{
-Given PAM and disease/control annotation, do Chi-square test for each row of PAM
+Given PAM and disease/control annotation,
+do Chi-square test for each row of PAM
 }
 \examples{
-Fisher_Test_Pam(pam, label.vec.num, pvalue.cutoff)
+tmp <- matrix(rbinom(12,1,0.5), nrow = 3)
+rownames(tmp) <- c("a", "b", "c")
+Fisher_Test_Pam(tmp, c(1,1,0,0))
 }

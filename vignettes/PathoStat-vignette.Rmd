@@ -1,0 +1,59 @@
+---
+title: "Run PathoStat"
+author: "Solaiappan Manimaran, Yue Zhao"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+    %\VignetteIndexEntry{PathoStat intro}
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment = "#>"
+)
+```
+
+
+## Introduction
+
+PathoStat is a R shiny package, designed for performing 
+Statistical Microbiome Analysis on metagenomics results 
+from sequencing data samples. In particular, it supports 
+analyses on the PathoScope generated report files.
+
+The package includes:
+
+* Data Summary and Filtering 
+* Relative Abundance plots (Stacked Bar Plot, Heatmap)
+* Multiple species boxplot visualization
+* Diversity analysis (Alpha and Beta diversity)
+* Differential Expression (DEseq2, edgeR)
+* Dimension Reduction (PCA, PCoA)
+* Biomarker identification
+
+## Installation
+
+singleCellTK is under development. You can install the development version from
+github:
+```{r}
+# install.packages("devtools")
+devtools::install_github("compbiomed/PathoStat")
+```
+
+## Run Pathostat
+
+```{r eval=FALSE}
+require(PathoStat)
+runPathoStat()
+```
+
+
+# Session info
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```
+

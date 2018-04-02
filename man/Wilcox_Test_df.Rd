@@ -20,5 +20,7 @@ df.output object
 Mann-whitney test for a dataframe
 }
 \examples{
-Wilcox_Test_df(df.list[[i]], label.vec.num, pvalue.cutoff)
+data('iris')
+Wilcox_Test_df(t(iris[,1:4]),
+c(rep(1,100), rep(0,50)))
 }

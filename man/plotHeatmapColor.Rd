@@ -11,7 +11,8 @@ plotHeatmapColor(df.input, condition.vec.1, condition.vec.2, condition.1.name,
   annotationColors = "auto", columnTitle = "Title")
 }
 \arguments{
-\item{df.input}{Input data object that contains the data to be plotted. Required}
+\item{df.input}{Input data object that
+contains the data to be plotted. Required}
 
 \item{condition.vec.1}{color vector. Required}
 
@@ -20,6 +21,8 @@ plotHeatmapColor(df.input, condition.vec.1, condition.vec.2, condition.1.name,
 \item{condition.1.name}{color vector 1 name. Required}
 
 \item{condition.2.name}{color vector 2 name. Required}
+
+\item{do.scale}{whether to do row scaling}
 
 \item{clusterRow}{Cluster the rows. The default is TRUE}
 
@@ -50,9 +53,8 @@ ComplexHeatmap object
 Plot heatmap with color bar
 }
 \examples{
-plotHeatmapColor(df.input, condition.vec,
-clusterRow=TRUE, clusterCol=TRUE, displayRowLabels=FALSE,
-displayColumnLabels=TRUE, displayRowDendrograms=TRUE,
-displayColumnDendrograms=TRUE, annotationColors = "auto",
-columnTitle="Title")
+data('iris')
+plotHeatmapColor(iris[,1:4],
+c(rep(1,100), rep(0,50)),c(rep(0,100), rep(1,50)),
+"condition.1.name", "condition.1.name")
 }

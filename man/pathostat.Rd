@@ -2,7 +2,7 @@
 % Please edit documentation in R/pathoStat.R
 \name{pathostat}
 \alias{pathostat}
-\title{Build PathoStat-class object from its phyloseq component.}
+\title{Build PathoStat class object from its phyloseq component.}
 \usage{
 pathostat(physeq1)
 }
@@ -13,7 +13,7 @@ pathostat(physeq1)
 pstat The pathostat object generated from the given phyloseq object
 }
 \description{
-Build PathoStat-class object from its phyloseq component.
+Build PathoStat class object from its phyloseq component.
 }
 \examples{
 rich_dense_biom  = system.file("extdata", "rich_dense_otu_table.biom",

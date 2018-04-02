@@ -1,8 +1,8 @@
 Package: PathoStat
 Type: Package
 Title: PathoStat Statistical Microbiome Analysis Package
-Version: 1.6.9
-Date: 2018-03-27
+Version: 1.8.1
+Date: 2018-04-01
 Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>, Matthew
         Bendall <bendall@gwmail.gwu.edu>, Sandro Valenzuela Diaz
         <sandrolvalenzuelad@gmail.com>, Eduardo Castro
@@ -19,18 +19,18 @@ Description: The purpose of this package is to perform Statistical
 URL: https://github.com/mani2012/PathoStat
 BugReports: https://github.com/mani2012/PathoStat/issues
 License: GPL (>= 2)
-Depends: R (>= 3.3.1)
-Imports: limma, corpcor, knitr,
-        matrixStats, reshape2, scales, ggplot2, rentrez, DT,
-        gtools, tidyr, plyr, dplyr, ape, phyloseq, shiny, grDevices,
+Depends: R (>= 3.4)
+Imports: limma, corpcor,matrixStats, reshape2, scales, ggplot2, rentrez, DT,
+        tidyr, plyr, dplyr, phyloseq, shiny,
         stats, methods, XML, graphics, utils, BiocStyle, edgeR,
-        preprocessCore, DESeq2, ComplexHeatmap, plotly, webshot, vegan, 
-        shinyjs, glmnet, gmodels, ROCR
-Collate: 'pathoStat.R' 'utils.R' 'taxonomy.R' 'confRegion.R'
-        'allClasses.R' 'coreOTUModule.R' 'normalization.R' 'visualization.R' 
-        'differentialAnalysis.R' 'biomarker.R'
-Suggests: testthat
+        DESeq2, ComplexHeatmap, plotly, webshot, vegan, 
+        shinyjs, glmnet, gmodels, ROCR, RColorBrewer, knitr, devtools
+Collate: 'pathoStat.R' 'utils.R' 'taxonomy.R' 'biomarker.R'
+        'allClasses.R' 'visualization.R' 'differentialAnalysis.R' 
 biocViews: Microbiome, Metagenomics, GraphAndNetwork, Microarray,
         PatternLogic, PrincipalComponent, Sequencing, Software,
         Visualization, RNASeq
 RoxygenNote: 6.0.1
+Suggests: rmarkdown,
+    testthat
+VignetteBuilder: knitr

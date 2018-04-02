@@ -10,6 +10,9 @@ plotPCoAPlotly(physeq.input, condition.color.vec,
   columnTitle = "Title", pc.a = "Axis.1", pc.b = "Axis.2")
 }
 \arguments{
+\item{physeq.input}{Input data object that contains
+the data to be plotted. Required}
+
 \item{condition.color.vec}{color vector. Required}
 
 \item{condition.color.name}{color variable name. Required}
@@ -18,14 +21,24 @@ plotPCoAPlotly(physeq.input, condition.color.vec,
 
 \item{condition.shape.name}{shape variable name. Required}
 
+\item{method}{which distance metric}
+
 \item{columnTitle}{Title to be displayed at top of heatmap.}
 
-\item{df.input}{Input data object that contains the data to be plotted. Required}
+\item{pc.a}{pc.1}
+
+\item{pc.b}{pc.2}
+}
+\value{
+the plot
 }
 \description{
 Plot PCoA
 }
 \examples{
-plotPCoAPlotly(physeq.input, condition.vec, condition.name = "condition", method = "bray",
-columnTitle = "Title", pc.a = "Axis.1", pc.b = "Axis.2")
+data_dir_test <- system.file("data", package = "PathoStat")
+pstat_test <- loadPstat(indir=data_dir_test,
+infileName="pstat_data_2_L1.rda")
+plotPCoAPlotly(pstat_test, condition.color.vec = rbinom(33,1,0.5),
+condition.shape.vec = rbinom(33,1,0.5))
 }

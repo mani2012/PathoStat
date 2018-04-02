@@ -11,8 +11,6 @@
 #'     \item{lowconf_count}{a single object of class otu_tableOrNULL}
 #' }
 #'
-#' @name PathoStat-class
-#' @rdname PathoStat-class
 #' @export pathostat1
 #' @exportClass PathoStat
 pathostat1 <- setClass(Class="PathoStat",

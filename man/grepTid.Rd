@@ -16,5 +16,5 @@ tid string
 Greps the tid from the given identifier string
 }
 \examples{
-tid <- grepTid("ti|367928|org|Bifidobacterium_adolescentis_ATCC_15703")
+grepTid("ti|700015|org|Coriobacterium_glomerans_PW2")
 }

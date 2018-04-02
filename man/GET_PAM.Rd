@@ -7,7 +7,8 @@
 GET_PAM(df)
 }
 \arguments{
-\item{df}{Input data object that contains the data to be tested. Required}
+\item{df}{Input data object that contains the data to be tested.
+Required}
 }
 \value{
 df.output object
@@ -16,5 +17,5 @@ df.output object
 transform cpm counts to presence-absence matrix
 }
 \examples{
-GET_PAM(df)
+GET_PAM(data.frame(a = c(1,3,0), b = c(0,0.1,2)))
 }

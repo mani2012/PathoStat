@@ -6,8 +6,7 @@
 html report and produces interactive shiny app plots}
 \usage{
 runPathoStat(pstat = NULL, report_dir = ".",
-  report_option_binary = "111111111", view_report = FALSE,
-  interactive = TRUE)
+  report_option_binary = "111111111", interactive = TRUE)
 }
 \arguments{
 \item{pstat}{phyloseq extension pathostat object}
@@ -16,8 +15,6 @@ runPathoStat(pstat = NULL, report_dir = ".",
 
 \item{report_option_binary}{9 bits Binary String representing the plots to
 display and hide in the report}
-
-\item{view_report}{when TRUE, opens the report in a browser}
 
 \item{interactive}{when TRUE, opens the interactive shinyApp}
 }
