@@ -32,18 +32,3 @@ install_github("jasonzhao0307/PathoStat")
 ```
 
 
-## Troubleshooting with Installation
-
-If you are having issues with the installation, you may have to setup local 
-directory, if you do not have permissions to install in the default location 
-for R. You may also want to load a version of R 3.3.1 or higher.
-```r
-export R_LIBS="/my_own_local_directory/R_libs"
-module load R/R-3.2.4
-```
-
-And do something like the following
-```r
-install.packages("devtools", repos="http://cran.r-project.org", 
-    lib="/my_own_local_directory/R_libs")
-```
