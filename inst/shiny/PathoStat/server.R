@@ -12,7 +12,7 @@ library(plotly)
 library(webshot)
 library(vegan)
 library(dplyr)
-
+library(ape)
 
 
 
@@ -32,6 +32,9 @@ getLogCPM <- function(df){
   logCPM.out <- apply(df, 2, function(y) log10(y*1e6/sum(y) + 1))
   return(logCPM.out)
 }
+
+
+
 
 shinyServer(function(input, output, session) {
 
@@ -973,6 +976,39 @@ shinyServer(function(input, output, session) {
     scale_fill_brewer(palette = palname, ...)
   }
 
+  # heatmap
+  output$single_species_ui_new <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    species.name.vec <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl)
+    tagList(
+      selectInput("select_single_species_name_plot_new", "Select names (support multiple)", species.name.vec, selected = species.name.vec[1], multiple = TRUE)
+    )
+  })
+
+  # get smaller df
+  getDfPlot <- function(){
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+
+    if (input$taxl !="no rank")  {
+      pstat <- tax_glom(pstat, input$taxl)
+    }
+      # change microbe names to selected taxon level
+      species.name.vec <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl)
+      index.take <- which(species.name.vec %in% input$select_single_species_name_plot_new)
+      df.plot <- pstat@otu_table@.Data
+      rownames(df.plot) <- species.name.vec
+      if(input$ssv_format_new == "log10 CPM"){
+        df.cpm <- getLogCPM(df.plot)
+        df.cpm <- df.cpm[index.take,]
+        return(df.cpm)
+      }else{
+        df.ra <- getRelativeAbundance(df.plot)
+        df.ra <- df.ra[index.take,]
+        return(df.ra)
+      }
+}
 
   # independent heatmap plotting function in the server using specific data from input
   plotHeatmapColorServer <- function(){
@@ -985,10 +1021,8 @@ shinyServer(function(input, output, session) {
       } else{
         add.colorbar <- NULL
       }
-      df.plot <- physeq1@otu_table@.Data
-      rownames(df.plot) <- TranslateIdToTaxLevel(physeq1, rownames(df.plot),
-                                                 input$taxl)
-      return(plotHeatmapColor(getRelativeAbundance(df.plot),
+      df.plot <- getDfPlot()
+      return(plotHeatmapColor(df.plot,
                               do.scale = FALSE,
                               condition.vec.1 = physeq1@sam_data[[input$select_heatmap_condition_1]],
                               condition.vec.2 = physeq1@sam_data[[input$select_heatmap_condition_2]],
@@ -999,15 +1033,13 @@ shinyServer(function(input, output, session) {
                                                   input$select_heatmap_condition, sep = " ")))
     } else  {
       physeq2 <- tax_glom(physeq1, input$taxl)
-      df.plot <- physeq2@otu_table@.Data
-      rownames(df.plot) <- TranslateIdToTaxLevel(physeq2, rownames(df.plot),
-                                                 input$taxl)
+      df.plot <- getDfPlot()
       if (input$checkbox_heatmap){
         add.colorbar <- "auto"
       } else{
         add.colorbar <- NULL
       }
-      return(plotHeatmapColor(getRelativeAbundance(df.plot),
+      return(plotHeatmapColor(df.plot,
                               do.scale = FALSE,
                               condition.vec.1 = physeq2@sam_data[[input$select_heatmap_condition_1]],
                               condition.vec.2 = physeq2@sam_data[[input$select_heatmap_condition_2]],
@@ -1160,6 +1192,12 @@ shinyServer(function(input, output, session) {
         output.table <- data.frame(output)
         rownames(output.table) <- c("Method", "P-value")
         output.table
+      } else if (input$select_alpha_stat_method == "T-test"){
+        tmp <- t.test(richness ~ condition, data = meta.data)
+        output <- c(tmp$method, tmp$p.value)
+        output.table <- data.frame(output)
+        rownames(output.table) <- c("Method", "P-value")
+        output.table
       } else{
         print("Condition level number is 2, please use Mann-Whitney test.")
       }
@@ -1184,6 +1222,24 @@ shinyServer(function(input, output, session) {
         output.table
 
 
+
+      } else if (input$select_alpha_stat_method == "T-test"){
+                result.list <- list()
+        meta.data.list <- list()
+        for (i in 1:length(unique(meta.data$condition))){
+          meta.data.list[[i]] <- meta.data[which(meta.data$condition != unique(meta.data$condition)[i]),]
+          result.list[[i]] <- t.test(richness ~ condition, data = meta.data.list[[i]])
+        }
+        output.table <- NULL
+        group.name <- c()
+        for (i in 1:length(result.list)){
+          output.tmp <- c(result.list[[i]]$method, result.list[[i]]$p.value)
+          output.table <- cbind(output.table, output.tmp)
+          group.name[i] <- paste(unique(meta.data.list[[i]]$condition), collapse = " and ")
+        }
+        rownames(output.table) <- c("Method", "P-value")
+        colnames(output.table) <- group.name
+        output.table
 
       } else{
         tmp <- kruskal.test(richness ~ condition, data = meta.data)
@@ -1785,6 +1841,14 @@ shinyServer(function(input, output, session) {
                       write.csv(data.frame(dist.mat), file)
                   }
               )
+              foldChange <- c()
+              for (i in 1:nrow(sigtab)){
+              foldChange[i] <- round((max(as.numeric(c(sigtab[i,5],
+                                                 sigtab[i,4]))) /
+                       min(as.numeric(c(sigtab[i,5],
+                                        sigtab[i,4])))), digits = 2)
+              }
+              sigtab <- cbind(sigtab, foldChange)
               return(sigtab)
 
           }
@@ -1933,6 +1997,14 @@ shinyServer(function(input, output, session) {
             write.csv(data.frame(dist.mat), file)
           }
         )
+        foldChange <- c()
+        for (i in 1:nrow(sigtab)){
+        foldChange[i] <- round((max(as.numeric(c(sigtab[i,5],
+                                                 sigtab[i,4]))) /
+                       min(as.numeric(c(sigtab[i,5],
+                                        sigtab[i,4])))), digits = 2)
+        }
+        sigtab <- cbind(sigtab, foldChange)
         return(sigtab)
 
       }
@@ -2064,7 +2136,7 @@ shinyServer(function(input, output, session) {
           write.csv(output.mat, file)
         }
       )
-      DT::datatable(output.mat)
+      DT::datatable(output.mat, rownames = TRUE)
     } else if (input$pa_method == "Mann-Whitney Test"){
       df.test <- physeq1@otu_table@.Data
       rownames(df.test) <- TranslateIdToTaxLevel(physeq1, rownames(df.test), input$taxl.pa)
@@ -2206,7 +2278,12 @@ shinyServer(function(input, output, session) {
                             num.1,
                             num.2,
                             percent(round((num.1+num.2)/ncol(physeq1@otu_table@.Data),4)))
-
+    foldChange <- c()
+    for (i in 1:nrow(output.df)){
+      foldChange[i] <- round((max(as.numeric(c(output.df[i,5], output.df[i,4]))) /
+                       min(as.numeric(c(output.df[i,5], output.df[i,4])))), digits = 2)
+    }
+    output.df <- cbind(output.df, foldChange)
     colnames(output.df)[ncol(output.df)-2] <- label.vec.save[1]
     colnames(output.df)[ncol(output.df)-1] <- label.vec.save[2]
     colnames(output.df)[ncol(output.df)] <- "prevalence"

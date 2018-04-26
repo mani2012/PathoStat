@@ -259,8 +259,8 @@ loadPstat <- function(indir=".", infileName="pstat_data.rda") {
 #' @examples
 #' data_dir <- system.file("data", package = "PathoStat")
 #' infileName <- "pstat_data.rda"
-#' pstat <- loadPstat(data_dir, infileName)
-#' ra_otu <- findRAfromCount(phyloseq::otu_table(pstat))
+#' pstat_test <- loadPstat(data_dir, infileName)
+#' ra_otu <- findRAfromCount(phyloseq::otu_table(pstat_test))
 
 findRAfromCount <- function(count_otu) {
     ra_otu <- otu_table(count_otu)

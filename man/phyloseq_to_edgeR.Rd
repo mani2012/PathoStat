@@ -7,31 +7,14 @@
 phyloseq_to_edgeR(physeq, group, method = "RLE", ...)
 }
 \arguments{
-\item{physeq}{(Required).  A \code{\link{phyloseq-class}} or
-an \code{\link{otu_table-class}} object.
-The latter is only appropriate if \code{group} argument is also a
-vector or factor with length equal to \code{nsamples(physeq)}.}
+\item{physeq}{(Required).}
 
 \item{group}{(Required). A character vector or factor giving the experimental
-group/condition for each sample/library. Alternatively, you may provide
-the name of a sample variable. This name should be among the output of
-\code{sample_variables(physeq)}, in which case
-\code{get_variable(physeq, group)}
-would return either a character vector or factor.
-This is passed on to \code{\link[edgeR]{DGEList}},
-and you may find further details or examples in its documentation.}
+group/condition for each sample/library.}
 
-\item{method}{(Optional). The label of the
-edgeR-implemented normalization to use.
-See \code{\link[edgeR]{calcNormFactors}} for supported options and details.
-The default option is \code{"RLE"}, which is a scaling factor method
-proposed by Anders and Huber (2010).
-At time of writing, the \link[edgeR]{edgeR} package supported
-the following options to the \code{method} argument:
+\item{method}{(Optional).}
 
-\code{c("TMM", "RLE", "upperquartile", "none")}.}
-
-\item{...}{Additional arguments passed on to \code{\link[edgeR]{DGEList}}}
+\item{...}{Additional arguments passed on to}
 }
 \value{
 dispersion
