@@ -1,6 +1,6 @@
-#' pathostat object generated from example pathoscope report files 
+#' pathostat object generated from example pathoscope report files
 #'
-#' This example data consists of 33 samples from a diet study with 11 subjects 
+#' This example data consists of 33 samples from a diet study with 11 subjects
 #' taking 3 different diets in random order
 #'
 #' @name pstat_data
@@ -24,7 +24,7 @@
 #'  display and hide in the report
 #' @param interactive when TRUE, opens the interactive shinyApp
 #' @return outputfile The output file with all the statistical plots
-#' @import stats graphics reshape2 ggplot2 rentrez phyloseq
+#' @import stats graphics reshape2 ggplot2 rentrez phyloseq ape
 #' @import corpcor knitr limma matrixStats methods BiocStyle
 #' @import edgeR
 #' @importFrom DESeq2 DESeqDataSetFromMatrix sizeFactors estimateDispersions
