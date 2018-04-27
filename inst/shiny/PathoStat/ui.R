@@ -104,6 +104,9 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                                                                                         covariates.colorbar)),
                                  column(3, checkboxInput("checkbox_heatmap", "Add colorbar", value = TRUE))
                              ),
+                             selectInput("ssv_format_new", "Select data format", c("relative abundance", "log10 CPM")),
+                             uiOutput("single_species_ui_new"),
+                             actionButton("boxplotButtonNew", "Plot"),
                              plotOutput("Heatmap", height="550px"),
                              downloadButton('download_heatmap_pdf', 'Download heatmap PDF'))
                 ), width=9
@@ -136,7 +139,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                                 plotlyOutput("AlphaDiversityBarplot")
                        ),
                        tabPanel("Statistical Test",
-                                selectInput("select_alpha_stat_method","Non-parametric Test", c("Mann-Whitney","Kruskal-Wallis")),
+                                selectInput("select_alpha_stat_method","Non-parametric Test", c("Mann-Whitney","T-test", "Kruskal-Wallis")),
                                 tableOutput("alpha.stat.test")
                        ),
                        tabPanel("Alpha Diversity Table",

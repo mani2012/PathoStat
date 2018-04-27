@@ -18,6 +18,6 @@ Return the Relative Abundance (RA) data for the given count OTU table
 \examples{
 data_dir <- system.file("data", package = "PathoStat")
 infileName <- "pstat_data.rda"
-pstat <- loadPstat(data_dir, infileName)
-ra_otu <- findRAfromCount(phyloseq::otu_table(pstat))
+pstat_test <- loadPstat(data_dir, infileName)
+ra_otu <- findRAfromCount(phyloseq::otu_table(pstat_test))
 }

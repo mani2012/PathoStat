@@ -3,31 +3,12 @@
 #'
 #' Further details.
 #'
-#' @param physeq (Required).  A \code{\link{phyloseq-class}} or
-#' an \code{\link{otu_table-class}} object.
-#' The latter is only appropriate if \code{group} argument is also a
-#' vector or factor with length equal to \code{nsamples(physeq)}.
-#'
+#' @param physeq (Required).
 #' @param group (Required). A character vector or factor giving the experimental
-#' group/condition for each sample/library. Alternatively, you may provide
-#' the name of a sample variable. This name should be among the output of
-#' \code{sample_variables(physeq)}, in which case
-#' \code{get_variable(physeq, group)}
-#' would return either a character vector or factor.
-#' This is passed on to \code{\link[edgeR]{DGEList}},
-#' and you may find further details or examples in its documentation.
+#' group/condition for each sample/library.
+#' @param method (Optional).
 #'
-#' @param method (Optional). The label of the
-#' edgeR-implemented normalization to use.
-#' See \code{\link[edgeR]{calcNormFactors}} for supported options and details.
-#' The default option is \code{"RLE"}, which is a scaling factor method
-#' proposed by Anders and Huber (2010).
-#' At time of writing, the \link[edgeR]{edgeR} package supported
-#' the following options to the \code{method} argument:
-#'
-#' \code{c("TMM", "RLE", "upperquartile", "none")}.
-#'
-#' @param ... Additional arguments passed on to \code{\link[edgeR]{DGEList}}
+#' @param ... Additional arguments passed on to
 #'
 #' @import edgeR phyloseq
 #' @return dispersion
@@ -116,10 +97,19 @@ Wilcox_Test_df <- function(df, label.vec.num, pvalue.cutoff = 0.05) {
     colnames(df.output) <- c("Name", "FDR",
     label.vec.save[1],label.vec.save[2], "prevalence")
     # FDR adjustment
+    print(df.output[,2])
     df.output[,2] <- p.adjust(df.output[,2],
-    method = "fdr",
-    n = length(df.output[,2]))
+    method = "fdr")
     df.output <- df.output[order(df.output[,2]),]
+    foldChange <- c()
+    for (i in 1:nrow(df.output)){
+      foldChange[i] <- round((max(as.numeric(c(df.output[i,3],
+                                               df.output[i,4]))) /
+                       min(as.numeric(c(df.output[i,3],
+                                        df.output[i,4])))),
+                       digits = 2)
+    }
+    df.output <- cbind(df.output, foldChange)
     return(df.output)
 }
 
@@ -197,6 +187,16 @@ Chisq_Test_Pam <- function(pam, label.vec.num, pvalue.cutoff = 0.05) {
     df.output[,2] <- p.adjust(df.output[,2],
     method = "fdr", n = length(df.output[,2]))
     df.output <- df.output[order(df.output[,2]),]
+
+    foldChange <- c()
+    for (i in 1:nrow(df.output)){
+      foldChange[i] <- round((max(as.numeric(c(df.output[i,3],
+                                               df.output[i,4]))) /
+                       min(as.numeric(c(df.output[i,3],
+                                        df.output[i,4])))),
+                       digits = 2)
+    }
+    df.output <- cbind(df.output, foldChange)
     return(df.output)
 }
 
@@ -255,5 +255,14 @@ Fisher_Test_Pam <- function(pam, label.vec.num, pvalue.cutoff = 0.05) {
     df.output[,2] <- p.adjust(df.output[,2], method = "fdr",
     n = length(df.output[,2]))
     df.output <- df.output[order(df.output[,2]),]
+    foldChange <- c()
+    for (i in 1:nrow(df.output)){
+      foldChange[i] <- round((max(as.numeric(c(df.output[i,3],
+                                               df.output[i,4]))) /
+                       min(as.numeric(c(df.output[i,3],
+                                        df.output[i,4])))),
+                       digits = 2)
+    }
+    df.output <- cbind(df.output, foldChange)
     return(df.output)
 }
