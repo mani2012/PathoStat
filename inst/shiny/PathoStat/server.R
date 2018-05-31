@@ -407,6 +407,29 @@ shinyServer(function(input, output, session) {
     vals$taxcountdata
   })
 
+  findCountTable <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    if (input$taxlTable !="no rank"){
+      pstat <- tax_glom(pstat, input$taxlTable)
+    }
+    df.out <- pstat@otu_table@.Data
+    rownames(df.out) <- TranslateIdToTaxLevel(pstat, rownames(df.out), 
+                                              input$taxlTable)
+    df.out
+  })
+ 
+  findRATable <- reactive({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    if (input$taxlTable !="no rank"){
+      pstat <- tax_glom(pstat, input$taxlTable)
+    }
+    df.ra <- getRelativeAbundance(pstat@otu_table@.Data)
+    rownames(df.ra) <- TranslateIdToTaxLevel(pstat, rownames(df.ra), 
+                                              input$taxlTable)
+    df.ra
+  })   
 
 
   output$filter_type <- reactive({
@@ -471,7 +494,11 @@ shinyServer(function(input, output, session) {
       which(pstat@sam_data@names == input$select_condition_sample_filter_sidebar)]]
     filter.option.vec <- sort(unique(variable.vec))
     tagList(
-      selectInput("cat_filter_options", "Keep these levels:", choices = filter.option.vec)
+      selectInput("cat_filter_options", 
+                  "Keep these levels:", 
+                  choices = filter.option.vec,
+                  multiple = TRUE
+                  )
     )
   })
 
@@ -823,10 +850,8 @@ shinyServer(function(input, output, session) {
 
 
 
-
-
-  tax_ra_bp <- reactive({
-    if (is.null(input$taxl)) {
+  plot.relative.abundance <- function(){
+        if (is.null(input$taxl)) {
       return()
     }
     if (input$uploadDataPs == TRUE | input$uploadDataCount == TRUE){
@@ -881,7 +906,13 @@ shinyServer(function(input, output, session) {
                                                                             "Genomes", properties = legend_props(title = list(fontSize = 15),
                                                                                                                  labels = list(fontSize = 10))) %>% set_options(width = "auto",
                                                                                                                                                                 height = "auto")
+  }
+
+  tax_ra_bp <- reactive({
+    plot.relative.abundance()
   })
+  
+  
   tax_ra_bp %>% bind_shiny("TaxRelAbundancePlot")
 
   output$TaxRAsummary <- renderPrint({
@@ -891,43 +922,27 @@ shinyServer(function(input, output, session) {
   # These are options for rendering datatables
   dtopts <- list(scrollX=TRUE, paging=TRUE)
 
-  # Format relative abundance table
-  # Converts percents to strings and expands taxa name
-  format_RA_table <- function(tmp) {
-    tmp %>% dplyr::add_rownames("fullname") %>%
-      dplyr::mutate_each(dplyr::funs(pct2str), -fullname) %>%
-      tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxlTable),
-                      sep='\\|') %>%
-      dplyr::select_(.dots=c(as.name(input$taxlTable), 'taxid', colnames(tmp)))
-  }
-
   # Render relative abundance table
-  output$TaxRAtable <- DT::renderDataTable(format_RA_table(findTaxDataTable()),
+  output$TaxRAtable <- DT::renderDataTable(findRATable(),
                                            options=dtopts, rownames=F)
 
-  # Format count table:
-  # Just expands taxa name
-  format_Count_table <- function(tmp) {
-    tmp %>% dplyr::add_rownames("fullname") %>%
-      tidyr::separate(fullname, c('fi1', 'taxid', 'fi2', input$taxlTable),
-                      sep='\\|') %>%
-      dplyr::select_(.dots=c(as.name(input$taxlTable), 'taxid', colnames(tmp)))
-  }
+
   # Render count table
-  output$TaxCountTable <- DT::renderDataTable(format_Count_table(
-    findTaxCountDataTable()), options=dtopts, rownames=F)
+  output$TaxCountTable <- DT::renderDataTable(findCountTable(),
+  options=dtopts, 
+  rownames=F)
 
   output$downloadData <- downloadHandler(filename = function() {
     paste0("sample_data_", input$taxlTable, ".csv", sep = "")
   }, content = function(file) {
-    df.out <- format_RA_table(findTaxDataTable())
+    df.out <- findRATable()
     write.csv(df.out, file)
   })
 
   output$downloadCountData <- downloadHandler(filename = function() {
     paste0("sample_data_count_", input$taxlTable, ".csv", sep = "")
   }, content = function(file) {
-      df.out <- format_Count_table(findTaxCountDataTable())
+    df.out <- findCountTable()
     write.csv(df.out, file)
   })
 
@@ -1051,10 +1066,17 @@ shinyServer(function(input, output, session) {
     }
   }
 
+  
+  
+  
+    plotHeatmapColorServerButton <- eventReactive(input$boxplotButtonNew,{
+      plotHeatmapColorServer()
+    })
+  
   # show heatmap in the shiny app by calling the plotting function
   output$Heatmap <- renderPlot({
 
-    plotHeatmapColorServer()
+    plotHeatmapColorServerButton()
 
   })
   # download heatmap by calling the plotting function.
@@ -1611,8 +1633,14 @@ shinyServer(function(input, output, session) {
   }
 
   # show heatmap in the shiny app by calling the plotting function
+  
+  
+  plotPCAPlotlyServerButton <- eventReactive(input$DR_plot,{
+      plotPCAPlotlyServer()
+  })
+    
   output$pca.plotly <- renderPlotly({
-    plotPCAPlotlyServer()
+    plotPCAPlotlyServerButton()
 
   })
 
@@ -1685,10 +1713,17 @@ shinyServer(function(input, output, session) {
                                          input$select_pca_color, sep = " "))}
   }
 
-
-  output$pcoa.plotly <- renderPlotly({
-    plotPCoAPlotlyServer()
+  
+    
+  plotPCoAPlotlyServerButton <- eventReactive(input$DR_plot,{
+      plotPCoAPlotlyServer()
   })
+    
+  output$pcoa.plotly <- renderPlotly({
+    plotPCoAPlotlyServerButton()
+
+  })
+
 
   observeEvent(input$download_pcoa,{
     if (!require("webshot")) install.packages("webshot")
