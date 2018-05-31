@@ -1294,7 +1294,16 @@ shinyServer(function(input, output, session) {
         add.colorbar <- NULL
       }
 
-      dist.mat = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+      if (input$select_beta_div_method == "bray"){
+        #First get otu_table and transpose it:
+        dist.matrix <- t(data.frame(otu_table(physeq1)))
+        #Then use vegdist from vegan to generate a bray distance object:
+        dist.mat <- vegdist(dist.matrix, method = "bray")
+      }else{
+        dist.mat = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+      }
+
+
       dist.mat <- as.matrix(dist.mat)
       return(plotHeatmapColor(dist.mat,
                               do.scale = FALSE,
@@ -1312,7 +1321,16 @@ shinyServer(function(input, output, session) {
       } else{
         add.colorbar <- NULL
       }
-      dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
+
+      
+      if (input$select_beta_div_method == "bray"){
+        #First get otu_table and transpose it:
+        dist.matrix <- t(data.frame(otu_table(physeq2)))
+        #Then use vegdist from vegan to generate a bray distance object:
+        dist.mat <- vegdist(dist.matrix, method = "bray")
+      }else{
+        dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
+      }
       dist.mat <- as.matrix(dist.mat)
       return(plotHeatmapColor(dist.mat,
                               do.scale = FALSE,
@@ -1359,7 +1377,17 @@ shinyServer(function(input, output, session) {
     meta.data$sample.name <- rownames(meta.data)
     colnames(meta.data)[which(colnames(meta.data) == input$select_beta_condition)] <- "condition"
 
-    dist.tmp = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+    
+    
+    if (input$select_beta_div_method == "bray"){
+        #First get otu_table and transpose it:
+        dist.matrix <- t(data.frame(otu_table(physeq1)))
+        #Then use vegdist from vegan to generate a bray distance object:
+        dist.tmp <- vegdist(dist.matrix, method = "bray")
+    }else{
+        dist.tmp = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+    }
+    
     dist.mat <- as.matrix(dist.tmp)
     dist.within.a <- c()
     dist.within.b <- c()
@@ -1419,7 +1447,16 @@ shinyServer(function(input, output, session) {
       meta.data$condition <- as.factor(meta.data$condition)
 
       set.seed(99)
-      dist.tmp = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+      
+      if (input$select_beta_div_method == "bray"){
+        #First get otu_table and transpose it:
+        dist.matrix <- t(data.frame(otu_table(physeq1)))
+        #Then use vegdist from vegan to generate a bray distance object:
+        dist.tmp <- vegdist(dist.matrix, method = "bray")
+      }else{
+        dist.tmp = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+      }      
+      
       beta.div <- adonis2(dist.tmp~condition, data=meta.data,
                           permutations = input$num.permutation.permanova, strata="PLOT")
       beta.div
@@ -1499,10 +1536,25 @@ shinyServer(function(input, output, session) {
     physeq1 <- shinyInput$pstat
 
     if (input$taxl.beta=="no rank")  {
-      dist.mat = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+        if (input$select_beta_div_method == "bray"){
+        #First get otu_table and transpose it:
+        dist.matrix <- t(data.frame(otu_table(physeq1)))
+        #Then use vegdist from vegan to generate a bray distance object:
+        dist.mat <- vegdist(dist.matrix, method = "bray")
+    }else{
+        dist.mat = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+    }
+
     } else{
       physeq2 <- tax_glom(physeq1, input$taxl.beta)
-      dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
+        if (input$select_beta_div_method == "bray"){
+        #First get otu_table and transpose it:
+        dist.matrix <- t(data.frame(otu_table(physeq2)))
+        #Then use vegdist from vegan to generate a bray distance object:
+        dist.mat <- vegdist(dist.matrix, method = "bray")
+        }else{
+        dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
+        }
     }
     dist.mat <- as.matrix(dist.mat)
     return(dist.mat)
@@ -1742,8 +1794,17 @@ shinyServer(function(input, output, session) {
         physeq1@otu_table@.Data <- data.frame(physeq1@otu_table@.Data[-which
                                                                       (rowSums(as.matrix(physeq1@otu_table@.Data)) == 0),])
       }
-      Dist.tmp <- phyloseq::distance(physeq1, method = input$select_beta_div_method)
-      ord.tmp <- ordinate(physeq1, method = "PCoA", distance = Dist.tmp)
+      if (input$select_beta_div_method == "bray"){
+        #First get otu_table and transpose it:
+        dist.matrix <- t(data.frame(otu_table(physeq1)))
+        #Then use vegdist from vegan to generate a bray distance object:
+        DistBC <- vegdist(dist.matrix, method = "bray")
+        ord.tmp <- ordinate(physeq1, method = "PCoA", distance = DistBC)
+      } else{
+        Dist.tmp <- phyloseq::distance(physeq1, method = input$select_beta_div_method)
+        ord.tmp <- ordinate(physeq1, method = "PCoA", distance = Dist.tmp)
+      }
+
       #cat(dim(physeq1@otu_table))
       return(ord.tmp$values)
 
@@ -1753,8 +1814,16 @@ shinyServer(function(input, output, session) {
         physeq2@otu_table@.Data <- data.frame(physeq2@otu_table@.Data[-which
                                                                       (rowSums(as.matrix(physeq2@otu_table@.Data)) == 0),])
       }
-      Dist.tmp <- phyloseq::distance(physeq2, method = input$select_beta_div_method)
-      ord.tmp <- ordinate(physeq2, method = "PCoA", distance = Dist.tmp)
+      if (input$select_beta_div_method == "bray"){
+        #First get otu_table and transpose it:
+        dist.matrix <- t(data.frame(otu_table(physeq2)))
+        #Then use vegdist from vegan to generate a bray distance object:
+        DistBC <- vegdist(dist.matrix, method = "bray")
+        ord.tmp <- ordinate(physeq2, method = "PCoA", distance = DistBC)
+      } else{
+        Dist.tmp <- phyloseq::distance(physeq2, method = input$select_beta_div_method)
+        ord.tmp <- ordinate(physeq2, method = "PCoA", distance = Dist.tmp)
+      }
       return(ord.tmp$values)
 
     }
