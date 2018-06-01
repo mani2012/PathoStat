@@ -213,6 +213,7 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
                                  covariates),
                      selectInput("select_pca_shape", "Shape points by:",
                                  covariates.colorbar),
+                     actionButton("DR_plot", "Plot"),
                      width=3
                  ),
                  mainPanel(

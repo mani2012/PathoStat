@@ -178,7 +178,13 @@ plotPCoAPlotly <- function(physeq.input,
     }
 
     if (method == "bray"){
-        DistBC = phyloseq::distance(physeq.input, method = method)
+      
+      
+        #First get otu_table and transpose it:
+        dist.matrix <- t(data.frame(otu_table(physeq.input)))
+        #Then use vegdist from vegan to generate a bray distance object:
+        DistBC <- vegdist(dist.matrix, method = "bray")
+        #DistBC = phyloseq::distance(physeq.input, method = method)
         ordBC = ordinate(physeq.input, method = "PCoA", distance = DistBC)
         tmp.df <- data.frame(ordBC$vectors)
     } else {
