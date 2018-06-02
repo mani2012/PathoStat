@@ -147,16 +147,19 @@ shinyServer(function(input, output, session) {
 
     observeEvent(input$uploadPathoStat,{
       withBusyIndicatorServer("uploadPathoStat", {
-        load(input$rda_file$datapath)
+        if (input$rdtype == 'rda') {
+          load(input$rdfile$datapath)
+        }
+        if (input$rdtype == 'rds') {
+          pstat = readRDS(input$rdfile$datapath)
+        }
         shinyInput <- list(pstat = pstat)
         vals$shiny.input <- shinyInput
         vals$shiny.input.backup <- shinyInput
         # update ui
         updateCovariate()
         updateSample()
-
       })
-
     })
 
 
