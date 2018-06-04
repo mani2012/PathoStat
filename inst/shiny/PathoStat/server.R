@@ -113,6 +113,8 @@ shinyServer(function(input, output, session) {
                           choices = covariates.colorbar)
         updateSelectInput(session, "select_condition_sample_filter",
                           choices = c("Read Number", covariates))
+        updateSelectInput(session, "select_condition_sample_filter_micro",
+                          choices = c("Taxon elements number", covariates))
         updateSelectInput(session, "select_condition_sample_filter_sidebar",
                           choices = c("Read Number", covariates))
         updateSelectInput(session, "select_condition_sample_distribution",
@@ -265,9 +267,9 @@ shinyServer(function(input, output, session) {
 
                 ids <- rownames(countdat)
                 tids <- unlist(lapply(ids, FUN = grepTid))
-                print(tids)
+                #print(tids)
                 taxonLevels <- findTaxonomy(tids)
-                print(str(taxonLevels))
+                #print(str(taxonLevels))
                 taxmat <- findTaxonMat(ids, taxonLevels)
                 #print(taxmat)
                 #test and fix the constant/zero row
@@ -338,6 +340,12 @@ shinyServer(function(input, output, session) {
     })
     })
 
+      observeEvent(input$resetSampleButtonMicro,{
+        withBusyIndicatorServer("resetSampleButtonMicro", {
+        vals$shiny.input <- vals$shiny.input.backup
+        updateTaxLevel()
+    })
+    })      
 
       output$download_rda <- downloadHandler(filename = function() {
         paste("pathostat", Sys.Date(), ".rda", sep="")
@@ -556,6 +564,94 @@ shinyServer(function(input, output, session) {
   })
 
 
+  output$sampleTaxon <- renderPlotly({
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
+      Sample_Name <- colnames(pstat@otu_table@.Data)
+      Taxon_Num <- apply(pstat@otu_table@.Data , 2, function(x) sum(x >= 1) )
+      data <- data.frame(Sample_Name, Taxon_Num, stringsAsFactors = FALSE)
+
+
+
+      if (input$select_condition_sample_filter_micro == "Taxon elements number"){
+        data$Sample_Name <- factor(data$Sample_Name,
+                                 levels = unique(data$Sample_Name)[order(data$Taxon_Num,
+                                                                         decreasing = FALSE)])
+      } else{
+          data$Sample_Name <- paste(as.character(pstat@sam_data@.Data
+                                                 [[which(pstat@sam_data@names == input$select_condition_sample_filter_micro)]]
+                                                 ),data$Sample_Name, sep = "-")
+          data$Sample_Name <- factor(data$Sample_Name,
+                                     levels = unique(data$Sample_Name)
+                                     [order(pstat@sam_data@.Data[[which(pstat@sam_data@names == input$select_condition_sample_filter_micro)]],
+                                            decreasing = FALSE)])
+      }
+      p <- plot_ly(data, 
+                   x = ~Sample_Name, 
+                   y = ~Taxon_Num, 
+                   type = "bar", 
+                   name = 'Sample taxon elements number') %>%
+          layout(margin = list(b = 160))
+      p
+  })    
+  
+  observeEvent(input$filter_read_micro,{
+    withBusyIndicatorServer("filter_read_micro", {
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
+
+
+      read.count.mat <- pstat@otu_table@.Data
+      read.count.mean <- apply(read.count.mat, 1, mean)
+      micro.keep.index <- which(read.count.mean >= input$read_filter_min_micro)
+     
+      pstat@otu_table@.Data <- pstat@otu_table@.Data[micro.keep.index,]
+      pstat@tax_table@.Data <- pstat@tax_table@.Data[micro.keep.index,]
+      shinyInput <- list(pstat = pstat)
+      vals$shiny.input <- shinyInput
+
+      updateTaxLevel()
+    })
+  })  
+  
+  observeEvent(input$filter_ra_micro,{
+    withBusyIndicatorServer("filter_ra_micro", {
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
+
+
+      read.count.mat <- pstat@otu_table@.Data
+      ra.mat <- getRelativeAbundance(read.count.mat)
+      ra.mean <- apply(ra.mat, 1, mean)
+      micro.keep.index <- which(ra.mean >= input$ra_filter_min_micro)
+     
+      pstat@otu_table@.Data <- pstat@otu_table@.Data[micro.keep.index,]
+      pstat@tax_table@.Data <- pstat@tax_table@.Data[micro.keep.index,]
+      shinyInput <- list(pstat = pstat)
+      vals$shiny.input <- shinyInput
+
+      updateTaxLevel()
+    })
+  })    
+
+  observeEvent(input$filter_prev_micro,{
+    withBusyIndicatorServer("filter_prev_micro", {
+      shinyInput <- vals$shiny.input
+      pstat <- shinyInput$pstat
+      read.count.mat <- pstat@otu_table@.Data
+
+      micro.prev <- apply(read.count.mat, 1, function(x) (sum(x >= 1)/ncol(read.count.mat)))
+      micro.keep.index <- which(micro.prev >= input$prev_filter_min)
+     
+      pstat@otu_table@.Data <- pstat@otu_table@.Data[micro.keep.index,]
+      pstat@tax_table@.Data <- pstat@tax_table@.Data[micro.keep.index,]
+      shinyInput <- list(pstat = pstat)
+      vals$shiny.input <- shinyInput
+
+      updateTaxLevel()
+    })
+  })        
+
   #Render summary table
   output$contents_summary <- renderTable({
     shinyInput <- vals$shiny.input
@@ -564,19 +660,13 @@ shinyServer(function(input, output, session) {
     summarizeTable(pstat)
   })
 
-
-
-
-    output$sampleCountHist <- renderPlotly({
-      shinyInput <- vals$shiny.input
-      pstat <- shinyInput$pstat
-      Sample_Name <- colnames(pstat@otu_table@.Data)
-      Read_Number <- colSums(pstat@otu_table@.Data)
-      p <- plot_ly(x = Read_Number[Read_Number < input$hist_read_num_max], type = "histogram", name = 'Sample read count histogram') %>%
-          layout(margin = list(b = 160))
-
-      p
+  output$contents_summary_micro <- renderTable({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    req(pstat)
+    summarizeTable(pstat)
   })
+  
 
 
 
@@ -2388,9 +2478,10 @@ shinyServer(function(input, output, session) {
                        min(as.numeric(c(output.df[i,5], output.df[i,4])))), digits = 2)
     }
     output.df <- cbind(output.df, foldChange)
-    colnames(output.df)[ncol(output.df)-2] <- label.vec.save[1]
-    colnames(output.df)[ncol(output.df)-1] <- label.vec.save[2]
-    colnames(output.df)[ncol(output.df)] <- "prevalence"
+    colnames(output.df)[ncol(output.df)-3] <- label.vec.save[1]
+    colnames(output.df)[ncol(output.df)-2] <- label.vec.save[2]
+    colnames(output.df)[ncol(output.df)-1] <- "prevalence"
+    colnames(output.df)[ncol(output.df)] <- "Fold-Change"
     df.biomarker <- df.input[,which(colnames(df.input) %in% output.fs$feature)]
     return(list(output.df = output.df, df.input = df.biomarker, target.vec = label.vec.num))
 

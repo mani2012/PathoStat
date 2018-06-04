@@ -56,10 +56,6 @@ shiny_panel_filter <- fluidPage(
                          tabsetPanel(
                              tabPanel("Sample summary",
                                       tableOutput("contents_summary"),
-                                      numericInput("hist_read_num_max", "Please the max read length for histogram",
-                                                   value = 1e10, min = 0, max = 1e10),
-                                      plotlyOutput("sampleCountHist")),
-                             tabPanel("Sample Read Count Sum",
                                       selectInput("select_condition_sample_filter", "Order by:",
                                                   c("Read Number", covariates)),
                                       plotlyOutput("sampleCountSum")),
@@ -73,6 +69,61 @@ shiny_panel_filter <- fluidPage(
 
 
         ),
+        tabPanel("Microbes Filter",
+                 br(),
+                 sidebarLayout(
+                     sidebarPanel(
+                         br(),
+                         selectInput(
+                           "filter_type_micro", "Select filter type",
+                           c("By mapped read number", 
+                             "By relative abundace",
+                             "By prevalence")),
+                         conditionalPanel(condition = "input.filter_type_micro == 'By mapped read number'",
+                                               helpText("Please select the average minimum read mapped"),
+                                               numericInput("read_filter_min_micro", "Min", 0, min = 0, max = 10000),
+                                               withBusyIndicatorUI(
+                                                 actionButton("filter_read_micro", "Filter")
+                                               )
+                         ),      
+                         conditionalPanel(condition = "input.filter_type_micro == 'By relative abundace'",
+                                               helpText("Please select average minimum RA"),
+                                               numericInput("ra_filter_min_micro", "Min", 0, min = 0, max = 1),
+                                               withBusyIndicatorUI(
+                                                 actionButton("filter_ra_micro", "Filter")
+                                               )
+                         ), 
+                         conditionalPanel(condition = "input.filter_type_micro == 'By prevalence'",
+                                               helpText("Please select minimum prevalence"),
+                                               numericInput("prev_filter_min", "Min", 0, min = 0, max = 1),
+                                               withBusyIndicatorUI(
+                                                 actionButton("filter_prev_micro", "Filter")
+                                               )
+                         ), 
+                         br(),
+                         withBusyIndicatorUI(
+                           actionButton("resetSampleButtonMicro", "Reset")
+                         ),
+                         br(),
+                         br(),
+                         width=3
+                     ),
+                     mainPanel(
+                         br(),
+                         tabsetPanel(
+                             tabPanel("Sample summary",
+                                      tableOutput("contents_summary_micro"),
+                                      selectInput("select_condition_sample_filter_micro", "Order by:",
+                                                  c("Taxon elements number", covariates)),
+                                      plotlyOutput("sampleTaxon"))                
+                         
+                         ), width=9
+                     )
+                 )
+
+
+        ),
+        
         tabPanel("Boxplot visualization",
                  selectizeInput('taxl_single_species', 'Taxonomy Level', choices = tax.name,
                                 selected='no rank'),

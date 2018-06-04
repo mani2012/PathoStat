@@ -22,7 +22,7 @@ TranslateIdToTaxLevel <- function(pstat, input.id.vec, tax.level){
 }
 
 
-#' Find the taxonomy for each taxon ids
+#' Find the taxonomy for maximum 300 tids
 #'
 #' @param tids Given taxonomy ids
 #' @return taxondata Data with the taxonomy information
@@ -35,9 +35,9 @@ TranslateIdToTaxLevel <- function(pstat, input.id.vec, tax.level){
 #' dat <- datlist$data
 #' ids <- rownames(dat)
 #' tids <- unlist(lapply(ids, FUN = grepTid))
-#' taxonLevels <- findTaxonomy(tids[1:5])
+#' taxonLevels <- findTaxonomy500(tids[1:5])
 
-findTaxonomy <- function(tids) {
+findTaxonomy300 <- function(tids) {
     if (is.null(tids)) {
         return(NULL)
     }
@@ -61,6 +61,48 @@ findTaxonomy <- function(tids) {
 
     return(taxonLevels)
 }
+
+
+
+#' Find the taxonomy for unlimited tids
+#'
+#' @param tids Given taxonomy ids
+#' @return taxondata Data with the taxonomy information
+#' @import rentrez
+#' @export
+#' @examples
+#' example_data_dir <- system.file("example/data", package = "PathoStat")
+#' pathoreport_file_suffix <- "-sam-report.tsv"
+#' datlist <- readPathoscopeData(example_data_dir, pathoreport_file_suffix)
+#' dat <- datlist$data
+#' ids <- rownames(dat)
+#' tids <- unlist(lapply(ids, FUN = grepTid))
+#' taxonLevels <- findTaxonomy(tids[1:5])
+
+findTaxonomy <- function(tids) {
+    if (is.null(tids)) {
+        return(NULL)
+    }
+    if (length(tids) <= 300){
+      taxonLevels <- findTaxonomy300(tids)
+    } else{
+      taxonLevels <- list()
+      batch.num <- ceiling(length(tids)/300)
+      for (i in 1:batch.num){
+        if (i == batch.num){
+          tids.batch <- tids[((i-1)*300 + 1):length(tids)]
+        }else{
+          tids.batch <- tids[((i-1)*300 + 1):(i*300)]
+        }
+        taxonLevels <- c(taxonLevels, findTaxonomy300(tids.batch))
+        print(i) 
+      }
+    }
+
+
+    return(taxonLevels)
+}
+
 
 findSelectedTaxonId <- function(tLineageEx, level) {
     id <- "others"
