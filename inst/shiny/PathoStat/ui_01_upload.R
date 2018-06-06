@@ -32,10 +32,17 @@ shiny_panel_upload <- fluidPage(
                                   helpText("Example data is loaded and ready to go!")
                  ),
                  conditionalPanel(condition = sprintf("input['%s'] == 'pathostat.file'", "uploadChoice"),
-                                  fileInput("rda_file", ".rda file (required):",
+                                  fileInput("rdfile", ".rda/.rds file (required):",
                                             accept = c(
-                                              ".rda"
+                                              ".rda",
+                                              ".rds"
                                             )
+                                  ),
+                                  radioButtons("rdtype", "Filetype",
+                                               choices = c(rda = "rda",
+                                                           rds = "rds"
+                                               ),
+                                               selected = "rda"
                                   ),
                                   withBusyIndicatorUI(
                                     actionButton("uploadPathoStat",
