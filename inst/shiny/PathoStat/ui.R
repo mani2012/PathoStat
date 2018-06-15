@@ -82,18 +82,30 @@ shinyUI(navbarPage(paste("PathoStat v", packageVersion("PathoStat"), sep = ""), 
     tabPanel("Relative Abundance",
         sidebarLayout(
             sidebarPanel(
-                #selectizeInput('taxl', 'Taxonomy Level', choices = setNames(
-                #   tax.abb, tax.name)),
-                selectizeInput('taxl', 'Taxonomy Level', choices = tax.name,
-                    selected='no rank'),
-                selectInput("select_condition", "Select Condition:",
-                            covariates),
+                tags$br(),
+
+                # Sort the samples by a condition
+                selectizeInput('select_conditions', 'Order Samples by Conditons:', choices=covariates, multiple=TRUE),
+
+                # Select taxon level
+                selectInput("taxl", "Tax Level:", choices=tax.name, selected="family"),
+
+                # Dynamically generate based on tax level
+                uiOutput("order_organisms"),
+
+                radioButtons("sort_samples_by", "Sort Samples By:",
+                                 c("No Sorting" = "nosort",
+                                   "Conditions" = "conditions",
+                                   "Organisms" = "organisms"), selected="nosort"),    
+
+                # Legend toggle
+                checkboxInput("show_legend", "Show Legend", value=TRUE),
                 width=3
             ),
             mainPanel(
                 tabsetPanel(
                     tabPanel("Taxonomy level RA",
-                        ggvisOutput("TaxRelAbundancePlot")),
+                        plotlyOutput("TaxRelAbundancePlot", width="800px", height="600px")),
                     # new heatmap
                     tabPanel("Heatmap",
                              helpText("Note: Only variables with less than 8 levels could be mapped to color bar."),
