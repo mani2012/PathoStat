@@ -935,80 +935,158 @@ shinyServer(function(input, output, session) {
         plott
       })
 
+  # Trying to not use the pstat object directly
+  pstat.extraction <- function(p) {
+    tables <- list()
 
+    # Taxon Levels
+    # unranked taxon x classifications
+    tables$TAX <- as.data.frame(p@tax_table)
 
+    # Relative Abundance
+    # unranked taxon x samples
+    tables$RLA <- as.data.frame(findRAfromCount(p@otu_table))
 
+    # Sample Data
+    # samples x traits
+    tables$SAM <- as.data.frame(p@sam_data)
+    return(tables)
+  }
 
+  # Takes the relative abundances at an unranked level and
+  # upsamples them to higher taxonomical levels
+  upsample.ra <- function(ra.unranked, tax.table, newlev) {
+    df = ra.unranked
+    df$newlev = tax.table[[newlev]]
+    df.melt = melt(df, id.vars = c("newlev"))
+    df.melt.agg = aggregate(.~variable+newlev, data=df.melt, FUN=sum)
+    df.ra = dcast(df.melt.agg, variable~newlev)
+    rownames(df.ra) = df.ra$variable
+    df.ra$variable = NULL 
+    return(df.ra)
+  }
 
+  # Used to dynamically generate selectable organisms based on taxlev
+  output$sra_order_organisms <- renderUI({
+    shinyInput <- vals$shiny.input
+    pstat <- shinyInput$pstat
+    tables <- pstat.extraction(pstat)
+    TAX_TABLE <- tables$TAX
+    choices <- unique(TAX_TABLE[[input$sra_taxlev]])
+    selectizeInput('sra_order_organisms', label='Reorder Organisms', choices=choices, multiple=TRUE)
+  })
 
-
-
-
-
-  plot.relative.abundance <- function(){
-        if (is.null(input$taxl)) {
-      return()
-    }
-    if (input$uploadDataPs == TRUE | input$uploadDataCount == TRUE){
-        cat("barplot update with new data!")
-    }
-
+  output$ra_plot <- renderPlotly({
 
     shinyInput <- vals$shiny.input
     pstat <- shinyInput$pstat
-    #cat(dim(pstat@otu_table@.Data))
-    taxdata <- findTaxData()
-    #cat(dim(taxdata))
-    dat <- melt(cbind(taxdata, ind = as.character(rownames(taxdata))),
-                id.vars = c("ind"))
 
-    if ((input$taxl == "no rank")){
-      covariates.tmp <- colnames(sample_data(pstat))
-      dat$condition.select <- rep(pstat@sam_data@.Data[[
-        which(covariates.tmp %in% input$select_condition)]],
-        each = dim(taxdata)[1])
-      dat <- dat[order(dat$condition.select),]
-      dat$condition.select.id <- paste(dat$condition.select,
-                                       as.character(dat$variable), sep = "-")
-    }else{
-      pstat.new <- tax_glom(pstat, input$taxl)
-      covariates.tmp <- colnames(sample_data(pstat.new))
-      dat$condition.select <- rep(pstat.new@sam_data@.Data[[
-        which(covariates.tmp %in% input$select_condition)]],
-        each = dim(taxdata)[1])
-      dat <- dat[order(dat$condition.select),]
-      dat$condition.select.id <- paste(dat$condition.select,
-                                       as.character(dat$variable), sep = "-")
+    # Future proofing this plot
+    tables <- pstat.extraction(pstat)
+    TAX_TABLE <- tables$TAX
+    RA_TABLE <- tables$RLA
+    SAM_DATA <- tables$SAM
+
+    # Sum by taxon level
+    df.ra <- upsample.ra(RA_TABLE, TAX_TABLE, input$sra_taxlev)
+
+    # If grouping is selected
+    if (input$group_samples & !is.null(input$gra_select_conditions)) {
+      df.ra$covariate <- SAM_DATA[[input$gra_select_conditions]]
+      df.ra.melted <- melt(df.ra, id.vars = "covariate")
+      df.avg.ra <- aggregate( . ~ variable + covariate , data = df.ra.melted, mean)
+      df.avg.ra <- dcast(data = df.avg.ra,formula = covariate~variable)
+      rownames(df.avg.ra) <- df.avg.ra$covariate
+      df.sam <- df.avg.ra[,"covariate",drop=FALSE]
+      colnames(df.sam) <- input$gra_select_conditions
+      df.avg.ra$covariate <- NULL
+      df.avg.ra <- df.avg.ra[,order(colSums(df.avg.ra))]
+      df.ra <- df.avg.ra
     }
 
-    # sort by selecting variables
+    # Reorder by most prominent organisms
+    df.ra <- df.ra[,order(colSums(df.ra))]
 
+    # Put selected organisms first
+    if (!is.null(input$sra_order_organisms)) {
+      organisms.order <- c(setdiff(colnames(df.ra), input$sra_order_organisms), rev(input$sra_order_organisms))
+      df.ra <- df.ra[,organisms.order]
+    }
 
-    dat %>% ggvis(x = ~condition.select.id, y = ~value, fill = ~as.factor(ind)) %>%
-      layer_bars(stack = TRUE) %>%
-      add_tooltip(function(dat2) {
-        paste0("Sample: ", dat2[2], "<br />", "Genome: ", dat2[1],
-               "<br />", "RA: ", round(dat2[4] - dat2[3], 4))
-      }, "hover") %>%
-      # add_axis('x', subdivide = 1,
-      #   values = 1:length(colnames(shinyInput$data)),
-      add_axis("x", title = "", properties = axis_props(title =
-                                                          list(fontSize = 15), labels = list(angle = 90,
-                                                                                             align = "left", baseline = "middle"))) %>%
-      add_axis("y", title = "Relative Abundance (RA)", properties =
-                 axis_props(title = list(fontSize = 15),
-                            labels = list(fontSize = 10))) %>% add_legend("fill", title =
-                                                                            "Genomes", properties = legend_props(title = list(fontSize = 15),
-                                                                                                                 labels = list(fontSize = 10))) %>% set_options(width = "auto",
-                                                                                                                                                                height = "auto")
-  }
+    # Order samples by organisms if not by conditons
+    if (input$sra_sort_by == "organisms") {
+      for (i in 1:ncol(df.ra)) {
+        df.ra <- df.ra[order(df.ra[,i]),]
+      }
+    }
 
-  tax_ra_bp <- reactive({
-    plot.relative.abundance()
+    # If any conditions are selected make a side bar
+    if (!is.null(input$sra_select_conditions) || input$group_samples) {
+      
+      if (!input$group_samples) {
+        df.sam <- SAM_DATA[,input$sra_select_conditions]
+      }
+
+      # Order samples by conitions if not by organisms
+      if (input$sra_sort_by == "conditions") {
+        for (i in ncol(df.sam):1) {
+          df.sam <- df.sam[order(df.sam[[i]]),,drop=FALSE]
+        }
+        # Reorder stacked barplot
+        df.ra <- df.ra[order(match(rownames(df.ra), rownames(df.sam))),,drop=FALSE]
+      } else {
+        df.sam <- df.sam[order(match(rownames(df.sam), rownames(df.ra))),,drop=FALSE]
+      }
+
+      # Retain hover-text information before conditions are factorized
+      hover.txt <- c()
+      for (i in 1:ncol(df.sam)) {
+        hover.txt <- cbind(hover.txt, df.sam[[i]])
+      }
+
+      # Plotly | Heatmap
+      df.sam[] <- lapply(df.sam, factor)
+      m <- data.matrix(df.sam)
+      m.row.normalized <- apply(m, 2, function(x)(x-min(x))/(max(x)-min(x)))
+      hm <- plot_ly(x = colnames(m), y = rownames(m), z = m.row.normalized, 
+                    type = "heatmap",
+                    showscale=FALSE,
+                    hoverinfo = "x+y+text",
+                    text=hover.txt) %>%
+             layout(xaxis = list(title = "", tickangle = -45),
+                    yaxis = list(showticklabels = FALSE, type = 'category', ticks = ""))
+    }
+
+    # Plotly | Stacked Bar Plots
+    df.plot <- df.ra
+    df.plot$samples <- rownames(df.plot)
+    sbp <- plot_ly(df.plot, y = ~samples, x = df.plot[[colnames(df.plot)[1]]], 
+                   type = 'bar', 
+                   orientation = 'h', 
+                   name = substr(colnames(df.plot)[1], 1, 40)) %>%
+            layout(font = list(size = 10),
+                   yaxis = list(title = '', type = 'category',
+                                tickmode = "array",
+                                tickvals = rownames(df.plot),
+                                showticklabels = FALSE,
+                                categoryorder = 'trace'),
+                   xaxis = list(title = 'Relative Abundance'),
+                   barmode = 'stack',
+                   showlegend = input$sra_show_legend)
+    for (i in 2:(ncol(df.plot)-1)) {
+      sbp <- add_trace(sbp, x=df.plot[[colnames(df.plot)[i]]], name=substr(colnames(df.plot)[i], 1, 40))
+    } 
+
+    # Create a multiplot if any conditions are selected
+    if (!is.null(input$sra_select_conditions) || input$group_samples) {
+      hm.sbp <- subplot(hm, sbp, widths=c(0.1,  0.9))
+      hm.sbp$elementId <- NULL # To suppress a shiny warning
+      return(hm.sbp)
+    } else {
+      sbp$elementId <- NULL # To suppress a shiny warning
+      return(sbp)
+    }
   })
-  
-  
-  tax_ra_bp %>% bind_shiny("TaxRelAbundancePlot")
 
   output$TaxRAsummary <- renderPrint({
     summary(findTaxData())
