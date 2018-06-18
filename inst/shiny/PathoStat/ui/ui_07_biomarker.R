@@ -1,5 +1,4 @@
-shiny_panel_biomarker <- fluidPage(
-
+tabPanel("Biomarker",
     tabsetPanel(
         tabPanel("Classification Model",
                  br(),
@@ -41,5 +40,4 @@ shiny_panel_biomarker <- fluidPage(
                  )
         )
     )
-
 )

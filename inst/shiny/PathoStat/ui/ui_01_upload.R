@@ -1,23 +1,25 @@
-shiny_panel_upload <- fluidPage(
+tabPanel("Upload",
 
-         useShinyjs(),
-         tags$style(appCSS),
+useShinyjs(),
+tags$style(appCSS),
+tags$div(
+    class = "jumbotron",
+    tags$div(
+        class = "container",
+        fluidRow(
+            column(7, h1("PathoStat")),
+            column(2, img(src = "bu_logo.png", height = 80, width = 140)),
+            column(2, img(src = "cbm_logo.jpeg", height = 80, width = 140)),
+            column(1, img(src = "bu_bioinfo_logo.png", height = 80, width = 80))
 
-         tags$div(
-             class = "jumbotron",
-             tags$div(
-                 class = "container",
-                 fluidRow(
-                     column(7, h1("PathoStat")),
-                     column(2, img(src = "bu_logo.png", height = 80, width = 140)),
-                     column(2, img(src = "cbm_logo.jpeg", height = 80, width = 140)),
-                     column(1, img(src = "bu_bioinfo_logo.png", height = 80, width = 80))
+        ),
 
-                 ),
+        p("Statistical Microbiome Analysis Toolkit")
+    )
+),
 
-                 p("Statistical Microbiome Analysis Toolkit")
-             )
-         ),
+
+
          sidebarLayout(
              sidebarPanel(
                  radioButtons("uploadChoice", "Upload:",
@@ -177,4 +179,4 @@ shiny_panel_upload <- fluidPage(
 
                  )
              )
-         )
+)

@@ -1,9 +1,4 @@
-# tags$style(type="text/css",
-#            ".shiny-output-error { visibility: hidden; }",
-#            ".shiny-output-error:before { visibility: hidden; }"
-# )
-
-shiny_panel_filter <- fluidPage(
+tabPanel("Summary and Filter",
 
     tabsetPanel(
 
@@ -76,7 +71,7 @@ shiny_panel_filter <- fluidPage(
                          br(),
                          selectInput(
                            "filter_type_micro", "Select filter type",
-                           c("By mapped read number", 
+                           c("By mapped read number",
                              "By relative abundace",
                              "By prevalence")),
                          conditionalPanel(condition = "input.filter_type_micro == 'By mapped read number'",
@@ -85,21 +80,21 @@ shiny_panel_filter <- fluidPage(
                                                withBusyIndicatorUI(
                                                  actionButton("filter_read_micro", "Filter")
                                                )
-                         ),      
+                         ),
                          conditionalPanel(condition = "input.filter_type_micro == 'By relative abundace'",
                                                helpText("Please select average minimum RA"),
                                                numericInput("ra_filter_min_micro", "Min", 0, min = 0, max = 1),
                                                withBusyIndicatorUI(
                                                  actionButton("filter_ra_micro", "Filter")
                                                )
-                         ), 
+                         ),
                          conditionalPanel(condition = "input.filter_type_micro == 'By prevalence'",
                                                helpText("Please select minimum prevalence"),
                                                numericInput("prev_filter_min", "Min", 0, min = 0, max = 1),
                                                withBusyIndicatorUI(
                                                  actionButton("filter_prev_micro", "Filter")
                                                )
-                         ), 
+                         ),
                          br(),
                          withBusyIndicatorUI(
                            actionButton("resetSampleButtonMicro", "Reset")
@@ -115,15 +110,15 @@ shiny_panel_filter <- fluidPage(
                                       tableOutput("contents_summary_micro"),
                                       selectInput("select_condition_sample_filter_micro", "Order by:",
                                                   c("Taxon elements number", covariates)),
-                                      plotlyOutput("sampleTaxon"))                
-                         
+                                      plotlyOutput("sampleTaxon"))
+
                          ), width=9
                      )
                  )
 
 
         ),
-        
+
         tabPanel("Boxplot visualization",
                  selectizeInput('taxl_single_species', 'Taxonomy Level', choices = tax.name,
                                 selected='no rank'),
@@ -161,5 +156,4 @@ shiny_panel_filter <- fluidPage(
                  )
         )
     )
-
 )
