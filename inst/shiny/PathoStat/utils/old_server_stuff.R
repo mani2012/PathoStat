@@ -133,7 +133,7 @@ updateCovariate <- function(){
     updateSelectInput(session, "select_pca_shape",
                       choices = covariates.colorbar)
     updateSelectInput(session, "da.condition",
-                      choices = covariates.colorbar)
+                      choices = covariates)
     updateSelectInput(session, "edger.condition",
                       choices = covariates.colorbar)
     updateSelectInput(session, "da.condition.covariate",

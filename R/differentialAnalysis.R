@@ -73,14 +73,15 @@ Wilcox_Test_df <- function(df, label.vec.num, pvalue.cutoff = 0.05) {
     # transform label into 1 and 0
     label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
     label.vec.num[label.vec.num != 1] <- 0
+    label.vec.num <- as.numeric(label.vec.num)
     for (i in 1:nrow(df)){
     # remove zero-variance rows
     if (sum(df[i,] == 1) == length(label.vec.num) |
     sum(df[i,] == 0) == length(label.vec.num)){
         next
     }
-    tmp.result <- wilcox.test(df[i,which(label.vec.num == 1)],
-    df[i,which(label.vec.num == 0)], correct=FALSE)
+    tmp.result <- suppressWarnings(wilcox.test(df[i,which(label.vec.num == 1)],
+    df[i,which(label.vec.num == 0)], correct=FALSE, exact=FALSE))
     if (tmp.result$p.value <= pvalue.cutoff & rownames(df)[i] != "others"){
         num.1 <- sum((df[i,which(label.vec.num == 1)] > 0))
         num.2 <- sum((df[i,which(label.vec.num == 0)] > 0))
@@ -97,19 +98,23 @@ Wilcox_Test_df <- function(df, label.vec.num, pvalue.cutoff = 0.05) {
     colnames(df.output) <- c("Name", "FDR",
     label.vec.save[1],label.vec.save[2], "prevalence")
     # FDR adjustment
-    print(df.output[,2])
-    df.output[,2] <- p.adjust(df.output[,2],
-    method = "fdr")
+    df.output <- data.frame(df.output, stringsAsFactors = FALSE)
+    df.output[,2] <- as.numeric(df.output[,2])
+    df.output[,3] <- as.numeric(df.output[,3])
+    df.output[,4] <- as.numeric(df.output[,4])
+    df.output[,2] <- p.adjust(df.output[,2], method = "fdr",
+                              n = length(df.output[,2]))
     df.output <- df.output[order(df.output[,2]),]
     foldChange <- c()
     for (i in 1:nrow(df.output)){
-      foldChange[i] <- round((max(as.numeric(c(df.output[i,3],
-                                               df.output[i,4]))) /
-                       min(as.numeric(c(df.output[i,3],
-                                        df.output[i,4])))),
-                       digits = 2)
+      foldChange[i] <- round((max(as.numeric(c((df.output[i,4] / sum(label.vec.num == 0)),
+                                               (df.output[i,3] / sum(label.vec.num == 1))))) /
+                                min(as.numeric(c((df.output[i,4] / sum(label.vec.num == 0)),
+                                                 (df.output[i,3] / sum(label.vec.num == 1)))))), 
+                             digits = 2)
     }
     df.output <- cbind(df.output, foldChange)
+    colnames(df.output)[ncol(df.output)] <- "Group Size adjusted fold change"
     return(df.output)
 }
 
@@ -159,7 +164,7 @@ Chisq_Test_Pam <- function(pam, label.vec.num, pvalue.cutoff = 0.05) {
     # transform label into 1 and 0
     label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
     label.vec.num[label.vec.num != 1] <- 0
-
+    label.vec.num <- as.numeric(label.vec.num)
 
     for (i in 1:nrow(pam)){
     # remove zero-variance rows
@@ -167,7 +172,7 @@ Chisq_Test_Pam <- function(pam, label.vec.num, pvalue.cutoff = 0.05) {
         sum(pam[i,] == 0) == length(label.vec.num)){
         next
     }
-    tmp.result <- chisq.test(pam[i,], label.vec.num, correct=FALSE)
+    tmp.result <- suppressWarnings(chisq.test(pam[i,], label.vec.num, correct=FALSE))
     if (tmp.result$p.value <= pvalue.cutoff  & rownames(pam)[i] != "others"){
         num.1 <- sum(pam[i,] == 1 & label.vec.num == 1)
         num.2 <- sum(pam[i,] == 1 & label.vec.num == 0)
@@ -184,19 +189,23 @@ Chisq_Test_Pam <- function(pam, label.vec.num, pvalue.cutoff = 0.05) {
     colnames(df.output) <- c("Name", "FDR",
     label.vec.save[1], label.vec.save[2], "prevalence")
     # FDR adjustment
-    df.output[,2] <- p.adjust(df.output[,2],
-    method = "fdr", n = length(df.output[,2]))
+    df.output <- data.frame(df.output, stringsAsFactors = FALSE)
+    df.output[,2] <- as.numeric(df.output[,2])
+    df.output[,3] <- as.numeric(df.output[,3])
+    df.output[,4] <- as.numeric(df.output[,4])
+    df.output[,2] <- p.adjust(df.output[,2], method = "fdr",
+                              n = length(df.output[,2]))
     df.output <- df.output[order(df.output[,2]),]
-
     foldChange <- c()
     for (i in 1:nrow(df.output)){
-      foldChange[i] <- round((max(as.numeric(c(df.output[i,3],
-                                               df.output[i,4]))) /
-                       min(as.numeric(c(df.output[i,3],
-                                        df.output[i,4])))),
-                       digits = 2)
+      foldChange[i] <- round((max(as.numeric(c((df.output[i,4] / sum(label.vec.num == 0)),
+                                               (df.output[i,3] / sum(label.vec.num == 1))))) /
+                                min(as.numeric(c((df.output[i,4] / sum(label.vec.num == 0)),
+                                                 (df.output[i,3] / sum(label.vec.num == 1)))))), 
+                             digits = 2)
     }
     df.output <- cbind(df.output, foldChange)
+    colnames(df.output)[ncol(df.output)] <- "Group Size adjusted fold change"
     return(df.output)
 }
 
@@ -224,14 +233,14 @@ Fisher_Test_Pam <- function(pam, label.vec.num, pvalue.cutoff = 0.05) {
     #  transform label into 1 and 0
     label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
     label.vec.num[label.vec.num != 1] <- 0
-
+    label.vec.num <- as.numeric(label.vec.num)
     for (i in 1:nrow(pam)){
         # remove zero-variance rows
         if (sum(pam[i,] == 1) == length(label.vec.num) |
         sum(pam[i,] == 0) == length(label.vec.num)){
         next
     }
-    tmp.result <- fisher.test(pam[i,], label.vec.num)
+    tmp.result <- suppressWarnings(fisher.test(pam[i,], label.vec.num))
     #print(tmp.result$p.value)
     if (tmp.result$p.value <= pvalue.cutoff  & rownames(pam)[i] != "others"){
         more.in.case <- sum(pam[i,] == 1 & label.vec.num == 1) >
@@ -252,17 +261,23 @@ Fisher_Test_Pam <- function(pam, label.vec.num, pvalue.cutoff = 0.05) {
     colnames(df.output) <- c("Name", "FDR", label.vec.save[1],
     label.vec.save[2], "prevalence")
     # FDR adjustment
+    df.output <- data.frame(df.output, stringsAsFactors = FALSE)
+    df.output[,2] <- as.numeric(df.output[,2])
+    df.output[,3] <- as.numeric(df.output[,3])
+    df.output[,4] <- as.numeric(df.output[,4])
     df.output[,2] <- p.adjust(df.output[,2], method = "fdr",
     n = length(df.output[,2]))
     df.output <- df.output[order(df.output[,2]),]
     foldChange <- c()
+
     for (i in 1:nrow(df.output)){
-      foldChange[i] <- round((max(as.numeric(c(df.output[i,3],
-                                               df.output[i,4]))) /
-                       min(as.numeric(c(df.output[i,3],
-                                        df.output[i,4])))),
-                       digits = 2)
+      foldChange[i] <- round((max(as.numeric(c((df.output[i,4] / sum(label.vec.num == 0)),
+                                               (df.output[i,3] / sum(label.vec.num == 1))))) /
+                                min(as.numeric(c((df.output[i,4] / sum(label.vec.num == 0)),
+                                                 (df.output[i,3] / sum(label.vec.num == 1)))))), 
+                             digits = 2)
     }
     df.output <- cbind(df.output, foldChange)
+    colnames(df.output)[ncol(df.output)] <- "Group Size adjusted fold change"
     return(df.output)
 }

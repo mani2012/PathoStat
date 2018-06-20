@@ -406,7 +406,6 @@ beta.stat.output <- reactive({
         result.list[[i]] <- wilcox.test(dist.list.tmp[[1]], dist.list.tmp[[2]])
       }
       output.table <- NULL
-      group.name <- c()
       for (i in 1:length(result.list)){
         output.tmp <- c(result.list[[i]]$method, result.list[[i]]$p.value)
         output.table <- cbind(output.table, output.tmp)

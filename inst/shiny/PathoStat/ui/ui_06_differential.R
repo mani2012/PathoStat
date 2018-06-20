@@ -11,7 +11,7 @@ tabPanel("Differential Analysis",
                                        selectizeInput('taxl.da', 'Taxonomy Level', choices = tax.name,
                                                       selected='no rank'),
                                        selectizeInput('da.condition', 'Select condition',
-                                                      choices = covariates.colorbar),
+                                                      choices = covariates),
                                        conditionalPanel(condition = "output.da_condition_type == 'multiple'",
                                                         helpText("Please select 2 levels to compare"),
                                                         uiOutput("da_condition_options")
