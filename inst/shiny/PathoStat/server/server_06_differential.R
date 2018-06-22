@@ -34,7 +34,7 @@
       # transform label into 1 and 0
       label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
       label.vec.num[label.vec.num != 1] <- 0
-
+      label.vec.num <- as.numeric(label.vec.num)
 
 
       dge = phyloseq_to_edgeR(pstat, group=input$edger.condition)
@@ -101,12 +101,14 @@
               )
               foldChange <- c()
               for (i in 1:nrow(sigtab)){
-              foldChange[i] <- round((max(as.numeric(c(sigtab[i,5],
-                                                 sigtab[i,4]))) /
-                       min(as.numeric(c(sigtab[i,5],
-                                        sigtab[i,4])))), digits = 2)
+                foldChange[i] <- round((max(as.numeric(c((sigtab[i,5] / sum(label.vec.num == 0)),
+                                                         (sigtab[i,4] / sum(label.vec.num == 1))))) /
+                                          min(as.numeric(c((sigtab[i,5] / sum(label.vec.num == 0)),
+                                                           (sigtab[i,4] / sum(label.vec.num == 1)))))), 
+                                       digits = 2)
               }
               sigtab <- cbind(sigtab, foldChange)
+              colnames(sigtab)[ncol(sigtab)] <- "Group Size adjusted fold change"
               return(sigtab)
 
           }
@@ -157,7 +159,7 @@
     # transform label into 1 and 0
     label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
     label.vec.num[label.vec.num != 1] <- 0
-
+    label.vec.num <- as.numeric(label.vec.num)
 
 
     # deal with continuous covariates and multiple covariates
@@ -256,12 +258,13 @@
         )
         foldChange <- c()
         for (i in 1:nrow(sigtab)){
-        foldChange[i] <- round((max(as.numeric(c(sigtab[i,5],
-                                                 sigtab[i,4]))) /
-                       min(as.numeric(c(sigtab[i,5],
-                                        sigtab[i,4])))), digits = 2)
+        foldChange[i] <- round((max(as.numeric(c((sigtab[i,5] / sum(label.vec.num == 0)),
+                                                 (sigtab[i,4] / sum(label.vec.num == 1))))) /
+                       min(as.numeric(c((sigtab[i,5] / sum(label.vec.num == 0)),
+                                        (sigtab[i,4] / sum(label.vec.num == 1)))))), digits = 2)
         }
         sigtab <- cbind(sigtab, foldChange)
+        colnames(sigtab)[ncol(sigtab)] <- "Group Size adjusted fold change"
         return(sigtab)
 
       }
@@ -289,7 +292,8 @@
     target.var.index <- which(pstat@sam_data@names == input$da.condition)
     label.vec <- pstat@sam_data@.Data[[target.var.index]]
     label.level.num <- length(unique(label.vec))
-    if (label.level.num == 2){
+    factor.non.categorical <- covariates[which(!covariates %in% covariates.colorbar)]
+    if (label.level.num == 2 || input$da.condition %in% factor.non.categorical){
       return("binary")
     } else{
       return("multiple")

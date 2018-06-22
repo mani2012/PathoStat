@@ -77,24 +77,27 @@
       num.2 <- c(num.2, sum((physeq1@otu_table@.Data[species.index,which(label.vec.num == 0)] > 0)))
     }
 
-    output.df <- data.frame(biomarker = output.fs$feature,
+    df.output <- data.frame(biomarker = output.fs$feature,
                             selection_rate = output.fs$selection_rate,
                             average_weights = output.fs$feature_weights,
                             num.1,
                             num.2,
                             percent(round((num.1+num.2)/ncol(physeq1@otu_table@.Data),4)))
     foldChange <- c()
-    for (i in 1:nrow(output.df)){
-      foldChange[i] <- round((max(as.numeric(c(output.df[i,5], output.df[i,4]))) /
-                       min(as.numeric(c(output.df[i,5], output.df[i,4])))), digits = 2)
+    for (i in 1:nrow(df.output)){
+      foldChange[i] <- round((max(as.numeric(c((df.output[i,5] / sum(label.vec.num == 0)),
+                                               (df.output[i,4] / sum(label.vec.num == 1))))) /
+                                min(as.numeric(c((df.output[i,5] / sum(label.vec.num == 0)),
+                                                 (df.output[i,4] / sum(label.vec.num == 1)))))), 
+                             digits = 2)
     }
-    output.df <- cbind(output.df, foldChange)
-    colnames(output.df)[ncol(output.df)-3] <- label.vec.save[1]
-    colnames(output.df)[ncol(output.df)-2] <- label.vec.save[2]
-    colnames(output.df)[ncol(output.df)-1] <- "prevalence"
-    colnames(output.df)[ncol(output.df)] <- "Fold-Change"
+    df.output <- cbind(df.output, foldChange)
+    colnames(df.output)[ncol(df.output)-3] <- label.vec.save[1]
+    colnames(df.output)[ncol(df.output)-2] <- label.vec.save[2]
+    colnames(df.output)[ncol(df.output)-1] <- "prevalence"
+    colnames(df.output)[ncol(df.output)] <- "group size adjusted fold change"
     df.biomarker <- df.input[,which(colnames(df.input) %in% output.fs$feature)]
-    return(list(output.df = output.df, df.input = df.biomarker, target.vec = label.vec.num))
+    return(list(df.output = df.output, df.input = df.biomarker, target.vec = label.vec.num))
 
 
   }
@@ -112,7 +115,7 @@
      )
 
       output$featureSelectionTmp <- renderTable({
-        biomarker.vals$biomarker.list$output.df
+        biomarker.vals$biomarker.list$df.output
       })
 
       output$loocv_output_simple <- renderPlot({
