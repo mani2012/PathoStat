@@ -4,7 +4,6 @@ tabPanel("Relative Abundance",
       tags$br(),
       sidebarLayout(
         sidebarPanel(
-
           # Sort the samples by a condition
           conditionalPanel(
             condition = "input.group_samples == false",
@@ -12,7 +11,7 @@ tabPanel("Relative Abundance",
           ),
           conditionalPanel(
             condition = "input.group_samples == true",
-            selectizeInput('gra_select_conditions', 'Color Samples by Condition', choices=covariates)
+            selectizeInput('gra_select_conditions', 'Color Samples by Condition', choices=c("All", covariates))
           ),
 
           # Sample aggregation
@@ -31,12 +30,14 @@ tabPanel("Relative Abundance",
           # Legend toggle
           checkboxInput("sra_show_legend", "Show Legend", value=TRUE),
 
+          sliderInput("plot_sra_height", "Plot Height", 600, 1000, value=600, step=50, post="px"),
+
           actionButton("plot_sra", "Plot"),
           width=3
         ),
         mainPanel(
-          plotlyOutput("ra_plot", width="800px", height="600px"),
-          width=9
+          uiOutput("dynamic_ra_plot"),
+          width=9        
         )
       )
     ),
@@ -60,11 +61,13 @@ tabPanel("Relative Abundance",
           # Legend toggle
           checkboxInput("hmra_logcpm", "log(CPM)", value=FALSE),
 
+          sliderInput("plot_hmra_height", "Plot Height", 600, 1000, value=600, step=50, post="px"),
+
           actionButton("plot_hmra", "Plot"),
           width=3
         ),
         mainPanel(
-          plotlyOutput("hmra_plot", width="800px", height="600px"),
+          uiOutput("dynamic_hmra_plot"),
           width=9        
         )
       )

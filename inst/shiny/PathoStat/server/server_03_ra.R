@@ -46,6 +46,12 @@ upsample.ra <- function(ra.unranked, tax.table, newlev) {
   return(df.ra)
 }
 
+# Used to dynamically adjust plot height
+output$dynamic_ra_plot <- renderUI({
+  height = paste(input$plot_sra_height, "px", sep="")
+  plotlyOutput("ra_plot", width="800px", height=height)
+})
+
 # Used to dynamically generate selectable organisms based on taxlev
 output$sra_order_organisms <- renderUI({
   shinyInput <- vals$shiny.input
@@ -72,7 +78,11 @@ plot_ra <- function() {
 
   # If grouping is selected
   if (input$group_samples & !is.null(input$gra_select_conditions)) {
-    df.ra$covariate <- SAM_DATA[[input$gra_select_conditions]]
+    if (input$gra_select_conditions == "All") {
+      df.ra$covariate <- rep("All", nrow(df.ra))
+    } else {
+      df.ra$covariate <- SAM_DATA[[input$gra_select_conditions]] 
+    }
     df.ra.melted <- melt(df.ra, id.vars = "covariate")
     df.avg.ra <- aggregate( . ~ variable + covariate , data = df.ra.melted, mean)
     df.avg.ra <- dcast(data = df.avg.ra,formula = covariate~variable)
@@ -101,10 +111,10 @@ plot_ra <- function() {
   }
 
   # If any conditions are selected make a side bar
-  if (!is.null(input$sra_select_conditions) || input$group_samples) {
-
+  if (!is.null(input$sra_select_conditions) || (input$group_samples & input$gra_select_conditions != "All")) {
+    
     if (!input$group_samples) {
-      df.sam <- SAM_DATA[,input$sra_select_conditions]
+      df.sam <- SAM_DATA[,input$sra_select_conditions,drop=FALSE]
     }
 
     # Order samples by conitions if not by organisms
@@ -128,7 +138,7 @@ plot_ra <- function() {
     df.sam[] <- lapply(df.sam, factor)
     m <- data.matrix(df.sam)
     m.row.normalized <- apply(m, 2, function(x)(x-min(x))/(max(x)-min(x)))
-    hm <- plot_ly(x = colnames(m), y = rownames(m), z = m.row.normalized,
+    hm <- plot_ly(x = colnames(m), y = rownames(m), z = m.row.normalized, 
                   type = "heatmap",
                   showscale=FALSE,
                   hoverinfo = "x+y+text",
@@ -140,9 +150,9 @@ plot_ra <- function() {
   # Plotly | Stacked Bar Plots
   df.plot <- df.ra
   df.plot$samples <- rownames(df.plot)
-  sbp <- plot_ly(df.plot, y = ~samples, x = df.plot[[colnames(df.plot)[1]]],
-                 type = 'bar',
-                 orientation = 'h',
+  sbp <- plot_ly(df.plot, y = ~samples, x = df.plot[[colnames(df.plot)[1]]], 
+                 type = 'bar', 
+                 orientation = 'h', 
                  name = substr(colnames(df.plot)[1], 1, 40)) %>%
           layout(font = list(size = 10),
                  yaxis = list(title = '', type = 'category',
@@ -155,10 +165,10 @@ plot_ra <- function() {
                  showlegend = input$sra_show_legend)
   for (i in 2:(ncol(df.plot)-1)) {
     sbp <- add_trace(sbp, x=df.plot[[colnames(df.plot)[i]]], name=substr(colnames(df.plot)[i], 1, 40))
-  }
+  } 
 
   # Create a multiplot if any conditions are selected
-  if (!is.null(input$sra_select_conditions) || input$group_samples) {
+  if (!is.null(input$sra_select_conditions) || (input$group_samples & input$gra_select_conditions != "All")) {
     hm.sbp <- subplot(hm, sbp, widths=c(0.1,  0.9))
     hm.sbp$elementId <- NULL # To suppress a shiny warning
     return(hm.sbp)
@@ -176,6 +186,12 @@ output$ra_plot <- renderPlotly({
   do_plot_ra()
 })
 
+
+# Used to dynamically adjust plot height
+output$dynamic_hmra_plot <- renderUI({
+  height = paste(input$plot_hmra_height, "px", sep="")
+  plotlyOutput("hmra_plot", width="800px", height=height)
+})
 
 # Used to dynamically generate selectable organisms based on taxlev
 output$hmra_isolate_organisms <- renderUI({
