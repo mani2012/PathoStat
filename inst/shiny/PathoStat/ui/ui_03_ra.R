@@ -1,6 +1,6 @@
-tabPanel("Relative Abundance",
+tabPanel("Visualization",
   tabsetPanel(
-    tabPanel("Sample Relative Abundance",
+    tabPanel("Stacked Barplots",
       tags$br(),
       sidebarLayout(
         sidebarPanel(
@@ -68,6 +68,24 @@ tabPanel("Relative Abundance",
         ),
         mainPanel(
           uiOutput("dynamic_hmra_plot"),
+          width=9        
+        )
+      )
+    ),
+    tabPanel("Boxplots",
+      tags$br(),
+      sidebarLayout(
+        sidebarPanel(
+          br(),
+          selectizeInput('taxl_single_species', 'Taxonomy Level', choices = tax.name, selected='no rank'),
+          selectInput("select_single_species_condition", "Select condition", covariates.colorbar),
+          selectInput("ssv_format", "Select data format", c("read count", "relative abundance", "log10 CPM")),
+          uiOutput("single_species_ui"),
+          actionButton("boxplotButton", "Plot"),
+          width=3
+        ),
+        mainPanel(
+          plotlyOutput("single_species_boxplot", width="800px"),
           width=9        
         )
       )
