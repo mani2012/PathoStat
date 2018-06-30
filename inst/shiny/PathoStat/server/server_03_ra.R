@@ -46,6 +46,12 @@ upsample.ra <- function(ra.unranked, tax.table, newlev) {
   return(df.ra)
 }
 
+# Used to dynamically adjust plot height
+output$dynamic_ra_plot <- renderUI({
+  height = paste(input$plot_sra_height, "px", sep="")
+  plotlyOutput("ra_plot", width="800px", height=height)
+})
+
 # Used to dynamically generate selectable organisms based on taxlev
 output$sra_order_organisms <- renderUI({
   shinyInput <- vals$shiny.input
@@ -72,7 +78,11 @@ plot_ra <- function() {
 
   # If grouping is selected
   if (input$group_samples & !is.null(input$gra_select_conditions)) {
-    df.ra$covariate <- SAM_DATA[[input$gra_select_conditions]]
+    if (input$gra_select_conditions == "All") {
+      df.ra$covariate <- rep("All", nrow(df.ra))
+    } else {
+      df.ra$covariate <- SAM_DATA[[input$gra_select_conditions]] 
+    }
     df.ra.melted <- melt(df.ra, id.vars = "covariate")
     df.avg.ra <- aggregate( . ~ variable + covariate , data = df.ra.melted, mean)
     df.avg.ra <- dcast(data = df.avg.ra,formula = covariate~variable)
@@ -101,10 +111,10 @@ plot_ra <- function() {
   }
 
   # If any conditions are selected make a side bar
-  if (!is.null(input$sra_select_conditions) || input$group_samples) {
-
+  if (!is.null(input$sra_select_conditions) || (input$group_samples & input$gra_select_conditions != "All")) {
+    
     if (!input$group_samples) {
-      df.sam <- SAM_DATA[,input$sra_select_conditions]
+      df.sam <- SAM_DATA[,input$sra_select_conditions,drop=FALSE]
     }
 
     # Order samples by conitions if not by organisms
@@ -128,7 +138,7 @@ plot_ra <- function() {
     df.sam[] <- lapply(df.sam, factor)
     m <- data.matrix(df.sam)
     m.row.normalized <- apply(m, 2, function(x)(x-min(x))/(max(x)-min(x)))
-    hm <- plot_ly(x = colnames(m), y = rownames(m), z = m.row.normalized,
+    hm <- plot_ly(x = colnames(m), y = rownames(m), z = m.row.normalized, 
                   type = "heatmap",
                   showscale=FALSE,
                   hoverinfo = "x+y+text",
@@ -140,9 +150,9 @@ plot_ra <- function() {
   # Plotly | Stacked Bar Plots
   df.plot <- df.ra
   df.plot$samples <- rownames(df.plot)
-  sbp <- plot_ly(df.plot, y = ~samples, x = df.plot[[colnames(df.plot)[1]]],
-                 type = 'bar',
-                 orientation = 'h',
+  sbp <- plot_ly(df.plot, y = ~samples, x = df.plot[[colnames(df.plot)[1]]], 
+                 type = 'bar', 
+                 orientation = 'h', 
                  name = substr(colnames(df.plot)[1], 1, 40)) %>%
           layout(font = list(size = 10),
                  yaxis = list(title = '', type = 'category',
@@ -155,10 +165,10 @@ plot_ra <- function() {
                  showlegend = input$sra_show_legend)
   for (i in 2:(ncol(df.plot)-1)) {
     sbp <- add_trace(sbp, x=df.plot[[colnames(df.plot)[i]]], name=substr(colnames(df.plot)[i], 1, 40))
-  }
+  } 
 
   # Create a multiplot if any conditions are selected
-  if (!is.null(input$sra_select_conditions) || input$group_samples) {
+  if (!is.null(input$sra_select_conditions) || (input$group_samples & input$gra_select_conditions != "All")) {
     hm.sbp <- subplot(hm, sbp, widths=c(0.1,  0.9))
     hm.sbp$elementId <- NULL # To suppress a shiny warning
     return(hm.sbp)
@@ -176,6 +186,12 @@ output$ra_plot <- renderPlotly({
   do_plot_ra()
 })
 
+
+# Used to dynamically adjust plot height
+output$dynamic_hmra_plot <- renderUI({
+  height = paste(input$plot_hmra_height, "px", sep="")
+  plotlyOutput("hmra_plot", width="800px", height=height)
+})
 
 # Used to dynamically generate selectable organisms based on taxlev
 output$hmra_isolate_organisms <- renderUI({
@@ -289,4 +305,119 @@ output$hmra_plot <- renderPlotly({
   do_plot_hmra()
 })
 
+###### Boxplots Moved Here
 
+output$single_species_ui <- renderUI({
+  #shinyInput <- vals$shiny.input
+  #pstat <- shinyInput$pstat
+  species.name.vec <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl_single_species)
+  tagList(
+    selectInput("select_single_species_name_plot", 
+      "Select names (support multiple)", 
+      species.name.vec, selected = species.name.vec[1], multiple = TRUE)
+  )
+})
+
+plotSingleSpeciesBoxplotServer <- eventReactive(input$boxplotButton,{
+  #shinyInput <- vals$shiny.input
+  #pstat <- shinyInput$pstat
+
+  if (input$taxl_single_species !="no rank")  {
+    pstat <- tax_glom(pstat, input$taxl_single_species)
+  }
+
+  if (length(input$select_single_species_name_plot) == 1){
+    condition.vec <- pstat@sam_data@.Data[[which(pstat@sam_data@names == input$select_single_species_condition)]]
+    # change microbe names to selected taxon level
+    species.name.vec <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl_single_species)
+    #cat(paste("condition:", length(condition.vec)))
+    read.num.condition.1 <- rep(0, length(condition.vec))
+
+    if (input$ssv_format == "read count"){
+      for (i in 1:nrow(pstat@otu_table@.Data)){
+        if (species.name.vec[i] == input$select_single_species_name_plot){
+          read.num.condition.1 <- read.num.condition.1 + pstat@otu_table@.Data[i,]
+        }
+      }
+      df.tmp <- data.frame(condition = condition.vec, read_Number = read.num.condition.1)
+      p <- plot_ly(df.tmp, y = ~read_Number, color = ~condition, type = "box")
+    }else if(input$ssv_format == "log10 CPM"){
+      df.cpm <- getLogCPM(pstat@otu_table@.Data)
+      for (i in 1:nrow(df.cpm)){
+        if (species.name.vec[i] == input$select_single_species_name_plot){
+          read.num.condition.1 <- read.num.condition.1 + df.cpm[i,]
+        }
+      }
+      df.tmp <- data.frame(condition = condition.vec, logCPM = read.num.condition.1)
+      p <- plot_ly(df.tmp, y = ~logCPM, color = ~condition, type = "box")
+    }else{
+      df.ra <- getRelativeAbundance(pstat@otu_table@.Data)
+      for (i in 1:nrow(df.ra)){
+        if (species.name.vec[i] == input$select_single_species_name_plot){
+          read.num.condition.1 <- read.num.condition.1 + df.ra[i,]
+        }
+      }
+      df.tmp <- data.frame(condition = condition.vec, RA = read.num.condition.1)
+      p <- plot_ly(df.tmp, y = ~RA, color = ~condition, type = "box")
+    }
+
+    ## plot
+    p
+
+  } else{
+    condition.vec <- pstat@sam_data@.Data[[which(pstat@sam_data@names == input$select_single_species_condition)]]
+    condition.vec.all <- c()
+    species.vec <- c()
+    read.num.condition.all <- c()
+    species.name.vec <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl_single_species)
+    for (i in 1:length(input$select_single_species_name_plot)){
+      condition.vec.all <- c(condition.vec.all, condition.vec)
+      species.vec <- c(species.vec, rep(input$select_single_species_name_plot[i], length(condition.vec)))
+      read.num.condition.tmp <- rep(0, length(condition.vec))
+      for (j in 1:nrow(pstat@otu_table@.Data)){
+        if (species.name.vec[j] == input$select_single_species_name_plot[i]){
+          if (input$ssv_format == "read count"){
+            read.num.condition.tmp <- read.num.condition.tmp + pstat@otu_table@.Data[j,]
+          }else if(input$ssv_format == "log10 CPM"){
+            df.cpm <- getLogCPM(pstat@otu_table@.Data)
+            read.num.condition.tmp <- read.num.condition.tmp + df.cpm[j,]
+          }else{
+            df.ra <- getRelativeAbundance(pstat@otu_table@.Data)
+            read.num.condition.tmp <- read.num.condition.tmp + df.ra[j,]
+          }
+        }
+      }
+      read.num.condition.all <- c(read.num.condition.all, read.num.condition.tmp)
+    }
+
+    if (input$ssv_format == "read count"){
+    df.tmp <- data.frame(condition = condition.vec.all, read_Number = read.num.condition.all, name = species.vec)
+    p <- plot_ly(df.tmp, x = ~name, y = ~read_Number, color = ~condition, type = "box") %>%
+      layout(boxmode = "group")
+    suppressMessages(p)
+    }else if(input$ssv_format == "log10 CPM"){
+      df.tmp <- data.frame(condition = condition.vec.all, logCPM = read.num.condition.all, name = species.vec)
+      p <- plot_ly(df.tmp, x = ~name, y = ~logCPM, color = ~condition, type = "box") %>%
+        layout(boxmode = "group")
+      suppressMessages(p)
+    }else{
+      df.tmp <- data.frame(condition = condition.vec.all, RA = read.num.condition.all, name = species.vec)
+      p <- plot_ly(df.tmp, x = ~name, y = ~RA, color = ~condition, type = "box") %>%
+        layout(boxmode = "group")
+      suppressMessages(p)
+    }
+  }
+})
+
+output$single_species_boxplot <- renderPlotly({
+  # suppress warnings
+  storeWarn<- getOption("warn")
+  options(warn = -1)
+  plott <- plotSingleSpeciesBoxplotServer()
+  #restore warnings, delayed so plot is completed
+  shinyjs::delay(expr =({
+    options(warn = storeWarn)
+  }) ,ms = 100)
+
+  plott
+})
