@@ -73,6 +73,12 @@ plot_ra <- function() {
   RA_TABLE <- tables$RLA
   SAM_DATA <- tables$SAM
 
+  # Isolate samples of interest
+  if (!is.null(input$sra_isolate_samples)) {
+    SAM_DATA <- SAM_DATA[rownames(SAM_DATA) %in% input$sra_isolate_samples,,drop=FALSE] 
+    RA_TABLE <- RA_TABLE[,colnames(RA_TABLE) %in% input$sra_isolate_samples,drop=FALSE] 
+  }
+
   # Sum by taxon level
   df.ra <- upsample.ra(RA_TABLE, TAX_TABLE, input$sra_taxlev)
 
@@ -214,6 +220,13 @@ plot_hmra <- function() {
   OTU_TABLE <- tables$OTU
   RA_TABLE <- tables$RLA
   SAM_DATA <- tables$SAM
+
+  # Isolate samples of interest
+  if (!is.null(input$hmra_isolate_samples)) {
+    SAM_DATA <- SAM_DATA[rownames(SAM_DATA) %in% input$hmra_isolate_samples,,drop=FALSE] 
+    OTU_TABLE <- OTU_TABLE[,colnames(OTU_TABLE) %in% input$hmra_isolate_samples,drop=FALSE] 
+    RA_TABLE <- RA_TABLE[,colnames(RA_TABLE) %in% input$hmra_isolate_samples,drop=FALSE] 
+  }
 
   if (input$hmra_logcpm) {
     df.ra = OTU_TABLE

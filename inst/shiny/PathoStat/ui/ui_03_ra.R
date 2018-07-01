@@ -1,3 +1,5 @@
+sam.name <- rownames(as.data.frame(pstat@sam_data))
+
 tabPanel("Visualization",
   tabsetPanel(
     tabPanel("Stacked Barplots",
@@ -26,6 +28,9 @@ tabPanel("Visualization",
           # Sort the bars
           radioButtons("sra_sort_by", "Sort By",
           c("No Sorting" = "nosort", "Conditions" = "conditions", "Organisms" = "organisms"), selected="nosort"),
+
+          # Isolate Samples
+          selectizeInput('sra_isolate_samples', 'Isolate Samples', choices=sam.name, multiple=TRUE),
 
           # Legend toggle
           checkboxInput("sra_show_legend", "Show Legend", value=TRUE),
@@ -57,6 +62,9 @@ tabPanel("Visualization",
           # Sort the bars
           radioButtons("hmra_sort_by", "Sort By",
           c("No Sorting" = "nosort", "Conditions" = "conditions", "Organisms" = "organisms"), selected="nosort"),
+
+          # Isolate Samples
+          selectizeInput('hmra_isolate_samples', 'Isolate Samples', choices=sam.name, multiple=TRUE),
 
           # Legend toggle
           checkboxInput("hmra_logcpm", "log(CPM)", value=FALSE),
