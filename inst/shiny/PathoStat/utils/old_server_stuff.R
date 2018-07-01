@@ -64,6 +64,10 @@ updateTaxLevel <- function(){
                     choices = colnames(pstat@tax_table@.Data))
   updateSelectInput(session, "taxl_single_species",
                     choices = colnames(pstat@tax_table@.Data))
+  updateSelectInput(session, "taxlTable",
+                    choices = colnames(pstat@tax_table@.Data))
+  updateSelectInput(session, "taxl_biomarker",
+                    choices = colnames(pstat@tax_table@.Data))  
 }
 
 # update samples
@@ -71,6 +75,10 @@ updateSample <- function(){
     shinyInput <- vals$shiny.input
     pstat <- shinyInput$pstat
     updateSelectInput(session, "filterSample",
+                      choices = colnames(pstat@otu_table@.Data))
+    updateSelectInput(session, "hmra_isolate_samples",
+                      choices = colnames(pstat@otu_table@.Data))
+    updateSelectInput(session, "sra_isolate_samples",
                       choices = colnames(pstat@otu_table@.Data))
 }
 
