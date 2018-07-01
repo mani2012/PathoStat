@@ -58,13 +58,11 @@ updateTaxLevel <- function(){
                     choices = colnames(pstat@tax_table@.Data))
   updateSelectInput(session, "taxl.pa",
                     choices = colnames(pstat@tax_table@.Data))
-  updateSelectInput(session, "taxl",
+  updateSelectInput(session, "sra_taxlev",
                     choices = colnames(pstat@tax_table@.Data))
-  updateSelectInput(session, "taxl",
+  updateSelectInput(session, "hmra_taxlev",
                     choices = colnames(pstat@tax_table@.Data))
-  updateSelectInput(session, "taxl",
-                    choices = colnames(pstat@tax_table@.Data))
-  updateSelectInput(session, "taxl",
+  updateSelectInput(session, "taxl_single_species",
                     choices = colnames(pstat@tax_table@.Data))
 }
 

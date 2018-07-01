@@ -81,6 +81,7 @@ observeEvent(input$uploadDataCount,{
     updateCovariate()
     updateSample()
     updateTaxLevel()
+    tax.name <- colnames(df.taxon.input)
 
     })
 
