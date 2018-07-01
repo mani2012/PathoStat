@@ -28,12 +28,7 @@ tabPanel("Differential Analysis",
                                      ),
                                      mainPanel(
                                        tabPanel("DeSeq2",
-                                                tabsetPanel(
-                                                  tabPanel("DE output",
-                                                           DT::dataTableOutput("DeSeq2Table.new"),
-                                                           downloadButton("download_deseq_tb", "Download this table")
-                                                  )
-                                                )
+                                         DT::dataTableOutput("DeSeq2Table.new")
                                        ), width=9
                                      )
                                    )
@@ -57,12 +52,8 @@ tabPanel("Differential Analysis",
                                      ),
                                      mainPanel(
                                        tabPanel("edgeR",
-                                                tabsetPanel(
-                                                  tabPanel("DE output",
-                                                           DT::dataTableOutput("edgerTable.new"),
-                                                           downloadButton("download_edger_tb", "Download this table")
-                                                  )
-                                                )
+                                         DT::dataTableOutput("edgerTable.new"),
+                                         downloadButton("download_edger_tb", "Download this table")
                                        ), width=9
                                      )
                                    )
@@ -90,16 +81,12 @@ tabPanel("Differential Analysis",
            mainPanel(
              tabPanel("Test output",
                       br(),
-                      tabsetPanel(
-                        tabPanel("output",
                                  selectInput('pa_method', 'Select test method',
                                                 choices = c("Fisher Exact Test", "Chi-squared Test", "Mann-Whitney Test")),
                                  conditionalPanel(condition = "input.pa_method == 'Mann-Whitney Test'",
                                                   selectInput('pa_mann_data_type', 'Select data type', choices = c("read count", "log10 CPM", "RA"))),
                                  DT::dataTableOutput("pa.test"),
                                  downloadButton("download_pa_test", "Download this table")
-                        )
-                      )
              ), width=9
            )
          )
