@@ -32,12 +32,12 @@ source(file.path("utils", "old_server_stuff.R"),  local = TRUE)
     })
     })
 
-      output$download_rda <- downloadHandler(filename = function() {
-        paste("pathostat", Sys.Date(), ".rda", sep="")
+      output$download_rds <- downloadHandler(filename = function() {
+        paste("pathostat", Sys.Date(), ".rds", sep="")
       }, content = function(file) {
         shinyInput <- vals$shiny.input
         pstat <- shinyInput$pstat
-        save(pstat, file=file)
+        saveRDS(pstat, file=file)
       })
 
 

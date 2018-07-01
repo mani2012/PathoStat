@@ -52,14 +52,6 @@
 
   })
 
-
-  observeEvent(input$download_pca,{
-    if (!require("webshot")) install.packages("webshot")
-    tmpFile <- tempfile(pattern = "PCA_", fileext = ".pdf")
-    export(plotPCAPlotlyServer(), file = tmpFile)
-    browseURL(tmpFile)}
-  )
-
   # interactive PCA table
   output$PCAtable <- DT::renderDataTable({
       shinyInput <- vals$shiny.input
@@ -131,14 +123,6 @@
     plotPCoAPlotlyServerButton()
 
   })
-
-
-  observeEvent(input$download_pcoa,{
-    if (!require("webshot")) install.packages("webshot")
-    tmpFile <- tempfile(pattern = "PCoA_", fileext = ".pdf")
-    export(plotPCoAPlotlyServer(), file = tmpFile)
-    browseURL(tmpFile)}
-  )
 
 
   getOrdPCoA <- function(){
