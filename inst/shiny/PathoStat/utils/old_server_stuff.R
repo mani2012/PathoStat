@@ -149,7 +149,7 @@ updateCovariate <- function(){
     updateSelectInput(session, "sra_select_conditions",
                       choices = covariates)
     updateSelectInput(session, "gra_select_conditions",
-                      choices = covariates)
+                      choices = c("All", covariates))
     updateSelectInput(session, "hmra_select_conditions",
                       choices = covariates)
 }
