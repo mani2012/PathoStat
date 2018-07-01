@@ -19,46 +19,17 @@ plotAlphaServer <- function(){
   ggplotly(g, tooltip="text")
 }
 
-output$AlphaDiversity <- renderPlotly({
+
+plotAlphaBoxplotButton <- eventReactive(input$alpha_boxplot,{
   plotAlphaServer()
 })
 
-observeEvent(input$download_alpha,{
-  if (!require("webshot")) install.packages("webshot")
-  tmpFile <- tempfile(pattern = "Alpha_diversity_", fileext = ".pdf")
-  export(plotAlphaServer(), file = tmpFile)
-  browseURL(tmpFile)}
-)
+output$AlphaDiversity <- renderPlotly({
+  plotAlphaBoxplotButton()
 
-
-
-output$AlphaDiversityBarplot <- renderPlotly({
-    shinyInput <- vals$shiny.input
-    pstat <- shinyInput$pstat
-    if (input$taxl.alpha !="no rank")  {
-        pstat <- tax_glom(pstat, input$taxl.alpha)
-    }
-    df.pam <- GET_PAM(pstat@otu_table@.Data)
-
-    Sample_Name <- colnames(pstat@otu_table@.Data)
-    taxa.num <- as.numeric(colSums(df.pam))
-    data <- data.frame(Sample_Name, taxa.num, stringsAsFactors = FALSE)
-    data[,3] <- as.character(pstat@sam_data@.Data
-                             [[which(pstat@sam_data@names == input$select_alpha_div_condition)]])
-    colnames(data)[3] <- input$select_alpha_div_condition
-    data$Sample_Name <- paste(as.character(pstat@sam_data@.Data
-                                           [[which(pstat@sam_data@names == input$select_alpha_div_condition)]]
-    ),data$Sample_Name, sep = "-")
-    data$Sample_Name <- factor(data$Sample_Name,
-                               levels = unique(data$Sample_Name)
-                               [order(pstat@sam_data@.Data[[which(pstat@sam_data@names == input$select_alpha_div_condition)]],
-                                      decreasing = FALSE)])
-
-
-    p <- plot_ly(data, x = ~Sample_Name, y = ~taxa.num, type = "bar", color = as.formula(paste("~", input$select_alpha_div_condition, sep = "")), name = 'Sample taxa number') %>%
-        layout(margin = list(b = 160))
-    p
 })
+
+
 
 
 output$table.alpha <- DT::renderDataTable({
@@ -253,19 +224,6 @@ output$BetaDiversityHeatmap <- renderPlot({
 })
 
 
-output$download_beta_heatmap_pdf <- downloadHandler(
-  filename = function() {
-    paste('heatmap_beta', Sys.Date(), '.pdf', sep='')
-  },
-  content = function(file) {
-    pdf(file)
-    #### add "print()" to plotting function to work!!
-    print(plotBetaHeatmapColorServer())
-    ####
-    dev.off()
-  }
-
-)
 
 
 plotBetaBoxplotServer <- function(){
@@ -322,17 +280,15 @@ plotBetaBoxplotServer <- function(){
   p
 }
 
-output$BetaDiversityBoxplot <- renderPlotly({
+
+plotBetaBoxplotServerButton <- eventReactive(input$beta_boxplot,{
   plotBetaBoxplotServer()
 })
 
-observeEvent(input$download_beta_boxplot,{
-  if (!require("webshot")) install.packages("webshot")
-  tmpFile <- tempfile(pattern = "Beta_diversity_boxplot", fileext = ".pdf")
-  export(plotBetaBoxplotServer(), file = tmpFile)
-  browseURL(tmpFile)}
-)
+output$BetaDiversityBoxplot <- renderPlotly({
+  plotBetaBoxplotServerButton()
 
+})
 
 
 
