@@ -1,3 +1,14 @@
+is.categorical <- function(v) {
+  if (class(v) == "integer" || class(v) == "numeric") {
+    return(F)
+  } else {
+    return(T)
+  }
+}
+sam_temp <- as.data.frame(pstat@sam_data)
+num_select <- lapply(covariates, function(x) is.categorical(unlist(sam_temp[,x])))
+num_covariates <- covariates[!unlist(num_select)]
+
 tabPanel("Summary and Filter",
   tabsetPanel(
     tabPanel("Sample Filter",
@@ -108,6 +119,28 @@ tabPanel("Summary and Filter",
         )
       )
     ),
+    tabPanel("Categorize",
+      tags$br(),
+      sidebarLayout(
+        sidebarPanel(
+          selectizeInput('bin_cov', 'Covariate', choices=num_covariates, multiple=FALSE),
+          uiOutput("nbins"),
+          textInput('bin_breaks', 'Custom Breaks (Comma Delimited)'),
+          verbatimTextOutput("bin_to1"),
+          textInput('bin_labels', 'Custom Labels (Comma Delimited)'),
+          verbatimTextOutput("bin_to2"),
+
+          textInput("new_covariate", "Covariate Label", value = "new_cov"),
+          actionButton("create_bins", "Create Bins"),
+          width=5
+        ),
+        mainPanel(
+          plotlyOutput("unbin_plot", height="150px"),
+          plotlyOutput("bin_plot"),
+          width=7
+        )
+      )
+    ),    
     tabPanel("Read Counts & Relative Abundance",
       br(),
       sidebarLayout(
