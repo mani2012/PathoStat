@@ -18,19 +18,13 @@ tabPanel("Dimension Reduction",
              mainPanel(
                  tabsetPanel(
                      tabPanel("PCA plot",
-                              # This is a bit different pdf downloading method for plotly,
-                              # as we must buy lisence for that
                               plotlyOutput("pca.plotly"),
-                              selectInput("select_pca_data_format", "Select data type", c("read count", "log10 CPM", "RA")),
-                              actionButton("download_pca", "Download PCA pdf"),
-                              helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")),
+                              selectInput("select_pca_data_format", "Select data type", c("read count", "log10 CPM", "RA"))),
                      tabPanel("PCA variance", DT::dataTableOutput("PCAtable")),
                      tabPanel("PCoA plot",
                               plotlyOutput("pcoa.plotly"),
                               selectInput("pcoa.method", "PCoA method:",
-                                          beta.methods),
-                              actionButton("download_pcoa", "Download PCoA pdf"),
-                              helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")),
+                                          beta.methods)),
                      tabPanel("PCoA variance", DT::dataTableOutput("PCoAtable"))
                  )
              )

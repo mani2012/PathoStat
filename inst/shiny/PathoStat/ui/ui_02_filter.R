@@ -40,7 +40,7 @@ tabPanel("Summary and Filter",
           ),
           br(),
           br(),
-          downloadButton('download_rda', 'Download pathostat data'),
+          downloadButton('download_rds', 'Download .rds file'),
           width=3
         ),
         mainPanel(

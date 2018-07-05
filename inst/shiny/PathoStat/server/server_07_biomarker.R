@@ -64,6 +64,7 @@
     label.vec.save <- unique(label.vec.num)
 
     # transform label into 1 and 0
+    label.vec <- label.vec.num
     label.vec.num[label.vec.num == unique(label.vec.num)[1]] <- 1
     label.vec.num[label.vec.num != 1] <- 0
 
@@ -97,7 +98,10 @@
     colnames(df.output)[ncol(df.output)-1] <- "prevalence"
     colnames(df.output)[ncol(df.output)] <- "group size adjusted fold change"
     df.biomarker <- df.input[,which(colnames(df.input) %in% output.fs$feature)]
-    return(list(df.output = df.output, df.input = df.biomarker, target.vec = label.vec.num))
+    return(list(df.output = df.output, 
+                df.input = df.biomarker, 
+                target.vec = label.vec.num,
+                label.vec = label.vec))
 
 
   }
@@ -130,21 +134,18 @@
 
 
       output$loocv.violin <- renderPlotly({
-        df.tmp <- data.frame(class.vec = biomarker.vals.2$loocv.output.list$testPredictionClassVec,
-                             class = c(rep(0, sum(biomarker.vals$biomarker.list$target.vec == 0)),
-                                       rep(1, sum(biomarker.vals$biomarker.list$target.vec == 1))))
+        df.tmp <- data.frame(class.vec = biomarker.vals.2$loocv.output.list$testPredictionProb,
+                             class = biomarker.vals$biomarker.list$label.vec)
+        #print(df.tmp)
         p.tmp <- df.tmp %>%
           plot_ly(
-            x = ~class,
+            color = ~class,
             y = ~class.vec,
-            split = ~class,
-            type = 'violin',
-            box = list(
-              visible = T
-            ),
-            meanline = list(
-              visible = T
-            )
+            type = 'box',
+            boxpoints = "all", 
+            jitter = 0.3,
+            pointpos = -1.8,
+            colors = c("#132B43", "#56B1F7")
           ) %>%
           layout(
             xaxis = list(

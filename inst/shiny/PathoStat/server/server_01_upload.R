@@ -169,5 +169,6 @@ observeEvent(input$uploadDataPs, {
             # update ui
             updateCovariate()
             updateSample()
+            updateTaxLevel()
     })
 })

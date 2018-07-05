@@ -12,18 +12,15 @@ tabPanel("Diversity",
                  selectInput("select_alpha_div_condition", "Compare between:",
                              covariates.colorbar),
                  selectInput("select_alpha_div_method", "Choose method:",
-                             alpha.methods)
+                             alpha.methods),
+                 actionButton("alpha_boxplot", "Run")
                 ),
                 mainPanel(
                  br(),
                  tabsetPanel(
                    tabPanel("Boxplot",
-                            plotlyOutput("AlphaDiversity"),
-                            actionButton("download_alpha", "Download Alpha diversity pdf"),
-                            helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")
-                   ),
-                   tabPanel("Taxa number Barplot",
-                            plotlyOutput("AlphaDiversityBarplot")
+                            plotlyOutput("AlphaDiversity")
+                    
                    ),
                    tabPanel("Statistical Test",
                             selectInput("select_alpha_stat_method","Non-parametric Test", c("Mann-Whitney","T-test", "Kruskal-Wallis")),
@@ -48,7 +45,8 @@ tabPanel("Diversity",
                                beta.methods),
                    helpText("Only variables with 2 levels are supported for boxplot and stat test here." ),
                    selectInput("select_beta_condition", "Select condition",
-                               covariates.two.levels)
+                               covariates.two.levels),
+                   actionButton("beta_boxplot", "Run")
                  ),
                  mainPanel(
                    br(),
@@ -62,13 +60,10 @@ tabPanel("Diversity",
                                                         covariates.colorbar))
                               ),
                               checkboxInput("checkbox_beta_heatmap", "Add colorbar", value = TRUE),
-                              plotOutput("BetaDiversityHeatmap"),
-                              downloadButton('download_beta_heatmap_pdf', 'Download heatmap PDF')
+                              plotOutput("BetaDiversityHeatmap")
                      ),
                      tabPanel("Boxplot",
-                              plotlyOutput("BetaDiversityBoxplot"),
-                              actionButton("download_beta_boxplot", "Download pdf"),
-                              helpText("Note: Wait for 8-10s after clicking DOWNLOAD, and the figure will be opened externally.")
+                              plotlyOutput("BetaDiversityBoxplot")
                      ),
                      tabPanel("Statistical Test",
                               selectInput("select_beta_stat_method","Select Test", c("PERMANOVA", "Kruskal-Wallis", "Mann-Whitney")),

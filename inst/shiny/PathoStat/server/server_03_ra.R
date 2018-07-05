@@ -321,8 +321,8 @@ output$hmra_plot <- renderPlotly({
 ###### Boxplots Moved Here
 
 output$single_species_ui <- renderUI({
-  #shinyInput <- vals$shiny.input
-  #pstat <- shinyInput$pstat
+  shinyInput <- vals$shiny.input
+  pstat <- shinyInput$pstat
   species.name.vec <- TranslateIdToTaxLevel(pstat, rownames(pstat@otu_table@.Data), input$taxl_single_species)
   tagList(
     selectInput("select_single_species_name_plot", 
@@ -332,8 +332,8 @@ output$single_species_ui <- renderUI({
 })
 
 plotSingleSpeciesBoxplotServer <- eventReactive(input$boxplotButton,{
-  #shinyInput <- vals$shiny.input
-  #pstat <- shinyInput$pstat
+  shinyInput <- vals$shiny.input
+  pstat <- shinyInput$pstat
 
   if (input$taxl_single_species !="no rank")  {
     pstat <- tax_glom(pstat, input$taxl_single_species)
