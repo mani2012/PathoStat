@@ -289,7 +289,8 @@ LOOAUC_simple_multiple_one_df <- function(df, targetVec){
     loo.perf.plot = performance(loo.pred.plot,"tpr","fpr")
     return(list(loo.pred.plot = loo.pred.plot,
     loo.perf.plot = loo.perf.plot,
-    testPredictionClassVec = testPredictionClassVec))
+    testPredictionClassVec = testPredictionClassVec,
+    testPredictionProb = vecProbTmp))
 }
 
 
