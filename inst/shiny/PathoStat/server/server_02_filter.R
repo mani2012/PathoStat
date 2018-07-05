@@ -1,4 +1,3 @@
-
 source(file.path("utils", "old_server_stuff.R"),  local = TRUE)
     observeEvent(input$filterSampleButton,{
         withBusyIndicatorServer("filterSampleButton", {
@@ -531,3 +530,99 @@ source(file.path("utils", "old_server_stuff.R"),  local = TRUE)
                 df.out <- findCountTable()
                 write.csv(df.out, file)
               })
+
+
+output$nbins <- renderUI({
+  tables <- pstat.extraction(pstat)
+  SAM_DATA <- tables$SAM
+  vals <-unlist(SAM_DATA[,input$bin_cov,drop=TRUE])
+  sliderInput("nbins", label="Number of Bins", min=2, max=length(unique(vals)), value=2, step=1)
+})
+output$bin_to1 <- renderPrint({
+  x <- sort(as.numeric(unlist(strsplit(input$bin_breaks,","))))
+  print(x)
+})
+output$bin_to2 <- renderPrint({
+  x <- unlist(strsplit(input$bin_labels,","))
+  print(x)
+})
+
+output$unbin_plot <- renderPlotly({
+  tables <- pstat.extraction(pstat)
+  SAM_DATA <- tables$SAM
+  unbinned = as.numeric(unlist(SAM_DATA[,input$bin_cov]))
+  fit <- density(unbinned)
+  p <- plot_ly(x=fit$x, y=fit$y, type="scatter", mode="lines", fill="tozeroy") %>%
+         layout(title="Unbinned Density",
+                margin = list(l=0,r=0,t=30,b=30))
+  p$elementId <- NULL
+  return(p)
+})
+
+output$bin_plot <- renderPlotly({
+  tables <- pstat.extraction(pstat)
+  SAM_DATA <- tables$SAM
+  unbinned <- as.numeric(unlist(SAM_DATA[,input$bin_cov]))
+  
+  # Bins
+  nbins <- input$nbins
+  n <- input$nbins
+
+  if (!is.null(input$nbins)) {
+    # Overrides numnber of bins
+    bin_breaks = sort(as.numeric(unlist(strsplit(input$bin_breaks,","))))
+    if (length(bin_breaks) > 1) {
+      nbins = bin_breaks
+      n = length(bin_breaks)-1
+    }
+    # Overrides labels of bins
+    bin_labels = unlist(strsplit(input$bin_labels,","))
+    labels <- NULL
+    if (length(bin_labels) == n) {
+      labels <- bin_labels
+    }
+    binned <- cut.default(unbinned, nbins, labels=labels)
+    p <- plot_ly(y = binned, type = "histogram") %>%
+         layout(title = input$bin_cov,
+                xaxis = list(title = "Frequency"),
+                yaxis = list(title = "Bins"),
+                margin = list(l=80)
+         )
+    p$elementId <- NULL
+    return(p)
+  }
+  return()
+})
+
+observeEvent(input$create_bins, {
+  tables <- pstat.extraction(pstat)
+  SAM_DATA <- tables$SAM
+  unbinned <- as.numeric(unlist(SAM_DATA[,input$bin_cov]))
+  
+  # Bins
+  nbins <- input$nbins
+  n <- input$nbins
+
+  if (!is.null(input$nbins)) {
+    # Overrides numnber of bins
+    bin_breaks = sort(as.numeric(unlist(strsplit(input$bin_breaks,","))))
+    if (length(bin_breaks) > 1) {
+      nbins = bin_breaks
+      n = length(bin_breaks)-1
+    }
+    # Overrides labels of bins
+    bin_labels = unlist(strsplit(input$bin_labels,","))
+    labels <- NULL
+    if (length(bin_labels) == n) {
+      labels <- bin_labels
+    }
+    binned <- cut.default(unbinned, nbins, labels=labels)
+
+    SAM_DATA[,input$new_covariate] <- binned
+    pstat@sam_data <- SAM_DATA
+    shinyInput <- list(pstat = pstat)
+    vals$shiny.input <- shinyInput
+    updateCovariate()
+    updateSample()
+  }
+})
