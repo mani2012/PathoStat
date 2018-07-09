@@ -11,24 +11,16 @@ num_covariates <- covariates[!unlist(num_select)]
 
 tabPanel("Summary and Filter",
   tabsetPanel(
-    tabPanel("Sample Filter",
+    tabPanel("Filtering",
       br(),
       sidebarLayout(
         sidebarPanel(
           br(),
-          selectInput("filter_type", "Select filter type", c("By Name", "By Metadata")),
-          
-          conditionalPanel(condition = "input.filter_type == 'By Name'",
-            selectizeInput('filterSample', 'Choose sample name(s) for removal', 
-                           choices = sample.names.all, selected=NULL, multiple = TRUE),
-            withBusyIndicatorUI(
-              actionButton("filterSampleButton", "Filter")
-            )
-          ),
+          selectInput("filter_type", "Select filter type", c("By Metadata", "By Samples", "By Microbes")),
 
+          # Filtering by metadata
           conditionalPanel(condition = "input.filter_type == 'By Metadata'",
-            selectInput("select_condition_sample_filter_sidebar", "Select a variable",
-                        c("Read Number", covariates)),
+            selectInput("select_condition_sample_filter_sidebar", "Select a variable", c("Reads", covariates)),
             conditionalPanel(condition = "output.filter_type == 'num.continuous'",
               helpText("Please select range of the feature to keep"),
               numericInput("num_filter_min", "Min", 0),
@@ -45,77 +37,69 @@ tabPanel("Summary and Filter",
               )
             )
           ),
-          br(),
-          withBusyIndicatorUI(
-            actionButton("resetSampleButton", "Reset")
-          ),
-          br(),
-          br(),
-          downloadButton('download_rds', 'Download .rds file'),
-          width=3
-        ),
-        mainPanel(
-          br(),
-          tabsetPanel(
-            tabPanel("Sample summary",
-              tableOutput("contents_summary"),
-              selectInput("select_condition_sample_filter", "Order by:",
-                          c("Read Number", covariates)),
-              plotlyOutput("sampleCountSum")),
-          tabPanel("Sample distribution in metadata",
-              selectInput("select_condition_sample_distribution", "See distribution in:", covariates),
-              plotlyOutput("sample_metadata_distribution"))
-           ), width=9
-        )
-      )
-    ),
-    tabPanel("Microbes Filter",
-      br(),
-      sidebarLayout(
-        sidebarPanel(
-          br(),
-          selectInput("filter_type_micro", "Select filter type",
-               c("By mapped read number",
-                 "By relative abundace",
-                 "By prevalence")
-          ),
-          conditionalPanel(condition = "input.filter_type_micro == 'By mapped read number'",
-            helpText("Please select the average minimum read mapped"),
-            numericInput("read_filter_min_micro", "Min", 0, min = 0, max = 10000),
+          
+          # Filtering by sample
+          conditionalPanel(condition = "input.filter_type == 'By Samples'",
+            selectizeInput('filterSample', 'Choose sample name(s) for removal', 
+                           choices = sample.names.all, selected=NULL, multiple = TRUE),
             withBusyIndicatorUI(
-              actionButton("filter_read_micro", "Filter")
+              actionButton("filterSampleButton", "Filter")
             )
           ),
-          conditionalPanel(condition = "input.filter_type_micro == 'By relative abundace'",
-            helpText("Please select average minimum RA"),
-            numericInput("ra_filter_min_micro", "Min", 0, min = 0, max = 1),
-            withBusyIndicatorUI(
-              actionButton("filter_ra_micro", "Filter")
-            )
-          ),
-          conditionalPanel(condition = "input.filter_type_micro == 'By prevalence'",
-            helpText("Please select minimum prevalence"),
-            numericInput("prev_filter_min", "Min", 0, min = 0, max = 1),
-            withBusyIndicatorUI(
-              actionButton("filter_prev_micro", "Filter")
+
+          # Filtering by microbes
+          conditionalPanel(condition = "input.filter_type == 'By Microbes'",
+            br(),
+            selectInput("filter_type_micro", "Select filter type",
+                 c("By mapped read number",
+                   "By relative abundace",
+                   "By prevalence")
+            ),
+            conditionalPanel(condition = "input.filter_type_micro == 'By mapped read number'",
+              helpText("Please select the average minimum read mapped"),
+              numericInput("read_filter_min_micro", "Min", 0, min = 0, max = 10000),
+              withBusyIndicatorUI(
+                actionButton("filter_read_micro", "Filter")
+              )
+            ),
+            conditionalPanel(condition = "input.filter_type_micro == 'By relative abundace'",
+              helpText("Please select average minimum RA"),
+              numericInput("ra_filter_min_micro", "Min", 0, min = 0, max = 1),
+              withBusyIndicatorUI(
+                actionButton("filter_ra_micro", "Filter")
+              )
+            ),
+            conditionalPanel(condition = "input.filter_type_micro == 'By prevalence'",
+              helpText("Please select minimum prevalence"),
+              numericInput("prev_filter_min", "Min", 0, min = 0, max = 1),
+              withBusyIndicatorUI(
+                actionButton("filter_prev_micro", "Filter")
+              )
             )
           ),
           br(),
           withBusyIndicatorUI(
-            actionButton("resetSampleButtonMicro", "Reset")
+            actionButton("reset_button", "Reset")
           ),
-          br(),
-          br(),
+          br(),    
+          downloadButton('download_rds', 'Download (.rds)'),
           width=3
         ),
         mainPanel(
-          br(),
-          tabsetPanel(
-            tabPanel("Sample summary",
-            tableOutput("contents_summary_micro"),
-            selectInput("select_condition_sample_filter_micro", "Order by:", c("Taxon elements number", covariates)),
-            plotlyOutput("sampleTaxon"))
-          ), width=9
+          fluidRow(
+            column(6,
+              h4("Overall Summary Table", align="center"),
+              br(),
+              tableOutput("contents_summary")
+            ),
+            column(6,
+              h4("Variable Summary Plots", align="center"),
+              br(),
+              plotlyOutput("summary_plot_top", height="300px"),
+              plotlyOutput("summary_plot_bottom", height="300px")
+            )
+          ), 
+          width=9
         )
       )
     ),
@@ -129,13 +113,13 @@ tabPanel("Summary and Filter",
           verbatimTextOutput("bin_to1"),
           textInput('bin_labels', 'Custom Labels (Comma Delimited)'),
           verbatimTextOutput("bin_to2"),
-
           textInput("new_covariate", "Covariate Label", value = "new_cov"),
           actionButton("create_bins", "Create Bins"),
           width=5
         ),
         mainPanel(
-          plotlyOutput("unbin_plot", height="150px"),
+          plotlyOutput("unbin_plot", height="200px"),
+          br(),
           plotlyOutput("bin_plot"),
           width=7
         )
@@ -145,9 +129,9 @@ tabPanel("Summary and Filter",
       br(),
       sidebarLayout(
         sidebarPanel(
-        br(),
-        selectizeInput('taxlTable', 'Taxonomy Level', choices = tax.name, selected='no rank'),
-         width=3
+          br(),
+          selectizeInput('taxlTable', 'Taxonomy Level', choices = tax.name, selected='no rank'),
+          width=3
         ),
         mainPanel(
           tabsetPanel(
@@ -162,7 +146,8 @@ tabPanel("Summary and Filter",
               downloadButton('downloadCountData', 'Download (.csv)')
             )
             #coreOTUModuleUI("coreOTUModule")
-          ), width=9
+          ), 
+          width=9
         )
       )
     )

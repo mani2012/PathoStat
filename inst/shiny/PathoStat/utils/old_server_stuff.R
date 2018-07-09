@@ -14,11 +14,6 @@ library(vegan)
 library(dplyr)
 library(ape)
 
-
-
-
-
-
 # Converts decimal percentage to string with specified digits
 pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
 
@@ -113,11 +108,11 @@ updateCovariate <- function(){
     updateSelectInput(session, "select_target_condition_biomarker",
                       choices = covariates.colorbar)
     updateSelectInput(session, "select_condition_sample_filter",
-                      choices = c("Read Number", covariates))
+                      choices = c("Reads", covariates))
     updateSelectInput(session, "select_condition_sample_filter_micro",
                       choices = c("Taxon elements number", covariates))
     updateSelectInput(session, "select_condition_sample_filter_sidebar",
-                      choices = c("Read Number", covariates))
+                      choices = c("Reads", covariates))
     updateSelectInput(session, "select_condition_sample_distribution",
                       choices = covariates)
     updateSelectInput(session, "select_condition",
