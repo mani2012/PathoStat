@@ -5,7 +5,7 @@ tabPanel("Dimension Reduction",
       numericInput('ycol.new', 'Principal Component (y-axis)', 2, min = 1, max = 50),
       selectizeInput('taxl.pca', 'Taxonomy Level', choices = tax.name, selected='no rank'),
       selectInput("select_pca_color", "Color points by:", covariates),
-      selectInput("select_pca_shape", "Shape points by:", covariates.colorbar),
+      selectInput("select_pca_shape", "Shape points by:", c("None", covariates.colorbar)),
       actionButton("DR_plot", "Plot"),
       width=3
     ),

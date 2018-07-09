@@ -111,10 +111,10 @@ plotHeatmapColor <- function(df.input,
 
 plotPCAPlotly <- function(df.input,
     condition.color.vec, condition.color.name = "condition",
-    condition.shape.vec, condition.shape.name = "condition",
+    condition.shape.vec=NULL, condition.shape.name = "condition",
     columnTitle = "Title", pc.a = "PC1", pc.b = "PC2"){
 
-    #test and fix the constant/zero row
+    # Test and fix the constant/zero row
     if (sum(rowSums(as.matrix(df.input)) == 0) > 0){
         df.input <- df.input[-which(rowSums(as.matrix(df.input)) == 0),]
     }
@@ -122,23 +122,33 @@ plotPCAPlotly <- function(df.input,
     # conduct PCA
     pca.tmp<- prcomp(t(df.input), scale = TRUE)
     tmp.df <- data.frame(pca.tmp$x)
+
     # add color variable
     tmp.df[[paste(condition.color.name)]] <- condition.color.vec
     # add shape variable
-    tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
-    plot_ly(tmp.df,
-            x = as.formula(paste("~", pc.a, sep = "")),
-            y = as.formula(paste("~", pc.b, sep = "")),
-            mode = "markers",
-            color = as.formula(paste("~", condition.color.name, sep = "")),
-            symbol = as.formula(paste("~", condition.shape.name, sep = "")),
-            type = "scatter",
-            text = rownames(tmp.df),
-            marker = list(size = 10))
+    if (!is.null(condition.shape.vec)) {
+        tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
+        p <- plot_ly(tmp.df,
+                     x = as.formula(paste("~", pc.a, sep = "")),
+                     y = as.formula(paste("~", pc.b, sep = "")),
+                     mode = "markers",
+                     color = as.formula(paste("~", condition.color.name, sep = "")),
+                     symbol = as.formula(paste("~", condition.shape.name, sep = "")),
+                     type = "scatter",
+                     text = rownames(tmp.df),
+                     marker = list(size = 10))
+    } else {
+        p <- plot_ly(tmp.df,
+                     x = as.formula(paste("~", pc.a, sep = "")),
+                     y = as.formula(paste("~", pc.b, sep = "")),
+                     mode = "markers",
+                     color = as.formula(paste("~", condition.color.name, sep = "")),
+                     type = "scatter",
+                     text = rownames(tmp.df),
+                     marker = list(size = 10))        
+    }
+    return(p)
 }
-
-
-
 
 #' Plot PCoA
 #'
@@ -164,7 +174,7 @@ plotPCAPlotly <- function(df.input,
 
 plotPCoAPlotly <- function(physeq.input,
     condition.color.vec, condition.color.name = "condition",
-    condition.shape.vec, condition.shape.name = "condition",
+    condition.shape.vec=NULL, condition.shape.name = "condition",
     method = "bray", columnTitle = "Title",
     pc.a = "Axis.1", pc.b = "Axis.2"){
     # conduct PCoA
@@ -178,7 +188,6 @@ plotPCoAPlotly <- function(physeq.input,
     }
 
     if (method == "bray"){
-      
       
         #First get otu_table and transpose it:
         dist.matrix <- t(data.frame(otu_table(physeq.input)))
@@ -196,23 +205,26 @@ plotPCoAPlotly <- function(physeq.input,
     # add color variable
     tmp.df[[paste(condition.color.name)]] <- condition.color.vec
     # add shape variable
-    tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
-
-    plot_ly(tmp.df,
-    x = as.formula(paste("~", pc.a, sep = "")),
-    y = as.formula(paste("~", pc.b, sep = "")),
-    mode = "markers",
-    color = as.formula(paste("~", condition.color.name, sep = "")),
-    symbol = as.formula(paste("~", condition.shape.name, sep = "")),
-    type = "scatter",
-    text = rownames(tmp.df),
-    marker = list(size = 10))
-
+    if (!is.null(condition.shape.vec)) {
+        tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
+        p <- plot_ly(tmp.df,
+                     x = as.formula(paste("~", pc.a, sep = "")),
+                     y = as.formula(paste("~", pc.b, sep = "")),
+                     mode = "markers",
+                     color = as.formula(paste("~", condition.color.name, sep = "")),
+                     symbol = as.formula(paste("~", condition.shape.name, sep = "")),
+                     type = "scatter",
+                     text = rownames(tmp.df),
+                     marker = list(size = 10))
+    } else {
+        p <- plot_ly(tmp.df,
+                     x = as.formula(paste("~", pc.a, sep = "")),
+                     y = as.formula(paste("~", pc.b, sep = "")),
+                     mode = "markers",
+                     color = as.formula(paste("~", condition.color.name, sep = "")),
+                     type = "scatter",
+                     text = rownames(tmp.df),
+                     marker = list(size = 10))
+    }
+    return(p)
 }
-
-
-
-
-
-
-
