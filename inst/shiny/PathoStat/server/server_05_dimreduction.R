@@ -2,6 +2,14 @@
 plotPCAPlotlyServer <- function(){
   shinyInput <- vals$shiny.input
   physeq1 <- shinyInput$pstat
+
+  # Use shapes is optional
+  if (input$select_pca_shape == "None") {
+    condition.shape.vec <- NULL
+  } else {
+    condition.shape.vec <- physeq1@sam_data[[input$select_pca_shape]]
+  }
+
   if (input$taxl.pca=="no rank")  {
     df.plot <- physeq1@otu_table@.Data
     if (input$select_pca_data_format == "log10 CPM"){
@@ -9,16 +17,19 @@ plotPCAPlotlyServer <- function(){
     } else if (input$select_pca_data_format == "RA"){
       df.plot <- getRelativeAbundance(df.plot)
     }
-    plotPCAPlotly(df.input = df.plot,
-                  condition.color.vec = physeq1@sam_data[[input$select_pca_color]],
-                  condition.color.name = input$select_pca_color,
-                  condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]],
-                  condition.shape.name = input$select_pca_shape,
-                  pc.a = paste("PC", input$xcol.new, sep = ""),
-                  pc.b = paste("PC", input$ycol.new, sep = ""),
-                  columnTitle = paste("PCA with colorbar representing", 
-                                       input$select_pca_color, sep = " ")
-    )
+    p <- plotPCAPlotly(df.input = df.plot,
+                       condition.color.vec = physeq1@sam_data[[input$select_pca_color]],
+                       condition.color.name = input$select_pca_color,
+                       condition.shape.vec = condition.shape.vec,
+                       condition.shape.name = input$select_pca_shape,
+                       pc.a = paste("PC", input$xcol.new, sep = ""),
+                       pc.b = paste("PC", input$ycol.new, sep = ""),
+                       columnTitle = paste("PCA with colorbar representing", input$select_pca_color, sep = " "))
+
+
+   #p$condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]]
+   #p$condition.shape.name = input$select_pca_shape
+
   } else  {
     physeq2 <- tax_glom(physeq1, input$taxl.pca)
     df.plot <- physeq2@otu_table@.Data
@@ -27,30 +38,29 @@ plotPCAPlotlyServer <- function(){
     } else if (input$select_pca_data_format == "RA"){
       df.plot <- getRelativeAbundance(df.plot)
     }
-    plotPCAPlotly(df.input = df.plot,
-                  condition.color.vec = physeq2@sam_data[[input$select_pca_color]],
-                  condition.color.name = input$select_pca_color,
-                  condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]],
-                  condition.shape.name = input$select_pca_shape,
-                  pc.a = paste("PC", input$xcol.new, sep = ""),
-                  pc.b = paste("PC", input$ycol.new, sep = ""),
-                  columnTitle = paste("PCA with colorbar representing",
-                                      input$select_pca_color, sep = " ")
+    p <- plotPCAPlotly(df.input = df.plot,
+                       condition.color.vec = physeq2@sam_data[[input$select_pca_color]],
+                       condition.color.name = input$select_pca_color,
+                       condition.shape.vec = condition.shape.vec,
+                       condition.shape.name = input$select_pca_shape,
+                       pc.a = paste("PC", input$xcol.new, sep = ""),
+                       pc.b = paste("PC", input$ycol.new, sep = ""),
+                       columnTitle = paste("PCA with colorbar representing", input$select_pca_color, sep = " ")
     )
   }
+  p$elementId <- NULL
+  return(p)
 }
-
-# show heatmap in the shiny app by calling the plotting function
+# Show plot after hitting the plot button
 plotPCAPlotlyServerButton <- eventReactive(input$DR_plot,{
   plotPCAPlotlyServer()
 })
-
 output$pca.plotly <- renderPlotly({
   plotPCAPlotlyServerButton()
 })
 
 # interactive PCA table
-output$PCAtable <- DT::renderDataTable({
+do_PCA_table <- function() {
   shinyInput <- vals$shiny.input
   physeq1 <- shinyInput$pstat
   if (input$taxl.pca=="no rank")  {
@@ -74,46 +84,60 @@ output$PCAtable <- DT::renderDataTable({
   table.output.pca[,3] <- scales::percent(as.numeric(table.output.pca[,3]))
   #hide std
   DT::datatable(table.output.pca[,-1], options = list(sDom  = '<"top">t<"bottom">ip'))
+}
+# Show table after hitting the plot button
+tablePCAServerButton <- eventReactive(input$DR_plot,{
+  do_PCA_table()
+})
+output$PCAtable <- DT::renderDataTable({
+  tablePCAServerButton()
 })
 
-### PCoA
+# PCoA
 plotPCoAPlotlyServer <- function(){
   shinyInput <- vals$shiny.input
   physeq1 <- shinyInput$pstat
   physeq1 <- phyloseq(otu_table(physeq1), phy_tree(physeq1),
                       tax_table(physeq1), sample_data(physeq1))
+
+  # Use shapes is optional
+  if (input$select_pca_shape == "None") {
+    condition.shape.vec <- NULL
+  } else {
+    condition.shape.vec <- physeq1@sam_data[[input$select_pca_shape]]
+  }
+
   if (input$taxl.pca=="no rank")  {
-    plotPCoAPlotly(physeq.input = physeq1,
-                   condition.color.vec = physeq1@sam_data[[input$select_pca_color]],
-                   condition.color.name = input$select_pca_color,
-                   condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]],
-                   condition.shape.name = input$select_pca_shape,
-                   method = input$pcoa.method,
-                   pc.a = paste("Axis", input$xcol.new, sep = "."),
-                   pc.b = paste("Axis", input$ycol.new, sep = "."),
-                   columnTitle = paste("PCoA with colorbar representing",
-                                       input$select_pca_color, sep = " ")
+    p <- plotPCoAPlotly(physeq.input = physeq1,
+                        condition.color.vec = physeq1@sam_data[[input$select_pca_color]],
+                        condition.color.name = input$select_pca_color,
+                        condition.shape.vec = condition.shape.vec,
+                        condition.shape.name = input$select_pca_shape,
+                        method = input$pcoa.method,
+                        pc.a = paste("Axis", input$xcol.new, sep = "."),
+                        pc.b = paste("Axis", input$ycol.new, sep = "."),
+                        columnTitle = paste("PCoA with colorbar representing", input$select_pca_color, sep = " ")
     )
   } else  {
     physeq2 <- tax_glom(physeq1, input$taxl.pca)
-    plotPCoAPlotly(physeq.input = physeq2,
-                   condition.color.vec = physeq2@sam_data[[input$select_pca_color]],
-                   condition.color.name = input$select_pca_color,
-                   condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]],
-                   condition.shape.name = input$select_pca_shape,
-                   method = input$pcoa.method,
-                   pc.a = paste("Axis", input$xcol.new, sep = "."),
-                   pc.b = paste("Axis", input$ycol.new, sep = "."),
-                   columnTitle = paste("PCoA with colorbar representing",
-                                       input$select_pca_color, sep = " ")
+    p <- plotPCoAPlotly(physeq.input = physeq2,
+                        condition.color.vec = physeq2@sam_data[[input$select_pca_color]],
+                        condition.color.name = input$select_pca_color,
+                        condition.shape.vec = condition.shape.vec,
+                        condition.shape.name = input$select_pca_shape,
+                        method = input$pcoa.method,
+                        pc.a = paste("Axis", input$xcol.new, sep = "."),
+                        pc.b = paste("Axis", input$ycol.new, sep = "."),
+                        columnTitle = paste("PCoA with colorbar representing", input$select_pca_color, sep = " ")
     )
   }
+  p$elementId <- NULL
+  return(p)
 }
-
+# Show plot after hitting the plot button
 plotPCoAPlotlyServerButton <- eventReactive(input$DR_plot,{
   plotPCoAPlotlyServer()
 })
-
 output$pcoa.plotly <- renderPlotly({
   plotPCoAPlotlyServerButton()
 })
@@ -159,8 +183,8 @@ getOrdPCoA <- function(){
   }
 }
 
-# interactive PCA table
-output$PCoAtable <- DT::renderDataTable({
+# Interactive PCA table
+do_PCoA_table <- function() {
   shinyInput <- vals$shiny.input
   physeq1 <- shinyInput$pstat
   ord <- getOrdPCoA()
@@ -171,4 +195,11 @@ output$PCoAtable <- DT::renderDataTable({
   df.output[,3] <- scales::percent(as.numeric(df.output[,3]))
   # hide eigenvalue
   DT::datatable(df.output[,-1], options = list(sDom  = '<"top">t<"bottom">ip'))
+}
+# Show table after hitting the plot button
+tablePCoAServerButton <- eventReactive(input$DR_plot,{
+  do_PCoA_table()
+})
+output$PCoAtable <- DT::renderDataTable({
+  tablePCoAServerButton()
 })
