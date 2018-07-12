@@ -1,11 +1,10 @@
-plotAlphaServer <- function(){
-    shinyInput <- vals$shiny.input
+# Alpha diversity boxplots
+plotAlphaServer <- function() {
+  shinyInput <- vals$shiny.input
   physeq1 <- shinyInput$pstat
-
-  if (input$taxl.alpha !="no rank")  {
+  if (input$taxl.alpha != "no rank") {
     physeq1 <- tax_glom(physeq1, input$taxl.alpha)
   }
-
   meta.data <- physeq1@sam_data
   meta.data$sample.name <- rownames(meta.data)
   meta.data$richness <- suppressWarnings(estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1])
@@ -15,60 +14,20 @@ plotAlphaServer <- function(){
     labs(title = paste("Alpha diversity between ",
                        input$select_alpha_div_condition,
                        " (", input$select_alpha_div_method, ")", sep = ""))
-
-  ggplotly(g, tooltip="text")
+  g <- ggplotly(g, tooltip="text")
+  g$elementId <- NULL # To suppress a shiny warning
+  return(g)
 }
-
 
 plotAlphaBoxplotButton <- eventReactive(input$alpha_boxplot,{
   plotAlphaServer()
 })
-
 output$AlphaDiversity <- renderPlotly({
   plotAlphaBoxplotButton()
-
 })
 
-
-
-
-output$table.alpha <- DT::renderDataTable({
-    shinyInput <- vals$shiny.input
-  physeq1 <- shinyInput$pstat
-  if (input$taxl.alpha !="no rank")  {
-    physeq1 <- tax_glom(physeq1, input$taxl.alpha)
-  }
-  meta.data <- physeq1@sam_data
-  meta.data$sample.name <- rownames(meta.data)
-  meta.data$richness <- suppressWarnings(estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1])
-  colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
-  rownames(meta.data) <- 1:nrow(meta.data)
-
-  DT::datatable(meta.data %>% dplyr::select(sample.name, condition, richness))
-
-})
-
-output$download_table_alpha <- downloadHandler(
-  filename = function() { paste('Alpha_diversity_table', '.csv', sep='') },
-  content = function(file) {
-      shinyInput <- vals$shiny.input
-    physeq1 <- shinyInput$pstat
-    if (input$taxl.alpha !="no rank")  {
-      physeq1 <- tax_glom(physeq1, input$taxl.alpha)
-    }
-    meta.data <- physeq1@sam_data
-    meta.data$sample.name <- rownames(meta.data)
-    meta.data$richness <- suppressWarnings(estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1])
-    colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
-    rownames(meta.data) <- 1:nrow(meta.data)
-    meta.data <- as_tibble(meta.data)
-    meta.data <- meta.data %>% select(sample.name, condition, richness)
-    write.csv(data.frame(meta.data), file)
-  }
-)
-
-
-alpha.stat.output <- reactive({
+# Alpha diversity statistics
+do_alpha_stats <- function() {
   shinyInput <- vals$shiny.input
   physeq1 <- shinyInput$pstat
   if (input$taxl.alpha !="no rank")  {
@@ -117,8 +76,6 @@ alpha.stat.output <- reactive({
       colnames(output.table) <- group.name
       output.table
 
-
-
     } else if (input$select_alpha_stat_method == "T-test"){
               result.list <- list()
       meta.data.list <- list()
@@ -148,10 +105,54 @@ alpha.stat.output <- reactive({
   } else{
     "Condition level must be at least 2."
   }
+}
+plotAlphaBoxplotButton3 <- eventReactive(input$alpha_boxplot,{
+  do_alpha_stats()
 })
-output$alpha.stat.test <- renderTable({
-  alpha.stat.output()
-},include.rownames=TRUE)
+output$alpha.stat.test <- DT::renderDataTable({
+  plotAlphaBoxplotButton3()
+}, options = list(sDom  = '<"top">t<"bottom">ip'))
+
+# Alpha diversity table
+do_alpha_table <- function() {
+  shinyInput <- vals$shiny.input
+  physeq1 <- shinyInput$pstat
+  if (input$taxl.alpha !="no rank")  {
+    physeq1 <- tax_glom(physeq1, input$taxl.alpha)
+  }
+  meta.data <- physeq1@sam_data
+  meta.data$sample.name <- rownames(meta.data)
+  meta.data$richness <- suppressWarnings(estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1])
+  colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
+  rownames(meta.data) <- 1:nrow(meta.data)
+  DT::datatable(meta.data %>% dplyr::select(sample.name, condition, richness))
+}
+plotAlphaBoxplotButton2 <- eventReactive(input$alpha_boxplot,{
+  do_alpha_table()
+})
+output$table.alpha <- DT::renderDataTable({
+  plotAlphaBoxplotButton2()
+})
+
+# Download alpha diversity table
+output$download_table_alpha <- downloadHandler(
+  filename = function() { paste('Alpha_diversity_table', '.csv', sep='') },
+  content = function(file) {
+      shinyInput <- vals$shiny.input
+    physeq1 <- shinyInput$pstat
+    if (input$taxl.alpha !="no rank")  {
+      physeq1 <- tax_glom(physeq1, input$taxl.alpha)
+    }
+    meta.data <- physeq1@sam_data
+    meta.data$sample.name <- rownames(meta.data)
+    meta.data$richness <- suppressWarnings(estimate_richness(physeq = physeq1, split = T, measures = input$select_alpha_div_method)[,1])
+    colnames(meta.data)[which(colnames(meta.data) == input$select_alpha_div_condition)] <- "condition"
+    rownames(meta.data) <- 1:nrow(meta.data)
+    meta.data <- as_tibble(meta.data)
+    meta.data <- meta.data %>% select(sample.name, condition, richness)
+    write.csv(data.frame(meta.data), file)
+  }
+)
 
 
 
@@ -217,17 +218,13 @@ plotBetaHeatmapColorServer <- function(){
                                                 input$select_beta_heatmap_condition, sep = " ")))
   }
 }
-
-
 output$BetaDiversityHeatmap <- renderPlot({
   plotBetaHeatmapColorServer()
 })
 
-
-
-
-plotBetaBoxplotServer <- function(){
-    shinyInput <- vals$shiny.input
+# Beta diversity boxplots
+plotBetaBoxplotServer <- function() {
+  shinyInput <- vals$shiny.input
   physeq1 <- shinyInput$pstat
 
   if (input$taxl.beta !="no rank")  {
@@ -238,17 +235,14 @@ plotBetaBoxplotServer <- function(){
   meta.data$sample.name <- rownames(meta.data)
   colnames(meta.data)[which(colnames(meta.data) == input$select_beta_condition)] <- "condition"
 
-
-
-  if (input$select_beta_div_method == "bray"){
+  if (input$select_beta_div_method == "bray") {
       #First get otu_table and transpose it:
       dist.matrix <- t(data.frame(otu_table(physeq1)))
       #Then use vegdist from vegan to generate a bray distance object:
       dist.tmp <- vegdist(dist.matrix, method = "bray")
-  }else{
+  } else {
       dist.tmp = phyloseq::distance(physeq1, method = input$select_beta_div_method)
   }
-
   dist.mat <- as.matrix(dist.tmp)
   dist.within.a <- c()
   dist.within.b <- c()
@@ -267,32 +261,78 @@ plotBetaBoxplotServer <- function(){
 
     }
   }
-
   y.axis <- list(
     title = paste(input$select_beta_div_method, "Distance", sep = " ")
   )
-
   p <- plot_ly(y = ~dist.within.a, type = "box", name = paste("Within", unique(meta.data$condition)[1])) %>%
     add_trace(y = ~dist.within.b, name = paste("Within", unique(meta.data$condition)[2])) %>%
     add_trace(y = ~dist.between, name = "Between 2 conditions") %>%
     layout(yaxis = y.axis)
-
+  p$elementId <- NULL # To suppress a shiny warning
   p
 }
-
-
 plotBetaBoxplotServerButton <- eventReactive(input$beta_boxplot,{
   plotBetaBoxplotServer()
 })
-
 output$BetaDiversityBoxplot <- renderPlotly({
   plotBetaBoxplotServerButton()
-
 })
 
+# Beta diversity table
+do_beta_table <- function() {
+  shinyInput <- vals$shiny.input
+  physeq1 <- shinyInput$pstat
 
+  if (input$taxl.beta=="no rank")  {
+      if (input$select_beta_div_method == "bray"){
+      #First get otu_table and transpose it:
+      dist.matrix <- t(data.frame(otu_table(physeq1)))
+      #Then use vegdist from vegan to generate a bray distance object:
+      dist.mat <- vegdist(dist.matrix, method = "bray")
+  }else{
+      dist.mat = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+  }
 
-beta.stat.output <- reactive({
+  } else{
+    physeq2 <- tax_glom(physeq1, input$taxl.beta)
+      if (input$select_beta_div_method == "bray"){
+      #First get otu_table and transpose it:
+      dist.matrix <- t(data.frame(otu_table(physeq2)))
+      #Then use vegdist from vegan to generate a bray distance object:
+      dist.mat <- vegdist(dist.matrix, method = "bray")
+      }else{
+      dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
+      }
+  }
+  dist.mat <- as.matrix(dist.mat)
+  return(dist.mat)
+}
+plotBetaBoxplotServerButton2 <- eventReactive(input$beta_boxplot,{
+  do_beta_table()
+})
+output$table.beta <- DT::renderDataTable({
+  plotBetaBoxplotServerButton2()
+}, options=list(paging = TRUE, scrollX = TRUE))
+
+# Download beta diversity table
+output$download_table_beta <- downloadHandler(
+  filename = function() { paste('Beta_diversity_table', '.csv', sep='') },
+  content = function(file) {
+      shinyInput <- vals$shiny.input
+    physeq1 <- shinyInput$pstat
+
+    if (input$taxl.beta=="no rank")  {
+      dist.mat = phyloseq::distance(physeq1, method = input$select_beta_div_method)
+    } else{
+      physeq2 <- tax_glom(physeq1, input$taxl.beta)
+      dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
+    }
+    dist.mat <- as.matrix(dist.mat)
+    write.csv(data.frame(dist.mat), file)
+  }
+)
+
+do_beta_stats <- function() {
   shinyInput <- vals$shiny.input
   physeq1 <- shinyInput$pstat
   if (input$select_beta_stat_method == "PERMANOVA"){
@@ -369,72 +409,18 @@ beta.stat.output <- reactive({
       rownames(output.table) <- c("Method", "P-value")
       colnames(output.table) <- group.name
       output.table
-
-
-    } else{
+    } else {
       tmp <- kruskal.test(list(dist.within.a, dist.within.b, dist.between))
       output <- c(tmp$method, tmp$p.value)
       output.table <- data.frame(output)
       rownames(output.table) <- c("Method", "P-value")
       output.table
     }
-
   }
-
-
+}
+plotBetaBoxplotServerButton3 <- eventReactive(input$beta_boxplot, {
+  do_beta_stats()
 })
-
-output$beta.stat.test <- renderTable({
-  beta.stat.output()
-
-},include.rownames=TRUE)
-
-output$table.beta <- DT::renderDataTable({
-    shinyInput <- vals$shiny.input
-  physeq1 <- shinyInput$pstat
-
-  if (input$taxl.beta=="no rank")  {
-      if (input$select_beta_div_method == "bray"){
-      #First get otu_table and transpose it:
-      dist.matrix <- t(data.frame(otu_table(physeq1)))
-      #Then use vegdist from vegan to generate a bray distance object:
-      dist.mat <- vegdist(dist.matrix, method = "bray")
-  }else{
-      dist.mat = phyloseq::distance(physeq1, method = input$select_beta_div_method)
-  }
-
-  } else{
-    physeq2 <- tax_glom(physeq1, input$taxl.beta)
-      if (input$select_beta_div_method == "bray"){
-      #First get otu_table and transpose it:
-      dist.matrix <- t(data.frame(otu_table(physeq2)))
-      #Then use vegdist from vegan to generate a bray distance object:
-      dist.mat <- vegdist(dist.matrix, method = "bray")
-      }else{
-      dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
-      }
-  }
-  dist.mat <- as.matrix(dist.mat)
-  return(dist.mat)
-
-},
-options = list(
-    paging = TRUE, scrollX = TRUE
-))
-
-output$download_table_beta <- downloadHandler(
-  filename = function() { paste('Beta_diversity_table', '.csv', sep='') },
-  content = function(file) {
-      shinyInput <- vals$shiny.input
-    physeq1 <- shinyInput$pstat
-
-    if (input$taxl.beta=="no rank")  {
-      dist.mat = phyloseq::distance(physeq1, method = input$select_beta_div_method)
-    } else{
-      physeq2 <- tax_glom(physeq1, input$taxl.beta)
-      dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
-    }
-    dist.mat <- as.matrix(dist.mat)
-    write.csv(data.frame(dist.mat), file)
-  }
-)
+output$beta.stat.test <- DT::renderDataTable({
+  plotBetaBoxplotServerButton3()
+}, options = list(sDom  = '<"top">t<"bottom">ip'))
