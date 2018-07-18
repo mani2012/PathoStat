@@ -14,6 +14,12 @@ library(vegan)
 library(dplyr)
 library(ape)
 
+# check if integer(0)
+is.integer0 <- function(x)
+{
+  is.integer(x) && length(x) == 0L
+}
+
 # Converts decimal percentage to string with specified digits
 pct2str <- function(v, digits=2) {sprintf(paste0('%.',digits,'f'), v*100)}
 

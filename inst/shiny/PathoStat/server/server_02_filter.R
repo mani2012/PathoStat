@@ -441,8 +441,8 @@ findCountTable <- reactive({
     pstat <- tax_glom(pstat, input$taxlTable)
   }
   df.out <- pstat@otu_table@.Data
-  rownames(df.out) <- TranslateIdToTaxLevel(pstat, rownames(df.out),
-                                            input$taxlTable)
+  rownames(df.out) <- make.names(TranslateIdToTaxLevel(pstat, rownames(df.out),
+                                                       input$taxlTable), unique=TRUE)
   df.out
 })
 
@@ -453,8 +453,8 @@ findRATable <- reactive({
     pstat <- tax_glom(pstat, input$taxlTable)
   }
   df.ra <- getRelativeAbundance(pstat@otu_table@.Data)
-  rownames(df.ra) <- TranslateIdToTaxLevel(pstat, rownames(df.ra),
-                                            input$taxlTable)
+  rownames(df.ra) <- make.names(TranslateIdToTaxLevel(pstat, rownames(df.ra),
+                                                     input$taxlTable), unique=TRUE)
   df.ra
 })
 

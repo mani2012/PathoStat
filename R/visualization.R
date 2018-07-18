@@ -128,7 +128,7 @@ plotPCAPlotly <- function(df.input,
     # add shape variable
     if (!is.null(condition.shape.vec)) {
         tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
-        p <- plot_ly(tmp.df,
+        p <- suppressWarnings(plot_ly(tmp.df,
                      x = as.formula(paste("~", pc.a, sep = "")),
                      y = as.formula(paste("~", pc.b, sep = "")),
                      mode = "markers",
@@ -136,16 +136,16 @@ plotPCAPlotly <- function(df.input,
                      symbol = as.formula(paste("~", condition.shape.name, sep = "")),
                      type = "scatter",
                      text = rownames(tmp.df),
-                     marker = list(size = 10))
+                     marker = list(size = 10)))
     } else {
-        p <- plot_ly(tmp.df,
+        p <- suppressWarnings(plot_ly(tmp.df,
                      x = as.formula(paste("~", pc.a, sep = "")),
                      y = as.formula(paste("~", pc.b, sep = "")),
                      mode = "markers",
                      color = as.formula(paste("~", condition.color.name, sep = "")),
                      type = "scatter",
                      text = rownames(tmp.df),
-                     marker = list(size = 10))        
+                     marker = list(size = 10)))        
     }
     return(p)
 }
@@ -207,7 +207,7 @@ plotPCoAPlotly <- function(physeq.input,
     # add shape variable
     if (!is.null(condition.shape.vec)) {
         tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
-        p <- plot_ly(tmp.df,
+        p <- suppressWarnings(plot_ly(tmp.df,
                      x = as.formula(paste("~", pc.a, sep = "")),
                      y = as.formula(paste("~", pc.b, sep = "")),
                      mode = "markers",
@@ -215,16 +215,16 @@ plotPCoAPlotly <- function(physeq.input,
                      symbol = as.formula(paste("~", condition.shape.name, sep = "")),
                      type = "scatter",
                      text = rownames(tmp.df),
-                     marker = list(size = 10))
+                     marker = list(size = 10)))
     } else {
-        p <- plot_ly(tmp.df,
+        p <- suppressWarnings(plot_ly(tmp.df,
                      x = as.formula(paste("~", pc.a, sep = "")),
                      y = as.formula(paste("~", pc.b, sep = "")),
                      mode = "markers",
                      color = as.formula(paste("~", condition.color.name, sep = "")),
                      type = "scatter",
                      text = rownames(tmp.df),
-                     marker = list(size = 10))
+                     marker = list(size = 10)))
     }
     return(p)
 }
