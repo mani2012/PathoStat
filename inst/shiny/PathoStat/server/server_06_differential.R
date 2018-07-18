@@ -290,6 +290,9 @@
     shinyInput <- vals$shiny.input
     pstat <- shinyInput$pstat
     target.var.index <- which(pstat@sam_data@names == input$da.condition)
+    if (is.integer0(target.var.index)){
+      target.var.index <- 1
+    }
     label.vec <- pstat@sam_data@.Data[[target.var.index]]
     label.level.num <- length(unique(label.vec))
     factor.non.categorical <- covariates[which(!covariates %in% covariates.colorbar)]
@@ -320,6 +323,9 @@
     shinyInput <- vals$shiny.input
     pstat <- shinyInput$pstat
     target.var.index <- which(pstat@sam_data@names == input$edger.condition)
+    if (is.integer0(target.var.index)){
+      target.var.index <- 1
+    }    
     label.vec <- pstat@sam_data@.Data[[target.var.index]]
     label.level.num <- length(unique(label.vec))
     if (label.level.num == 2){
@@ -436,6 +442,9 @@
     shinyInput <- vals$shiny.input
     pstat <- shinyInput$pstat
     target.var.index <- which(pstat@sam_data@names == input$pa.condition)
+    if (is.integer0(target.var.index)){
+      target.var.index <- 1
+    }    
     label.vec <- pstat@sam_data@.Data[[target.var.index]]
     label.level.num <- length(unique(label.vec))
     if (label.level.num == 2){

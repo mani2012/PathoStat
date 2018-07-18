@@ -17,15 +17,21 @@ plotPCAPlotlyServer <- function(){
     } else if (input$select_pca_data_format == "RA"){
       df.plot <- getRelativeAbundance(df.plot)
     }
-    p <- plotPCAPlotly(df.input = df.plot,
+  # suppress warnings (otherwise, see Warning in RColorBrewer::brewer.pal(N, "Set2"))  
+  storeWarn<- getOption("warn")
+  options(warn = -1)     
+    p <- suppressWarnings(plotPCAPlotly(df.input = df.plot,
                        condition.color.vec = physeq1@sam_data[[input$select_pca_color]],
                        condition.color.name = input$select_pca_color,
                        condition.shape.vec = condition.shape.vec,
                        condition.shape.name = input$select_pca_shape,
                        pc.a = paste("PC", input$xcol.new, sep = ""),
                        pc.b = paste("PC", input$ycol.new, sep = ""),
-                       columnTitle = paste("PCA with colorbar representing", input$select_pca_color, sep = " "))
-
+                       columnTitle = paste("PCA with colorbar representing", input$select_pca_color, sep = " ")))
+        #restore warnings, delayed so plot is completed
+    shinyjs::delay(expr =({ 
+      options(warn = storeWarn) 
+    }) ,ms = 10) 
 
    #p$condition.shape.vec = physeq1@sam_data[[input$select_pca_shape]]
    #p$condition.shape.name = input$select_pca_shape
@@ -38,25 +44,33 @@ plotPCAPlotlyServer <- function(){
     } else if (input$select_pca_data_format == "RA"){
       df.plot <- getRelativeAbundance(df.plot)
     }
-    p <- plotPCAPlotly(df.input = df.plot,
+  # suppress warnings (otherwise, see Warning in RColorBrewer::brewer.pal(N, "Set2"))  
+  storeWarn<- getOption("warn")
+  options(warn = -1) 
+    p <- suppressWarnings(plotPCAPlotly(df.input = df.plot,
                        condition.color.vec = physeq2@sam_data[[input$select_pca_color]],
                        condition.color.name = input$select_pca_color,
                        condition.shape.vec = condition.shape.vec,
                        condition.shape.name = input$select_pca_shape,
                        pc.a = paste("PC", input$xcol.new, sep = ""),
                        pc.b = paste("PC", input$ycol.new, sep = ""),
-                       columnTitle = paste("PCA with colorbar representing", input$select_pca_color, sep = " ")
+                       columnTitle = paste("PCA with colorbar representing", input$select_pca_color, sep = " "))
     )
+        #restore warnings, delayed so plot is completed
+    shinyjs::delay(expr =({ 
+      options(warn = storeWarn) 
+    }) ,ms = 10) 
   }
   p$elementId <- NULL
-  return(p)
+  return(suppressWarnings(p))
 }
 # Show plot after hitting the plot button
 plotPCAPlotlyServerButton <- eventReactive(input$DR_plot,{
-  plotPCAPlotlyServer()
+
+  suppressWarnings(plotPCAPlotlyServer())
 })
 output$pca.plotly <- renderPlotly({
-  plotPCAPlotlyServerButton()
+  suppressWarnings(plotPCAPlotlyServerButton())
 })
 
 # interactive PCA table
@@ -106,7 +120,9 @@ plotPCoAPlotlyServer <- function(){
   } else {
     condition.shape.vec <- physeq1@sam_data[[input$select_pca_shape]]
   }
-
+  # suppress warnings (otherwise, see Warning in RColorBrewer::brewer.pal(N, "Set2"))  
+  storeWarn<- getOption("warn")
+  options(warn = -1)  
   if (input$taxl.pca=="no rank")  {
     p <- plotPCoAPlotly(physeq.input = physeq1,
                         condition.color.vec = physeq1@sam_data[[input$select_pca_color]],
@@ -132,6 +148,10 @@ plotPCoAPlotlyServer <- function(){
     )
   }
   p$elementId <- NULL
+          #restore warnings, delayed so plot is completed
+    shinyjs::delay(expr =({ 
+      options(warn = storeWarn) 
+    }) ,ms = 10) 
   return(p)
 }
 # Show plot after hitting the plot button
