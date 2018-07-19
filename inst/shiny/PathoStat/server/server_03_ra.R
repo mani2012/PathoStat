@@ -276,7 +276,7 @@ plot_hmra <- function() {
   hm.ra <- plot_ly(x = colnames(m), y = rownames(m), z = m,
                 type = "heatmap",
                 colors= "RdPu",
-                hoverinfo = "x+y+text",
+                hoverinfo = "x+y+z+text",
                 text=hover.txt) %>%
     layout(xaxis = list(showticklabels = FALSE, title = "", ticks = "", tickangle = -45),
            yaxis = list(showticklabels = FALSE, type = 'category', ticks = ""))
