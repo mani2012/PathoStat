@@ -46,11 +46,9 @@ tabPanel("Diversity",
             tabPanel("Heatmap",
               br(),
               fluidRow(
-                column(3, selectInput("select_beta_heatmap_condition_1", "Add colorbar on:", covariates.colorbar)),
-                column(3, selectInput("select_beta_heatmap_condition_2", "Add second colorbar on:", covariates.colorbar))
-              ),
-              checkboxInput("checkbox_beta_heatmap", "Add colorbar", value = TRUE),
-              plotOutput("BetaDiversityHeatmap")
+                selectizeInput('bdhm_select_conditions', 'Color Samples by Condition', choices=covariates.colorbar, multiple=TRUE),
+                radioButtons("bdhm_sort_by", "Sort By", c("No Sorting" = "nosort", "Conditions" = "conditions"), selected="nosort")),
+                plotlyOutput("BetaDiversityHeatmap")
             ),
             tabPanel("Boxplot",
               plotlyOutput("BetaDiversityBoxplot"),
