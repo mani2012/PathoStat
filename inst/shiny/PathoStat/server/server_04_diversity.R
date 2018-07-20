@@ -138,7 +138,7 @@ output$table.alpha <- DT::renderDataTable({
 output$download_table_alpha <- downloadHandler(
   filename = function() { paste('Alpha_diversity_table', '.csv', sep='') },
   content = function(file) {
-      shinyInput <- vals$shiny.input
+    shinyInput <- vals$shiny.input
     physeq1 <- shinyInput$pstat
     if (input$taxl.alpha !="no rank")  {
       physeq1 <- tax_glom(physeq1, input$taxl.alpha)
@@ -154,72 +154,110 @@ output$download_table_alpha <- downloadHandler(
   }
 )
 
-
-
-
-# independent heatmap plotting function in the server using specific data from input
-plotBetaHeatmapColorServer <- function(){
-    shinyInput <- vals$shiny.input
+do_beta_heatmap <- function(){
+  shinyInput <- vals$shiny.input
   physeq1 <- shinyInput$pstat
+  tables <- pstat.extraction(shinyInput$pstat)
+  SAM_DATA <- tables$SAM
 
-  if (input$taxl.beta=="no rank")  {
-    if (input$checkbox_beta_heatmap){
-      add.colorbar <- "auto"
-    } else{
-      add.colorbar <- NULL
-    }
-
-    if (input$select_beta_div_method == "bray"){
-      #First get otu_table and transpose it:
-      dist.matrix <- t(data.frame(otu_table(physeq1)))
-      #Then use vegdist from vegan to generate a bray distance object:
-      dist.mat <- vegdist(dist.matrix, method = "bray")
-    }else{
-      dist.mat = phyloseq::distance(physeq1, method = input$select_beta_div_method)
-    }
-
-
-    dist.mat <- as.matrix(dist.mat)
-    return(plotHeatmapColor(dist.mat,
-                            do.scale = FALSE,
-                            condition.vec.1 = physeq1@sam_data[[input$select_beta_heatmap_condition_1]],
-                            condition.vec.2 = physeq1@sam_data[[input$select_beta_heatmap_condition_2]],
-                            condition.1.name = input$select_beta_heatmap_condition_1,
-                            condition.2.name = input$select_beta_heatmap_condition_2,
-                            annotationColors = add.colorbar,
-                            columnTitle = paste("Heatmap with colorbar representing",
-                                                input$select_beta_heatmap_condition, sep = " ")))
-  } else  {
+  if (input$taxl.beta != "no rank") {
     physeq2 <- tax_glom(physeq1, input$taxl.beta)
-    if (input$checkbox_beta_heatmap){
-      add.colorbar <- "auto"
-    } else{
-      add.colorbar <- NULL
-    }
+  } else {
+    physeq2 <- physeq1
+  }
+  if (input$select_beta_div_method == "bray"){
+    #First get otu_table and transpose it:
+    dist.matrix <- t(data.frame(otu_table(physeq2)))
+    #Then use vegdist from vegan to generate a bray distance object:
+    dist.mat <- vegdist(dist.matrix, method = "bray")
+  }else{
+    dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
+  }
+  dist.mat <- as.data.frame(dist.mat)
+  dist.mat <- dist.mat[order(match(rownames(dist.mat), rev(rownames(dist.mat)))),,drop=FALSE]
 
-
-    if (input$select_beta_div_method == "bray"){
-      #First get otu_table and transpose it:
-      dist.matrix <- t(data.frame(otu_table(physeq2)))
-      #Then use vegdist from vegan to generate a bray distance object:
-      dist.mat <- vegdist(dist.matrix, method = "bray")
-    }else{
-      dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
+  if (!is.null(input$bdhm_select_conditions)) {
+    df.sam <- SAM_DATA[,input$bdhm_select_conditions,drop=FALSE]
+    if (input$bdhm_sort_by == "conditions") {
+      for (i in ncol(df.sam):1) {
+        df.sam <- df.sam[order(df.sam[[i]]),,drop=FALSE]
+      }
+      dist.mat <- dist.mat[order(match(rownames(dist.mat), rownames(df.sam))),,drop=FALSE]
+      dist.mat <- dist.mat[,order(match(colnames(dist.mat), rownames(df.sam))),drop=FALSE]
+    } else {
+      df.sam <- df.sam[order(match(rownames(df.sam), rownames(dist.mat))),,drop=FALSE]
     }
-    dist.mat <- as.matrix(dist.mat)
-    return(plotHeatmapColor(dist.mat,
-                            do.scale = FALSE,
-                            condition.vec.1 = physeq2@sam_data[[input$select_beta_heatmap_condition_1]],
-                            condition.vec.2 = physeq2@sam_data[[input$select_beta_heatmap_condition_2]],
-                            condition.1.name = input$select_beta_heatmap_condition_1,
-                            condition.2.name = input$select_beta_heatmap_condition_2,
-                            annotationColors = add.colorbar,
-                            columnTitle = paste("Heatmap with colorbar representing",
-                                                input$select_beta_heatmap_condition, sep = " ")))
+  }
+
+  m <- data.matrix(dist.mat)
+  hover.txt <- c()
+  for (i in 1:ncol(dist.mat)) {
+    hover.txt <- cbind(hover.txt, dist.mat[[i]])
+  }
+  hm.beta <- plot_ly(x = colnames(m), y = rownames(m), z = m,
+                     type = "heatmap",
+                     colors= "RdPu",
+                     hoverinfo = "x+y+z") %>%
+    layout(xaxis = list(showticklabels = FALSE, title = "", ticks = "", tickangle = -45),
+           yaxis = list(showticklabels = FALSE, type = 'category', ticks = ""))
+
+  if (!is.null(input$bdhm_select_conditions)) {
+    hover.txt <- c()
+    for (i in 1:ncol(df.sam)) {
+      hover.txt <- cbind(hover.txt, df.sam[[i]])
+    }
+    df.sam[] <- lapply(df.sam, factor)
+    
+    # Y-axis of subplot
+    m <- data.matrix(df.sam)
+    m.row.normalized <- apply(m, 2, function(x)(x-min(x))/(max(x)-min(x)))
+    hm.sam.y <- plot_ly(x = colnames(m.row.normalized), 
+                        y = rownames(m.row.normalized), 
+                        z = m.row.normalized, 
+                        type = "heatmap",
+                        showscale=FALSE,
+                        hoverinfo = "x+y+text",
+                        transpose=FALSE,
+                        text=hover.txt) %>%
+      layout(xaxis = list(title = "", tickangle = -45),
+             yaxis = list(showticklabels = FALSE, type = 'category', ticks = ""),
+             orientation=TRUE)
+    
+    # X-axis of subplot
+    m <- data.matrix(df.sam)
+    m.row.normalized <- apply(m, 2, function(x)(x-min(x))/(max(x)-min(x)))
+    m.row.normalized = t(m.row.normalized)
+    m.row.normalized = m.row.normalized[order(match(rownames(m.row.normalized), rev(rownames(m.row.normalized)))),,drop=FALSE]
+    hm.sam.x <- plot_ly(x = colnames(m.row.normalized), 
+                        y = rownames(m.row.normalized), 
+                        z = m.row.normalized, 
+                        type = "heatmap",
+                        showscale=FALSE,
+                        hoverinfo = "x+y+text",
+                        transpose=FALSE,
+                        text=t(hover.txt)) %>%
+      layout(xaxis = list(showticklabels = FALSE, type = 'category', ticks = ""),
+             yaxis = list(title = "", tickangle = -45),
+             orientation=TRUE)
+  }
+
+  empty <- plotly_empty(type = "scatter")
+  if (!is.null(input$bdhm_select_conditions)) {
+    hm.sam.beta.top <- subplot(empty, hm.sam.x, widths=c(0.1,  0.9))
+    hm.sam.beta.bot <- subplot(hm.sam.y, hm.beta, widths=c(0.1,  0.9))
+    hm.sam.beta <- subplot(hm.sam.beta.top, hm.sam.beta.bot, nrows=2, heights=c(0.1,  0.9))
+    hm.sam.beta$elementId <- NULL # To suppress a shiny warning
+    return(hm.sam.beta)
+  } else {
+    hm.beta$elementId <- NULL # To suppress a shiny warning
+    return(hm.beta)
   }
 }
-output$BetaDiversityHeatmap <- renderPlot({
-  plotBetaHeatmapColorServer()
+plotBetaBoxplotServerButton3 <- eventReactive(input$beta_boxplot,{
+  do_beta_heatmap()
+})
+output$BetaDiversityHeatmap <- renderPlotly({
+  plotBetaBoxplotServerButton3()
 })
 
 # Beta diversity boxplots
@@ -258,7 +296,6 @@ plotBetaBoxplotServer <- function() {
       } else{
         dist.between <- c(dist.between, dist.mat[i,j])
       }
-
     }
   }
   y.axis <- list(
