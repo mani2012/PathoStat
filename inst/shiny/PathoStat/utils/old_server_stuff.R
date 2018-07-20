@@ -106,6 +106,11 @@ updateCovariate <- function(){
             covariates.two.levels <- c(covariates.two.levels, covariates[i])
         }
     }
+    
+    ## numeric cov
+    sam_temp <- as.data.frame(pstat@sam_data)
+    num_select <- lapply(covariates, function(x) is.categorical(unlist(sam_temp[,x])))
+    num_covariates <- covariates[!unlist(num_select)]
 
     updateSelectInput(session, "select_covariate_condition_biomarker",
                       choices = covariates)
@@ -153,4 +158,7 @@ updateCovariate <- function(){
                       choices = c("All", covariates))
     updateSelectInput(session, "hmra_select_conditions",
                       choices = covariates)
+    updateSelectInput(session, "bin_cov",
+                      choices = num_covariates)    
+    
 }

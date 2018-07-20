@@ -47,6 +47,20 @@ for (i in 1:length(covariates)){
   }
 }
 
+is.categorical <- function(v) {
+  if (class(v) == "integer" || class(v) == "numeric") {
+    return(F)
+  } else {
+    return(T)
+  }
+}
+
+# numeric cov
+    sam_temp <- as.data.frame(pstat@sam_data)
+    num_select <- lapply(covariates, function(x) is.categorical(unlist(sam_temp[,x])))
+    num_covariates <- covariates[!unlist(num_select)]
+
+
 
 maxbatchElems <- minbatch(c(pstat@sam_data[,1])[[1]])
 maxcondElems <- minbatch(c(pstat@sam_data[,2])[[1]])

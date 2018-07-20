@@ -173,7 +173,7 @@ do_beta_heatmap <- function(){
   }else{
     dist.mat = phyloseq::distance(physeq2, method = input$select_beta_div_method)
   }
-  dist.mat <- as.data.frame(dist.mat)
+  dist.mat <- as.matrix(dist.mat)
   dist.mat <- dist.mat[order(match(rownames(dist.mat), rev(rownames(dist.mat)))),,drop=FALSE]
 
   if (!is.null(input$bdhm_select_conditions)) {
@@ -242,6 +242,9 @@ do_beta_heatmap <- function(){
   }
 
   empty <- plotly_empty(type = "scatter")
+  
+  
+  
   if (!is.null(input$bdhm_select_conditions)) {
     hm.sam.beta.top <- subplot(empty, hm.sam.x, widths=c(0.1,  0.9))
     hm.sam.beta.bot <- subplot(hm.sam.y, hm.beta, widths=c(0.1,  0.9))

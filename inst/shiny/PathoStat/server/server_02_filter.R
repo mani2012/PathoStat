@@ -490,6 +490,8 @@ output$downloadCountData <- downloadHandler(filename = function() {
 })
 
 output$nbins <- renderUI({
+  shinyInput <- vals$shiny.input
+  pstat <- shinyInput$pstat
   tables <- pstat.extraction(pstat)
   SAM_DATA <- tables$SAM
   vals <-unlist(SAM_DATA[,input$bin_cov,drop=TRUE])
@@ -505,6 +507,8 @@ output$bin_to2 <- renderPrint({
 })
 
 output$unbin_plot <- renderPlotly({
+  shinyInput <- vals$shiny.input
+  pstat <- shinyInput$pstat  
   tables <- pstat.extraction(pstat)
   SAM_DATA <- tables$SAM
   unbinned = as.numeric(unlist(SAM_DATA[,input$bin_cov]))
@@ -517,6 +521,8 @@ output$unbin_plot <- renderPlotly({
 })
 
 output$bin_plot <- renderPlotly({
+  shinyInput <- vals$shiny.input
+  pstat <- shinyInput$pstat
   tables <- pstat.extraction(pstat)
   SAM_DATA <- tables$SAM
   unbinned <- as.numeric(unlist(SAM_DATA[,input$bin_cov]))
@@ -552,6 +558,8 @@ output$bin_plot <- renderPlotly({
 })
 
 observeEvent(input$create_bins, {
+  shinyInput <- vals$shiny.input
+  pstat <- shinyInput$pstat
   tables <- pstat.extraction(pstat)
   SAM_DATA <- tables$SAM
   unbinned <- as.numeric(unlist(SAM_DATA[,input$bin_cov]))
