@@ -243,8 +243,6 @@ do_beta_heatmap <- function(){
 
   empty <- plotly_empty(type = "scatter")
   
-  
-  
   if (!is.null(input$bdhm_select_conditions)) {
     hm.sam.beta.top <- subplot(empty, hm.sam.x, widths=c(0.1,  0.9))
     hm.sam.beta.bot <- subplot(hm.sam.y, hm.beta, widths=c(0.1,  0.9))
@@ -256,11 +254,11 @@ do_beta_heatmap <- function(){
     return(hm.beta)
   }
 }
-plotBetaBoxplotServerButton3 <- eventReactive(input$beta_boxplot,{
+plotBetaHeatmapServerButton <- eventReactive(input$beta_heatmap,{
   do_beta_heatmap()
 })
 output$BetaDiversityHeatmap <- renderPlotly({
-  plotBetaBoxplotServerButton3()
+  plotBetaHeatmapServerButton()
 })
 
 # Beta diversity boxplots
@@ -347,7 +345,7 @@ do_beta_table <- function() {
   dist.mat <- as.matrix(dist.mat)
   return(dist.mat)
 }
-plotBetaBoxplotServerButton2 <- eventReactive(input$beta_boxplot,{
+plotBetaBoxplotServerButton2 <- eventReactive(input$beta_heatmap,{
   do_beta_table()
 })
 output$table.beta <- DT::renderDataTable({

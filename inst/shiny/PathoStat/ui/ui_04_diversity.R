@@ -12,7 +12,6 @@ tabPanel("Diversity",
           actionButton("alpha_boxplot", "Run")
         ),
         mainPanel(
-          br(),
           tabsetPanel(
             tabPanel("Boxplot",
               plotlyOutput("AlphaDiversity"),
@@ -34,25 +33,31 @@ tabPanel("Diversity",
         sidebarPanel(
           selectizeInput('taxl.beta', 'Taxonomy Level', choices = tax.name, selected='no rank'),
           selectInput("select_beta_div_method", "Choose method:", beta.methods),
-          helpText("Only variables with 2 levels are supported for boxplot and stat test here." ),
-          selectInput("select_beta_condition", "Select condition", covariates.two.levels),
-          selectInput("select_beta_stat_method","Select Test", c("PERMANOVA", "Kruskal-Wallis", "Mann-Whitney")),
-          numericInput("num.permutation.permanova", "Number of permutations", value = 999, max = 2000),
-          actionButton("beta_boxplot", "Run")
+          selectizeInput('bdhm_select_conditions', 'Color Samples by Condition', choices=covariates.colorbar, multiple=TRUE),
+          radioButtons("bdhm_sort_by", "Sort By", c("No Sorting" = "nosort", "Conditions" = "conditions"), selected="nosort"),
+          actionButton("beta_heatmap", "Plot Heatmap")
         ),
         mainPanel(
-          br(),
           tabsetPanel(
             tabPanel("Heatmap",
               br(),
-              fluidRow(
-                selectizeInput('bdhm_select_conditions', 'Color Samples by Condition', choices=covariates.colorbar, multiple=TRUE),
-                radioButtons("bdhm_sort_by", "Sort By", c("No Sorting" = "nosort", "Conditions" = "conditions"), selected="nosort")),
-                plotlyOutput("BetaDiversityHeatmap")
+              plotlyOutput("BetaDiversityHeatmap", width="800px", height="600px")
             ),
             tabPanel("Boxplot",
-              plotlyOutput("BetaDiversityBoxplot"),
-              DT::dataTableOutput("beta.stat.test")
+              fluidRow(
+                column(4,
+                  selectInput("select_beta_stat_method","Select Test", c("PERMANOVA", "Kruskal-Wallis", "Mann-Whitney")),
+                  helpText("Only variables with 2 levels are supported" ),
+                  selectInput("select_beta_condition", "Select condition", covariates.two.levels),
+                  numericInput("num.permutation.permanova", "Number of permutations", value = 999, max = 2000)
+                ),
+                column(8,
+                  br(),
+                  DT::dataTableOutput("beta.stat.test"),
+                  actionButton("beta_boxplot", "Run")
+                )
+              ),
+              plotlyOutput("BetaDiversityBoxplot")
             ),
             tabPanel("Beta Diversity Table",
               br(),
