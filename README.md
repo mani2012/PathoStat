@@ -33,8 +33,9 @@ run the following to automatically install PathoStat and all the dependencies
 as follows.
 
 ```r
-source("http://bioconductor.org/biocLite.R")
-biocLite("PathoStat")
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("PathoStat")
 ```
 
 If you want to install the latest development version of PathoStat from Github, 
