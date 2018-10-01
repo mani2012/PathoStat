@@ -7,9 +7,9 @@ tags$div(
         class = "container",
         fluidRow(
             column(7, h1("PathoStat")),
-            column(2, br(),br(),img(src = "bu_logo.png", height = 80, width = 140)),
-            column(2, br(),br(),img(src = "cbm_logo.png", height = 80, width = 140)),
-            column(1, br(),br(),img(src = "bu_bioinfo_logo.png", height = 80, width = 80))
+            column(5, br(),br(),img(src = "logo.png", height = 50, width = 300))
+            # column(2, br(),br(),img(src = "cbm_logo.png", height = 80, width = 140)),
+            # column(1, br(),br(),img(src = "bu_bioinfo_logo.png", height = 80, width = 80))
 
         ),
         p("Statistical Microbiome Analysis Toolkit")

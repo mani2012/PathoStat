@@ -25,21 +25,24 @@ observeEvent(input$uploadDataCount,{
                        row.names = 1,
                        stringsAsFactors = FALSE,
                        sep = input$sep.count,
-                       comment.char="")
+                       comment.char="",
+                       check.names = FALSE)
 
   df.taxon.input <- read.csv(input$taxon.table$datapath,
                             header = input$header.count,
                             sep = input$sep.count,
                             row.names= 1,
                             stringsAsFactors=FALSE,
-                            comment.char="")
+                            comment.char="",
+                            check.names = FALSE)
 
   df.meta.input <- read.csv(input$annotfile.count$datapath,
                             header = input$header.count,
                             sep = input$sep.count,
                             row.names=input$metadata_sample_name_col_count,
                             stringsAsFactors=FALSE,
-                            comment.char="")
+                            comment.char="",
+                            check.names = FALSE)
 
   # Choose only the samples in metadata that have counts data as well
   df.meta.input <- df.meta.input[match(colnames(df.input), rownames(df.meta.input)), ]
