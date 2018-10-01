@@ -159,6 +159,8 @@ updateCovariate <- function(){
     updateSelectInput(session, "hmra_select_conditions",
                       choices = covariates)
     updateSelectInput(session, "bin_cov",
-                      choices = num_covariates)    
+                      choices = num_covariates)   
+    updateSelectInput(session, "bdhm_select_conditions",
+                      choices = covariates.colorbar)       
     
 }

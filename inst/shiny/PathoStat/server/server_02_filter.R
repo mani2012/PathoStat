@@ -583,7 +583,7 @@ observeEvent(input$create_bins, {
     }
     binned <- cut.default(unbinned, nbins, labels=labels)
 
-    SAM_DATA[,input$new_covariate] <- binned
+    SAM_DATA[,input$new_covariate] <- as.character(binned)
     pstat@sam_data <- SAM_DATA
     shinyInput <- list(pstat = pstat)
     vals$shiny.input <- shinyInput
