@@ -1,7 +1,5 @@
 library(shiny)
 library(shinyjs)
-library(ggvis)
-library(d3heatmap)
 library(phyloseq)
 library(plotly)
 source(file.path("utils", "helpers.R"))

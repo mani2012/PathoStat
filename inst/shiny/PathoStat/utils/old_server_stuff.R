@@ -1,7 +1,5 @@
 library(shiny)
 library(ROCR)
-library(ggvis)
-library(d3heatmap)
 library(reshape2)
 library(DESeq2)
 library(edgeR)
