@@ -43,7 +43,7 @@ findTaxonomy300 <- function(tids) {
     }
 
     na.vec <- c()
-    for (i in 1:length(tids)){
+    for (i in seq_len(length(tids))){
         if(is.na(tids[i])){
             na.vec <- c(na.vec, i)
         }
@@ -53,7 +53,7 @@ findTaxonomy300 <- function(tids) {
     dat <- XML::xmlToList(r_fetch)
     taxonLevels <- lapply(dat, function(x) x$LineageEx)
     if(!is.null(na.vec)){
-        for(i in 1:length(na.vec)){
+        for(i in seq_len(length(na.vec))){
         taxonLevels <- append(taxonLevels, list(NA), na.vec[i]-1)
         }
     }
@@ -84,19 +84,19 @@ findTaxonomy <- function(tids) {
         return(NULL)
     }
     if (length(tids) <= 300){
-      taxonLevels <- findTaxonomy300(tids)
+        taxonLevels <- findTaxonomy300(tids)
     } else{
-      taxonLevels <- list()
-      batch.num <- ceiling(length(tids)/300)
-      for (i in 1:batch.num){
-        if (i == batch.num){
-          tids.batch <- tids[((i-1)*300 + 1):length(tids)]
-        }else{
-          tids.batch <- tids[((i-1)*300 + 1):(i*300)]
-        }
+        taxonLevels <- list()
+        batch.num <- ceiling(length(tids)/300)
+        for (i in seq_len(batch.num)){
+            if (i == batch.num){
+                tids.batch <- tids[((i-1)*300 + 1):length(tids)]
+            }else{
+                tids.batch <- tids[((i-1)*300 + 1):(i*300)]
+            }
         taxonLevels <- c(taxonLevels, findTaxonomy300(tids.batch))
         print(i) 
-      }
+        }
     }
 
 
@@ -174,14 +174,14 @@ findTaxonMat <- function(names, taxonLevels) {
     tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order',
         'family', 'genus', 'species', 'no rank')
     tl <- c()
-    for (i in 1:length(tax.name)) {
+    for (i in seq_len(length(tax.name))) {
         tl[tax.name[i]] <- "others"
     }
     taxmat <- NULL
     for (i in seq_len(length(taxonLevels))) {
         taxrow <- tl
         tLineageEx <- taxonLevels[[i]]
-        for (j in 1:length(tLineageEx)) {
+        for (j in seq_len(length(tLineageEx))) {
             rank <- tLineageEx[[j]]["Rank"]
             #taxid <- tLineageEx[[j]]["TaxId"]
             scientificName <- tLineageEx[[j]]["ScientificName"]

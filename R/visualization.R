@@ -58,9 +58,9 @@ plotHeatmapColor <- function(df.input,
         }
         col <- list()
         col[[paste(condition.1.name)]] <-
-    setNames(colors[1:length(cond_levels.1)], cond_levels.1)
+    setNames(colors[seq_len(length(cond_levels.1))], cond_levels.1)
         col[[paste(condition.2.name)]] <-
-    setNames(colors[1:length(cond_levels.2)], cond_levels.2)
+    setNames(colors[seq_len(length(cond_levels.2))], cond_levels.2)
 
         df.plot <- list()
         df.plot[[paste(condition.1.name)]] <- condition.vec.1
@@ -129,23 +129,26 @@ plotPCAPlotly <- function(df.input,
     if (!is.null(condition.shape.vec)) {
         tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
         p <- suppressWarnings(plot_ly(tmp.df,
-                     x = as.formula(paste("~", pc.a, sep = "")),
-                     y = as.formula(paste("~", pc.b, sep = "")),
-                     mode = "markers",
-                     color = as.formula(paste("~", condition.color.name, sep = "")),
-                     symbol = as.formula(paste("~", condition.shape.name, sep = "")),
-                     type = "scatter",
-                     text = rownames(tmp.df),
-                     marker = list(size = 10)))
+        x = as.formula(paste("~", pc.a, sep = "")),
+        y = as.formula(paste("~", pc.b, sep = "")),
+        mode = "markers",
+        color = as.formula(paste("~", 
+            condition.color.name, sep = "")),
+            symbol = as.formula(paste("~", 
+            condition.shape.name, sep = "")),
+            type = "scatter",
+            text = rownames(tmp.df),
+            marker = list(size = 10)))
     } else {
         p <- suppressWarnings(plot_ly(tmp.df,
-                     x = as.formula(paste("~", pc.a, sep = "")),
-                     y = as.formula(paste("~", pc.b, sep = "")),
-                     mode = "markers",
-                     color = as.formula(paste("~", condition.color.name, sep = "")),
-                     type = "scatter",
-                     text = rownames(tmp.df),
-                     marker = list(size = 10)))        
+            x = as.formula(paste("~", pc.a, sep = "")),
+            y = as.formula(paste("~", pc.b, sep = "")),
+            mode = "markers",
+            color = as.formula(paste("~", 
+            condition.color.name, sep = "")),
+            type = "scatter",
+            text = rownames(tmp.df),
+            marker = list(size = 10)))        
     }
     return(p)
 }
@@ -188,7 +191,6 @@ plotPCoAPlotly <- function(physeq.input,
     }
 
     if (method == "bray"){
-      
         #First get otu_table and transpose it:
         dist.matrix <- t(data.frame(otu_table(physeq.input)))
         #Then use vegdist from vegan to generate a bray distance object:
@@ -208,23 +210,26 @@ plotPCoAPlotly <- function(physeq.input,
     if (!is.null(condition.shape.vec)) {
         tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
         p <- suppressWarnings(plot_ly(tmp.df,
-                     x = as.formula(paste("~", pc.a, sep = "")),
-                     y = as.formula(paste("~", pc.b, sep = "")),
-                     mode = "markers",
-                     color = as.formula(paste("~", condition.color.name, sep = "")),
-                     symbol = as.formula(paste("~", condition.shape.name, sep = "")),
-                     type = "scatter",
-                     text = rownames(tmp.df),
-                     marker = list(size = 10)))
+                    x = as.formula(paste("~", pc.a, sep = "")),
+                    y = as.formula(paste("~", pc.b, sep = "")),
+                    mode = "markers",
+                    color = as.formula(paste("~", 
+                    condition.color.name, sep = "")),
+                    symbol = as.formula(paste("~", 
+                    condition.shape.name, sep = "")),
+                    type = "scatter",
+                    text = rownames(tmp.df),
+                    marker = list(size = 10)))
     } else {
         p <- suppressWarnings(plot_ly(tmp.df,
-                     x = as.formula(paste("~", pc.a, sep = "")),
-                     y = as.formula(paste("~", pc.b, sep = "")),
-                     mode = "markers",
-                     color = as.formula(paste("~", condition.color.name, sep = "")),
-                     type = "scatter",
-                     text = rownames(tmp.df),
-                     marker = list(size = 10)))
+                    x = as.formula(paste("~", pc.a, sep = "")),
+                    y = as.formula(paste("~", pc.b, sep = "")),
+                    mode = "markers",
+                    color = as.formula(paste("~", 
+                    condition.color.name, sep = "")),
+                    type = "scatter",
+                    text = rownames(tmp.df),
+                    marker = list(size = 10)))
     }
     return(p)
 }

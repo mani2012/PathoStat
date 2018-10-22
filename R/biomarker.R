@@ -30,7 +30,7 @@ getSignatureFromMultipleGlmnet <- function(df.input,
     # factorize catogorical variables
     factor.col.index <- c()
     factor.variable.name <- c()
-    for (i in 1:ncol(df.input)){
+    for (i in seq_len(ncol(df.input))){
         if (is.character(df.input[,i]) | is.factor(df.input[,i])){
             df.input[,i] <- as.factor(df.input[,i])
             factor.variable.name <- c(factor.variable.name,
@@ -138,7 +138,7 @@ getSignatureFromMultipleGlmnet <- function(df.input,
     return.list[["weights"]] <- weights.vec
 
     selection.rate <- c()
-    for (i in 1:length(featureSelectionFloor)){
+    for (i in seq_len(length(featureSelectionFloor))){
     selection.rate <- c(selection.rate,
     round(featureDict[[
     paste(featureSelectionFloor[i])]]/nRun, 2))
@@ -193,8 +193,8 @@ Bootstrap_LOOCV_LR_AUC <- function(df, targetVec, nboot=50){
     }
     targetVec <- as.numeric(targetVec)
     auc.vec <- c()
-    for (i in 1:nboot){
-        index.boot <- sample(1:nrow(df), nrow(df), replace = TRUE)
+    for (i in seq_len(nboot)){
+        index.boot <- sample(seq_len(nrow(df)), nrow(df), replace = TRUE)
         df.tmp <- df[index.boot,]
         auc.vec <- c(auc.vec, LOOAUC_simple_multiple_noplot_one_df(df.tmp,
         targetVec[index.boot]))
@@ -227,7 +227,7 @@ LOOAUC_simple_multiple_noplot_one_df <- function(df, targetVec){
     nSample <- nrow(df)
     vecProbTmp <- c()
     testPredictionClassVec <- c()
-    for (j in 1:nSample){
+    for (j in seq_len(nSample)){
         train = as.matrix(df[-j,])
         test = matrix(as.numeric(df[j,]), nrow = 1)
         fit <- glmnet(train, targetVec[-j], family = "binomial")
@@ -274,7 +274,7 @@ LOOAUC_simple_multiple_one_df <- function(df, targetVec){
     }
     targetVec <- as.numeric(targetVec)
 
-    for (j in 1:nSample){
+    for (j in seq_len(nSample)){
         train = as.matrix(df[-j,])
         test = matrix(as.numeric(df[j,]), nrow = 1)
         fit <- glmnet(train, targetVec[-j], family = "binomial")

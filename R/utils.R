@@ -10,7 +10,7 @@
 log2CPM <- function(qcounts, lib.size = NULL) {
     if (is.null(lib.size))
         lib.size <- colSums(qcounts)
-    qcounts <- apply(qcounts, 1:2, FUN = function(x) {
+    qcounts <- apply(qcounts, seq_len(2), FUN = function(x) {
         ifelse(is.null(x) || is.na(x) || is.nan(x), 0, x)
     })
     minimum <- min(qcounts)
@@ -18,7 +18,7 @@ log2CPM <- function(qcounts, lib.size = NULL) {
         qcounts <- qcounts - minimum
     }
     avg <- mean(colMeans(qcounts))
-    qcounts <- apply(qcounts, 1:2, FUN = function(x) {
+    qcounts <- apply(qcounts, seq_len(2), FUN = function(x) {
         ifelse(x < 0, avg, x)
     })
     y <- t(log2(t(qcounts + 0.5)/(lib.size + 1) * 1e+06))
@@ -122,7 +122,8 @@ loadPathoscopeReports <- function(reportfiles, nrows=NULL) {
     row.names=1, skip=1, comment.char="")
     })
 
-    if(!is.null(nrows)) mlist <- lapply(mlist, function(tbl){tbl[1:nrows, ]})
+    if(!is.null(nrows)) mlist <- lapply(mlist, 
+    function(tbl){tbl[seq_len(nrows), ]})
 
     # Get column names for variables in reports
     vals <- colnames(mlist[[1]])
@@ -137,9 +138,9 @@ loadPathoscopeReports <- function(reportfiles, nrows=NULL) {
     z
     })
     # Sanity check: colnames and rownames should be the same for all tables
-    stopifnot(all(sapply(mlist.allgenomes,
+    stopifnot(all(vapply(mlist.allgenomes,
     function(tbl){all(rownames(tbl)==genomes)})))
-    stopifnot(all(sapply(mlist.allgenomes,
+    stopifnot(all(vapply(mlist.allgenomes,
     function(tbl){all(colnames(tbl)==vals)})))
 
     ret <- lapply(vals, function(v) {
