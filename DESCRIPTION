@@ -1,8 +1,8 @@
 Package: PathoStat
 Type: Package
 Title: PathoStat Statistical Microbiome Analysis Package
-Version: 1.5.6
-Date: 2018-06-02
+Version: 1.5.8
+Date: 2018-10-22
 Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>, Matthew
         Bendall <bendall@gwmail.gwu.edu>, Sandro Valenzuela Diaz
         <sandrolvalenzuelad@gmail.com>, Eduardo Castro
@@ -20,7 +20,7 @@ Description: The purpose of this package is to perform Statistical
 URL: https://github.com/mani2012/PathoStat
 BugReports: https://github.com/mani2012/PathoStat/issues
 License: GPL (>= 2)
-Depends: R (>= 3.4)
+Depends: R (>= 3.5)
 Imports: limma, corpcor,matrixStats, reshape2, scales, ggplot2, rentrez, DT,
         tidyr, plyr, dplyr, phyloseq, shiny,
         stats, methods, XML, graphics, utils, BiocStyle, edgeR,
@@ -32,7 +32,8 @@ Collate: 'pathoStat.R' 'utils.R' 'taxonomy.R' 'biomarker.R'
 biocViews: Microbiome, Metagenomics, GraphAndNetwork, Microarray,
         PatternLogic, PrincipalComponent, Sequencing, Software,
         Visualization, RNASeq
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
+Encoding: UTF-8
 Suggests: rmarkdown,
     testthat
 VignetteBuilder: knitr
