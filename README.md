@@ -41,7 +41,7 @@ If you want to install the latest development version of PathoStat from Github,
 use [devtools](https://github.com/hadley/devtools) to install it as follows:
 ```r
 require(devtools)
-install_github("mani2012/PathoStat", build_vignettes=TRUE)
+install_github("compbiomed/PathoStat")
 ```
 
 If all went well you should now be able to load PathoStat:

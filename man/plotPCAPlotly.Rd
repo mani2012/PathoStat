@@ -5,9 +5,9 @@
 \title{Plot PCA}
 \usage{
 plotPCAPlotly(df.input, condition.color.vec,
-  condition.color.name = "condition", condition.shape.vec,
-  condition.shape.name = "condition", columnTitle = "Title", pc.a = "PC1",
-  pc.b = "PC2")
+  condition.color.name = "condition", condition.shape.vec = NULL,
+  condition.shape.name = "condition", columnTitle = "Title",
+  pc.a = "PC1", pc.b = "PC2")
 }
 \arguments{
 \item{df.input}{Input data object that contains
