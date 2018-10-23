@@ -5,7 +5,7 @@
 \title{Plot PCoA}
 \usage{
 plotPCoAPlotly(physeq.input, condition.color.vec,
-  condition.color.name = "condition", condition.shape.vec,
+  condition.color.name = "condition", condition.shape.vec = NULL,
   condition.shape.name = "condition", method = "bray",
   columnTitle = "Title", pc.a = "Axis.1", pc.b = "Axis.2")
 }

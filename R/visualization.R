@@ -58,9 +58,9 @@ plotHeatmapColor <- function(df.input,
         }
         col <- list()
         col[[paste(condition.1.name)]] <-
-    setNames(colors[1:length(cond_levels.1)], cond_levels.1)
+    setNames(colors[seq_len(length(cond_levels.1))], cond_levels.1)
         col[[paste(condition.2.name)]] <-
-    setNames(colors[1:length(cond_levels.2)], cond_levels.2)
+    setNames(colors[seq_len(length(cond_levels.2))], cond_levels.2)
 
         df.plot <- list()
         df.plot[[paste(condition.1.name)]] <- condition.vec.1
@@ -111,10 +111,10 @@ plotHeatmapColor <- function(df.input,
 
 plotPCAPlotly <- function(df.input,
     condition.color.vec, condition.color.name = "condition",
-    condition.shape.vec, condition.shape.name = "condition",
+    condition.shape.vec=NULL, condition.shape.name = "condition",
     columnTitle = "Title", pc.a = "PC1", pc.b = "PC2"){
 
-    #test and fix the constant/zero row
+    # Test and fix the constant/zero row
     if (sum(rowSums(as.matrix(df.input)) == 0) > 0){
         df.input <- df.input[-which(rowSums(as.matrix(df.input)) == 0),]
     }
@@ -122,23 +122,36 @@ plotPCAPlotly <- function(df.input,
     # conduct PCA
     pca.tmp<- prcomp(t(df.input), scale = TRUE)
     tmp.df <- data.frame(pca.tmp$x)
+
     # add color variable
     tmp.df[[paste(condition.color.name)]] <- condition.color.vec
     # add shape variable
-    tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
-    plot_ly(tmp.df,
+    if (!is.null(condition.shape.vec)) {
+        tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
+        p <- suppressWarnings(plot_ly(tmp.df,
+        x = as.formula(paste("~", pc.a, sep = "")),
+        y = as.formula(paste("~", pc.b, sep = "")),
+        mode = "markers",
+        color = as.formula(paste("~", 
+            condition.color.name, sep = "")),
+            symbol = as.formula(paste("~", 
+            condition.shape.name, sep = "")),
+            type = "scatter",
+            text = rownames(tmp.df),
+            marker = list(size = 10)))
+    } else {
+        p <- suppressWarnings(plot_ly(tmp.df,
             x = as.formula(paste("~", pc.a, sep = "")),
             y = as.formula(paste("~", pc.b, sep = "")),
             mode = "markers",
-            color = as.formula(paste("~", condition.color.name, sep = "")),
-            symbol = as.formula(paste("~", condition.shape.name, sep = "")),
+            color = as.formula(paste("~", 
+            condition.color.name, sep = "")),
             type = "scatter",
             text = rownames(tmp.df),
-            marker = list(size = 10))
+            marker = list(size = 10)))        
+    }
+    return(p)
 }
-
-
-
 
 #' Plot PCoA
 #'
@@ -164,7 +177,7 @@ plotPCAPlotly <- function(df.input,
 
 plotPCoAPlotly <- function(physeq.input,
     condition.color.vec, condition.color.name = "condition",
-    condition.shape.vec, condition.shape.name = "condition",
+    condition.shape.vec=NULL, condition.shape.name = "condition",
     method = "bray", columnTitle = "Title",
     pc.a = "Axis.1", pc.b = "Axis.2"){
     # conduct PCoA
@@ -178,8 +191,6 @@ plotPCoAPlotly <- function(physeq.input,
     }
 
     if (method == "bray"){
-      
-      
         #First get otu_table and transpose it:
         dist.matrix <- t(data.frame(otu_table(physeq.input)))
         #Then use vegdist from vegan to generate a bray distance object:
@@ -196,23 +207,29 @@ plotPCoAPlotly <- function(physeq.input,
     # add color variable
     tmp.df[[paste(condition.color.name)]] <- condition.color.vec
     # add shape variable
-    tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
-
-    plot_ly(tmp.df,
-    x = as.formula(paste("~", pc.a, sep = "")),
-    y = as.formula(paste("~", pc.b, sep = "")),
-    mode = "markers",
-    color = as.formula(paste("~", condition.color.name, sep = "")),
-    symbol = as.formula(paste("~", condition.shape.name, sep = "")),
-    type = "scatter",
-    text = rownames(tmp.df),
-    marker = list(size = 10))
-
+    if (!is.null(condition.shape.vec)) {
+        tmp.df[[paste(condition.shape.name)]] <- condition.shape.vec
+        p <- suppressWarnings(plot_ly(tmp.df,
+                    x = as.formula(paste("~", pc.a, sep = "")),
+                    y = as.formula(paste("~", pc.b, sep = "")),
+                    mode = "markers",
+                    color = as.formula(paste("~", 
+                    condition.color.name, sep = "")),
+                    symbol = as.formula(paste("~", 
+                    condition.shape.name, sep = "")),
+                    type = "scatter",
+                    text = rownames(tmp.df),
+                    marker = list(size = 10)))
+    } else {
+        p <- suppressWarnings(plot_ly(tmp.df,
+                    x = as.formula(paste("~", pc.a, sep = "")),
+                    y = as.formula(paste("~", pc.b, sep = "")),
+                    mode = "markers",
+                    color = as.formula(paste("~", 
+                    condition.color.name, sep = "")),
+                    type = "scatter",
+                    text = rownames(tmp.df),
+                    marker = list(size = 10)))
+    }
+    return(p)
 }
-
-
-
-
-
-
-

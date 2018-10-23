@@ -22,7 +22,49 @@ TranslateIdToTaxLevel <- function(pstat, input.id.vec, tax.level){
 }
 
 
-#' Find the taxonomy for each taxon ids
+#' Find the taxonomy for maximum 300 tids
+#'
+#' @param tids Given taxonomy ids
+#' @return taxondata Data with the taxonomy information
+#' @import rentrez
+#' @export
+#' @examples
+#' example_data_dir <- system.file("example/data", package = "PathoStat")
+#' pathoreport_file_suffix <- "-sam-report.tsv"
+#' datlist <- readPathoscopeData(example_data_dir, pathoreport_file_suffix)
+#' dat <- datlist$data
+#' ids <- rownames(dat)
+#' tids <- unlist(lapply(ids, FUN = grepTid))
+#' taxonLevels <- findTaxonomy300(tids[1:5])
+
+findTaxonomy300 <- function(tids) {
+    if (is.null(tids)) {
+        return(NULL)
+    }
+
+    na.vec <- c()
+    for (i in seq_len(length(tids))){
+        if(is.na(tids[i])){
+            na.vec <- c(na.vec, i)
+        }
+    }
+
+    r_fetch <- entrez_fetch(db = "taxonomy", id = tids, rettype = "xml")
+    dat <- XML::xmlToList(r_fetch)
+    taxonLevels <- lapply(dat, function(x) x$LineageEx)
+    if(!is.null(na.vec)){
+        for(i in seq_len(length(na.vec))){
+        taxonLevels <- append(taxonLevels, list(NA), na.vec[i]-1)
+        }
+    }
+
+
+    return(taxonLevels)
+}
+
+
+
+#' Find the taxonomy for unlimited tids
 #'
 #' @param tids Given taxonomy ids
 #' @return taxondata Data with the taxonomy information
@@ -41,26 +83,26 @@ findTaxonomy <- function(tids) {
     if (is.null(tids)) {
         return(NULL)
     }
-
-    na.vec <- c()
-    for (i in 1:length(tids)){
-        if(is.na(tids[i])){
-            na.vec <- c(na.vec, i)
-        }
-    }
-
-    r_fetch <- entrez_fetch(db = "taxonomy", id = tids, rettype = "xml")
-    dat <- XML::xmlToList(r_fetch)
-    taxonLevels <- lapply(dat, function(x) x$LineageEx)
-    if(!is.null(na.vec)){
-        for(i in 1:length(na.vec)){
-        taxonLevels <- append(taxonLevels, list(NA), na.vec[i]-1)
+    if (length(tids) <= 300){
+        taxonLevels <- findTaxonomy300(tids)
+    } else{
+        taxonLevels <- list()
+        batch.num <- ceiling(length(tids)/300)
+        for (i in seq_len(batch.num)){
+            if (i == batch.num){
+                tids.batch <- tids[((i-1)*300 + 1):length(tids)]
+            }else{
+                tids.batch <- tids[((i-1)*300 + 1):(i*300)]
+            }
+        taxonLevels <- c(taxonLevels, findTaxonomy300(tids.batch))
+        print(i) 
         }
     }
 
 
     return(taxonLevels)
 }
+
 
 findSelectedTaxonId <- function(tLineageEx, level) {
     id <- "others"
@@ -132,14 +174,14 @@ findTaxonMat <- function(names, taxonLevels) {
     tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order',
         'family', 'genus', 'species', 'no rank')
     tl <- c()
-    for (i in 1:length(tax.name)) {
+    for (i in seq_len(length(tax.name))) {
         tl[tax.name[i]] <- "others"
     }
     taxmat <- NULL
     for (i in seq_len(length(taxonLevels))) {
         taxrow <- tl
         tLineageEx <- taxonLevels[[i]]
-        for (j in 1:length(tLineageEx)) {
+        for (j in seq_len(length(tLineageEx))) {
             rank <- tLineageEx[[j]]["Rank"]
             #taxid <- tLineageEx[[j]]["TaxId"]
             scientificName <- tLineageEx[[j]]["ScientificName"]

@@ -62,7 +62,7 @@ runPathoStat <- function(pstat=NULL,
 
     # remove variables with identical values
     col.remove.index <- c()
-    for (i in 1:ncol(pstat@sam_data)){
+    for (i in seq_len(ncol(pstat@sam_data))){
         if(dim(unique(pstat@sam_data[,i]))[1] < 2){
             col.remove.index <- c(col.remove.index, i)
         }

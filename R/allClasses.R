@@ -12,6 +12,9 @@
 #' }
 #'
 #' @export pathostat1
+#' @examples 
+#' pathostat1()
+#' 
 #' @exportClass PathoStat
 pathostat1 <- setClass(Class="PathoStat",
     representation=representation(
