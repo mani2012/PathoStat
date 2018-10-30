@@ -203,10 +203,11 @@ proportionc <- function(lhasht, genomes, lnumReads, i) {
 #' grepTid("ti|700015|org|Coriobacterium_glomerans_PW2")
 
 grepTid <- function(id) {
-    tid <- unlist(strsplit(id, ".org"))[1]
-    tid <- unlist(strsplit(tid, "ti."))[2]
+    tid <- strsplit(id, "\\|")
+    tid <- sapply(tid, function(x) x[2])
     return(tid)
 }
+
 
 #' Save the pathostat object to R data(.rda) file
 #'
