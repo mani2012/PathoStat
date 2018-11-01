@@ -56,27 +56,34 @@ readPathoscopeData <-
         filenames <- input.files.path.vec
     }
     ltbl <- lapply(filenames, read.table, skip=1, header=TRUE, sep="\t")
+
     lgenomes <- lapply(ltbl, function(tbl) {return(levels(tbl[,1]))})
     genomes <- unique(unlist(lgenomes))
     genomes <- c(genomes, "others")
-
     lfl <- lapply(filenames, readLines, n = 1)
     lnumReads <- unlist(lapply(lfl, function(fl)
     {return(as.numeric(strsplit(fl, "\t")[[1]][2]))}))
-    lhasht <- lapply(ltbl, prop_hash)
-    lprop <- lapply(lhasht, proportion, genomes)
-    lcprop <- lapply(seq_along(lhasht), proportionc, lhasht=lhasht,
-    genomes=genomes, lnumReads=lnumReads)
-
-    do.call(cbind, lprop)
-    do.call(cbind, lcprop)
     samplenames <- unlist(lapply(input.files.name.vec, function(x) {
-        return(strsplit(x, pathoreport_file_suffix)[[1]])
+        return(strsplit(x, "-sam-report.tsv")[[1]])
     }))
-    dat <- data.frame(lprop)
+    
+    dat <- matrix(0L, nrow = length(genomes), ncol = length(samplenames))
+    countdat <- matrix(0L, nrow = length(genomes), ncol = length(samplenames))    
+    
+    for (i in seq(length(samplenames))){
+      index.tmp <- match(ltbl[[i]][,1], genomes)
+      dat[index.tmp,i] <- ltbl[[i]][,3]
+      countdat[index.tmp,i] <- ltbl[[i]][,4]
+      read.sum <- sum(ltbl[[i]][,4])
+      read.num.other <- lnumReads[i] - read.sum
+      dat[nrow(dat),i] <- 1 - sum(ltbl[[i]][,3])
+      countdat[nrow(dat),i] <- read.num.other
+    }
+    
+    dat <- data.frame(dat)
     rownames(dat) <- genomes
     colnames(dat) <- samplenames
-    countdat <- data.frame(lcprop)
+    countdat <- data.frame(countdat)
     rownames(countdat) <- genomes
     colnames(countdat) <- samplenames
     return(list(data = dat, countdata = countdat))
@@ -203,10 +210,11 @@ proportionc <- function(lhasht, genomes, lnumReads, i) {
 #' grepTid("ti|700015|org|Coriobacterium_glomerans_PW2")
 
 grepTid <- function(id) {
-    tid <- unlist(strsplit(id, ".org"))[1]
-    tid <- unlist(strsplit(tid, "ti."))[2]
+    tid <- strsplit(id, "\\|")
+    tid <- sapply(tid, function(x) x[2])
     return(tid)
 }
+
 
 #' Save the pathostat object to R data(.rda) file
 #'
