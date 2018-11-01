@@ -194,6 +194,6 @@ findTaxonMat <- function(names, taxonLevels) {
     }
 
     rownames(taxmat) <- names
-    print(taxmat)
+    #print(taxmat)
     return(taxmat)
 }
