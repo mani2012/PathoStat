@@ -39,6 +39,9 @@ log2CPM <- function(qcounts, lib.size = NULL) {
 #' @export
 #' @examples
 #' example_data_dir <- system.file("example/data", package = "PathoStat")
+#' pathoreport_file_suffix <- "-sam-report.tsv"
+#' datlist <- readPathoscopeData(example_data_dir, pathoreport_file_suffix,
+#' input.files.name.vec = as.character(1:6))
 
 readPathoscopeData <-
     function(input_dir=".", pathoreport_file_suffix="-sam-report.tsv",
@@ -64,7 +67,7 @@ readPathoscopeData <-
     lnumReads <- unlist(lapply(lfl, function(fl)
     {return(as.numeric(strsplit(fl, "\t")[[1]][2]))}))
     samplenames <- unlist(lapply(input.files.name.vec, function(x) {
-        return(strsplit(x, "-sam-report.tsv")[[1]])
+        return(strsplit(x, pathoreport_file_suffix)[[1]])
     }))
     
     dat <- matrix(0L, nrow = length(genomes), ncol = length(samplenames))
