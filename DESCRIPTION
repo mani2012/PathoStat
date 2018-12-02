@@ -1,7 +1,7 @@
 Package: PathoStat
 Type: Package
 Title: PathoStat Statistical Microbiome Analysis Package
-Version: 1.8.3
+Version: 1.8.4
 Date: 2018-11-28
 Author: Solaiappan Manimaran <manimaran_1975@hotmail.com>, Matthew
         Bendall <bendall@gwmail.gwu.edu>, Sandro Valenzuela Diaz
@@ -33,7 +33,7 @@ Collate: 'pathoStat.R' 'utils.R' 'taxonomy.R' 'biomarker.R'
         'allClasses.R' 'visualization.R' 'differentialAnalysis.R'
 biocViews: Microbiome, Metagenomics, GraphAndNetwork, Microarray,
         PatternLogic, PrincipalComponent, Sequencing, Software,
-        Visualization, RNASeq
+        Visualization, RNASeq, ImmunoOncology
 RoxygenNote: 6.1.0
 Encoding: UTF-8
 Suggests: rmarkdown,
