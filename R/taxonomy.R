@@ -36,7 +36,7 @@ TranslateIdToTaxLevel <- function(pstat, input.id.vec, tax.level){
 #' dat <- datlist$data
 #' ids <- rownames(dat)
 #' tids <- unlist(lapply(ids, FUN = grepTid))
-#' taxonLevels <- findTaxonomy300(tids[1:5])
+#' # taxonLevels <- findTaxonomy300(tids[1:5])
 
 findTaxonomy300 <- function(tids) {
     if (is.null(tids)) {
@@ -79,7 +79,7 @@ findTaxonomy300 <- function(tids) {
 #' dat <- datlist$data
 #' ids <- rownames(dat)
 #' tids <- unlist(lapply(ids, FUN = grepTid))
-#' taxonLevels <- findTaxonomy(tids[1:5])
+#' # taxonLevels <- findTaxonomy(tids[1:5])
 
 findTaxonomy <- function(tids) {
     if (is.null(tids)) {
