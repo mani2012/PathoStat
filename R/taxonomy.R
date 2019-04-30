@@ -36,9 +36,7 @@ TranslateIdToTaxLevel <- function(pstat, input.id.vec, tax.level){
 #' dat <- datlist$data
 #' ids <- rownames(dat)
 #' tids <- unlist(lapply(ids, FUN = grepTid))
-#' \dontrun{
-#' taxonLevels <- findTaxonomy300(tids[1:5])
-#' }
+#' # taxonLevels <- findTaxonomy300(tids[1:5])
 
 findTaxonomy300 <- function(tids) {
     if (is.null(tids)) {
@@ -81,9 +79,7 @@ findTaxonomy300 <- function(tids) {
 #' dat <- datlist$data
 #' ids <- rownames(dat)
 #' tids <- unlist(lapply(ids, FUN = grepTid))
-#' \dontrun{
-#' taxonLevels <- findTaxonomy(tids[1:5])
-#' }
+#' # taxonLevels <- findTaxonomy(tids[1:5])
 
 findTaxonomy <- function(tids) {
     if (is.null(tids)) {
@@ -171,10 +167,8 @@ taxon_hash_update <- function(taxon_hash, taxon, length) {
 #' dat <- datlist$data
 #' ids <- rownames(dat)
 #' tids <- unlist(lapply(ids, FUN = grepTid))
-#' \dontrun{
-#' taxonLevels <- findTaxonomy(tids[1:5])
-#' taxmat <- findTaxonMat(ids[1:5], taxonLevels)
-#' }
+#' # taxonLevels <- findTaxonomy(tids[1:5])
+#' # taxmat <- findTaxonMat(ids[1:5], taxonLevels)
 
 findTaxonMat <- function(names, taxonLevels) {
     # tax.name <- c('superkingdom', 'kingdom', 'phylum', 'class', 'order',

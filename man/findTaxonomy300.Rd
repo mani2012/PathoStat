@@ -23,5 +23,5 @@ pathoreport_file_suffix, input.files.name.vec = as.character(1:6))
 dat <- datlist$data
 ids <- rownames(dat)
 tids <- unlist(lapply(ids, FUN = grepTid))
-taxonLevels <- findTaxonomy300(tids[1:5])
+# taxonLevels <- findTaxonomy300(tids[1:5])
 }

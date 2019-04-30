@@ -23,5 +23,5 @@ input.files.name.vec = as.character(1:6))
 dat <- datlist$data
 ids <- rownames(dat)
 tids <- unlist(lapply(ids, FUN = grepTid))
-taxonLevels <- findTaxonomy(tids[1:5])
+# taxonLevels <- findTaxonomy(tids[1:5])
 }
