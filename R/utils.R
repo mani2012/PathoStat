@@ -58,7 +58,7 @@ readPathoscopeData <-
     } else{
         filenames <- input.files.path.vec
     }
-    ltbl <- lapply(filenames, read.table, skip=1, header=TRUE, sep="\t")
+    ltbl <- lapply(filenames, read.table, skip=1, header=TRUE, sep="\t", stringsAsFactors=TRUE)
 
     lgenomes <- lapply(ltbl, function(tbl) {return(levels(tbl[,1]))})
     genomes <- unique(unlist(lgenomes))
